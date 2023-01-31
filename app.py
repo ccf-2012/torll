@@ -229,6 +229,8 @@ def editrcp():
     if os.path.isfile(fn):
         with open(fn, 'r') as f:
             rcpsh_file = f.read()
+    else:
+        rcpsh_file = ''
     msg = ''
     if request.method == 'POST':
         rcpsh_file = request.form['config_file']
