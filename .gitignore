@@ -9,6 +9,7 @@ __pycache__/
 .vscode/
 config.ini
 rcp.sh
+*.sh
 
 myTMDbParser*
 tt.py
@@ -70,8 +71,6 @@ db.sqlite3-journal
 db.sqlite*
 
 .DS_Store
-*.txt
-*.sh
 
 
 # Flask stuff:
