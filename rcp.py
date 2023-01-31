@@ -88,7 +88,7 @@ def torcpByHash(torhash):
     if torhash:
         torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(torhash)
         r = runTorcp(torpath, torhash2, torsize, tortag,
-                     savepath, insertHashDir=True)
+                     savepath, insertHashDir=ARGS.hash_dir)
         return r
     else:
         print("set -I arg")
@@ -103,6 +103,7 @@ def loadArgs():
     parser.add_argument('-D', '--save-path', help='qbittorrent save path.')
     parser.add_argument('-G', '--tag', help='tag of the torrent.')
     parser.add_argument('-Z', '--size', help='size of the torrent.')
+    parser.add_argument('--hash-dir', action='store_true', help='create hash dir.')        
     parser.add_argument('-C', '--config', help='config file.')
 
     global ARGS
@@ -117,7 +118,7 @@ def main():
     readConfig(ARGS.config)
     if ARGS.full_path and ARGS.save_path:
         runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size,
-                 ARGS.tag, ARGS.save_path, insertHashDir=True)
+                 ARGS.tag, ARGS.save_path, insertHashDir=ARGS.hash_dir)
     else:
         torcpByHash(ARGS.info_hash)
 
