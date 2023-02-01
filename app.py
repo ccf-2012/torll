@@ -359,7 +359,7 @@ class RSSHistory(db.Model):
             'reason': self.reason,
             'size': HumanBytes.format(int(self.size)),
             'accept': self.accept,
-            'torsite': genSiteLink(self.site, self.infoLink),
+            'infoLink': self.infoLink,
         }
 
 
