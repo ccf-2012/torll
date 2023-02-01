@@ -1,14 +1,6 @@
 {% extends "base.html" %}
 {% block stylesheet %}
-<style>
-  /* https://stackoverflow.com/questions/33454016/change-font-family-in-datatable */
-  .dataTables_wrapper {
-      font-family: Verdana, Geneva, Tahoma, sans-serif;
-      font-size: 13px;
-      clear: both;
-  }
 
-</style>
 {% endblock %}
 
 {% block content %}
@@ -36,8 +28,9 @@
 
 {% block script %}
   <script>
+    
     $(document).ready(function () {
-      $('#data').DataTable({
+      var table = $('#data').DataTable({
         language: {
                 "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
                 "lengthMenu": "每页显示  _MENU_ 条",
@@ -64,13 +57,13 @@
         order: [[6, 'desc']],
         columns: [
           {data: 'tmdbcat',
-           "width": "4%" 
+           "width": "6%" 
           },
           {data: 'torname',
-          "width": "25%"
+          "width": "20%"
           },
           {data: 'location',
-          "width": "30%" 
+          "width": "25%" 
           },
           {data: 'torsite', searchable: false, 
             "width": "6%",
@@ -82,7 +75,7 @@
             }
           },
           {data: 'torimdb', orderable: false,
-            "width": "8%",
+            "width": "7%",
             "render": function ( data, type, row, meta ) {
               if (data){
                 return '<a href="https://www.imdb.com/title/'+data+'" target="_blank">'+data+'</a>';
@@ -91,7 +84,7 @@
             }
           },
           {data: 'tmdbid', orderable: false,
-            "width": "8%",
+            "width": "7%",
             "render": function ( data, type, row, meta ) {
               if (data){
                 var s = row.tmdbcat + '/' + row.tmdbid;
@@ -101,10 +94,17 @@
             }
           },
           {data: 'addedon',
-            "width": "14%",
+            "width": "12%",
+            "render": function (data) {
+                var date = new Date(data);
+                return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+            }            
           },
+          
         ],
       });
+
     });
+
   </script>
 {% endblock %}
