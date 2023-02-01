@@ -70,7 +70,14 @@
         },
         {
           data: 'title',
-          "width": "50%"
+          "width": "50%",
+          "render": function ( data, type, row, meta ) {
+              if (data) {
+                return '<a href="'+row.torsite+'" target="_blank">'+row.title+'</a>';
+              }
+              else return ''
+            }
+
         },
         {
           data: 'imdbstr',

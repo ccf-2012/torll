@@ -18,29 +18,47 @@
                 {{form.cookie.label(class='form-label')}} 
                 {{ form.cookie(class="form-control") }}
             </div>
-            <div class="form-group mb-3">
-                {{form.title_regex.label(class='form-label')}} 
-                {{ form.title_regex(class="form-control") }}
+            <div class="row form-row">
+                <div class="form-group col-md-6 mb-0">
+                    <div class="form-group mb-3">
+                        {{form.title_not_regex.label(class='form-label')}} 
+                        {{ form.title_not_regex(class="form-control") }}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 mb-0">
+                    <div class="form-group mb-3">
+                        {{form.title_regex.label(class='form-label')}} 
+                        {{ form.title_regex(class="form-control") }}
+                    </div>
+                </div>
             </div>
-            <div class="form-group mb-3">
-                {{form.title_not_regex.label(class='form-label')}} 
-                {{ form.title_not_regex(class="form-control") }}
+            <div class="row form-row">
+                <div class="form-group col-md-6 mb-0">
+                    <div class="form-group mb-3">
+                        {{form.info_not_regex.label(class='form-label')}} 
+                        {{ form.info_not_regex(class="form-control") }}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 mb-0">
+                    <div class="form-group mb-3">
+                        {{form.info_regex.label(class='form-label')}} 
+                        {{ form.info_regex(class="form-control") }}
+                    </div>
+                </div>
             </div>
-            <div class="form-group mb-3">
-                {{form.info_regex.label(class='form-label')}} 
-                {{ form.info_regex(class="form-control") }}
-            </div>
-            <div class="form-group mb-3">
-                {{form.info_not_regex.label(class='form-label')}} 
-                {{ form.info_not_regex(class="form-control") }}
-            </div>
-            <div class="form-group mb-3">
-                {{form.min_imdb.label(class='form-label')}} 
-                {{ form.min_imdb(class="form-control") }}
-            </div>
-            <div class="form-group mb-3">
-                {{form.task_interval.label(class='form-label')}} 
-                {{ form.task_interval(class="form-control") }}
+            <div class="row form-row">
+                <div class="form-group col-md-6 mb-0">
+                    <div class="form-group mb-3">
+                        {{form.min_imdb.label(class='form-label')}} 
+                        {{ form.min_imdb(class="form-control") }}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 mb-0">
+                    <div class="form-group mb-3">
+                        {{form.task_interval.label(class='form-label')}} 
+                        {{ form.task_interval(class="form-control") }}
+                    </div>
+                </div>
             </div>
             {{form.submit(class='btn btn-primary')}}
 

@@ -359,6 +359,7 @@ class RSSHistory(db.Model):
             'reason': self.reason,
             'size': HumanBytes.format(int(self.size)),
             'accept': self.accept,
+            'torsite': genSiteLink(self.site, self.infoLink),
         }
 
 
@@ -455,7 +456,7 @@ class RSSTaskForm(Form):
     info_regex = StringField('描述包含')
     info_not_regex = StringField('描述不含')
     min_imdb = DecimalField('IMDb 大于', validators=[NumberRange(min=0, max=10)])
-    task_interval = IntegerField('执行间隔 (分钟)')
+    task_interval = IntegerField('执行间隔 (分钟)', validators=[DataRequired()])
     submit = SubmitField("保存设置")
 
 
@@ -698,11 +699,13 @@ def parseDetailPage(pageUrl, rsstask):
         if not re.search(rsstask.info_regex, doc, flags=re.A):
             # print('  >> INFO_REGEX not match.')
             rsstask.reason = 'INFO_REGEX'
+            db.session.commit()
             match = False
     if rsstask.info_not_regex:
         if re.search(rsstask.info_not_regex, doc, flags=re.A):
             # print('  >> INFO_NOT_REGEX not match.')
             rsstask.reason = 'INFO_NOT_REGEX'
+            db.session.commit()
             match = False
 
     if rsstask.min_imdb:
@@ -732,6 +735,7 @@ def parseDetailPage(pageUrl, rsstask):
             if (imdbval < rsstask.min_imdb) and (doubanval < rsstask.min_imdb):
                 # print("   >> MIN_IMDb not match")
                 rsstask.reason = "IMDb: %s, douban: %s" % (imdbval, doubanval)
+                db.session.commit()
                 match = False
 
     imdbstr = ''
@@ -745,16 +749,19 @@ def parseDetailPage(pageUrl, rsstask):
 def checkDupAddTor(rsstask, torname, downloadLink, imdbstr, siteIdStr, forceDownload=False):
     if not torname:
         rsstask.reason = 'no name'
+        db.session.commit()
         return 400
 
     if (not myconfig.CONFIG.qbServer):
         # print("qBittorrent not set, skip")
         rsstask.reason = 'qBit config'
+        db.session.commit()
         return 400
 
     if (not myconfig.CONFIG.tmdb_api_key):
         # print("tmdb_api_key not set, skip")
         rsstask.reason = 'tmdb_api_key not set'
+        db.session.commit()
         return 400
 
     p = TMDbNameParser(myconfig.CONFIG.tmdb_api_key, '')
@@ -765,6 +772,7 @@ def checkDupAddTor(rsstask, torname, downloadLink, imdbstr, siteIdStr, forceDown
         exists = checkMediaDbExistsTMDb(torTMDb, p.tmdbcat)
         if (exists) and (not forceDownload):
             rsstask.reason = 'exists'
+            db.session.commit()
             return 202
         else:
             if downloadLink:
@@ -772,12 +780,14 @@ def checkDupAddTor(rsstask, torname, downloadLink, imdbstr, siteIdStr, forceDown
                     # print("   >> Not valid torrent downlink: %s ( %s) " %
                     #       (torname, downloadLink))
                     rsstask.reason = 'Not valid downlink'
+                    db.session.commit()
                     return 205
 
                 if not myconfig.CONFIG.dryrun:
                     print("   >> Added: " + torname)
                     if not qbfunc.addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr):
                         rsstask.reason = 'qBit Fail'
+                        db.session.commit()
                         return 400
                 else:
                     print("   >> DRYRUN: " + torname + "\n   >> " + downloadLink)
@@ -785,6 +795,7 @@ def checkDupAddTor(rsstask, torname, downloadLink, imdbstr, siteIdStr, forceDown
             return 201
     else:
         rsstask.reason = 'TMDb no found'
+        db.session.commit()
         return 203
 
 
