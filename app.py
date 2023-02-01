@@ -20,6 +20,7 @@ import feedparser
 import re
 from http.cookies import SimpleCookie
 from humanbytes import HumanBytes
+import shutil
 
 
 app = Flask(__name__)
@@ -139,6 +140,81 @@ def verify_password(username, password):
 @auth.login_required
 def index():
     return render_template('tortable.html')
+
+
+
+class MediaItemForm(Form):
+    # location = StringField('存储路径，如果是在本机上，修改此处将尝试改名', validators=[DataRequired()])
+    # torimdb = StringField('修改IMDb以重新查询和生成硬链', validators=[DataRequired()])
+    tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 以tv-12345或m12345指定分类和id')
+    # tmdbid = StringField('TMDb id')
+    submit = SubmitField("保存设置")
+
+
+def parseTMDbStr(tmdbstr):
+    if tmdbstr.isnumeric():
+        return '', tmdbstr
+    m = re.search(r'(m(ovie)?|t(v)?)[-_]?(\d+)', tmdbstr.strip(), flags=re.A | re.I)
+    if m:
+        catstr = 'movie' if m[1].startswith('m') else 'tv'
+        return catstr, m[4]
+    else:
+        return '', ''
+
+
+@app.route('/mediaedit/<id>', methods=['POST', 'GET'])
+@auth.login_required
+def torMediaEdit(id):
+    tormedia = TorMediaItem.query.get(id)
+    destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
+
+    if os.path.exists(destDir):
+        warningstr = '此影视种子所链目录将被删除：%s' % (destDir)
+    else:
+        warningstr = '%s : 目标不存在' % (destDir)
+
+    form = MediaItemForm(request.form)
+    form.tmdbcatid.data = "%s-%s" % (tormedia.tmdbcat, tormedia.tmdbid)
+
+    if request.method == 'POST':
+        form = MediaItemForm(request.form)
+        # cat, tmdbstr = parseTMDbStr(form.tmdbcatid.data)
+
+        if os.path.exists(destDir):
+            print("Deleting ", destDir)
+            try:
+                shutil.rmtree(destDir)
+            except:
+                pass
+        # print("Delete complete")
+
+        torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(
+            tormedia.torhash)
+        r = runRcp(torpath, torhash2, torsize, tortag, savepath, form.tmdbcatid.data)
+        
+        db.session.delete(tormedia)
+        db.session.commit()
+        return redirect("/")
+
+    return render_template('mediaedit.html', form=form, msg=warningstr)
+
+
+@app.route('/mediadel/<id>')
+@auth.login_required
+def torMediaDel(id):
+    tormedia = TorMediaItem.query.get(id)
+
+    destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
+    if os.path.exists(destDir):
+        print("Deleting ", destDir)
+        try:
+            shutil.rmtree(destDir)
+        except:
+            pass
+    
+    db.session.delete(tormedia)
+    db.session.commit()
+    return redirect("/")
 
 
 class QBSettingForm(Form):
@@ -313,7 +389,7 @@ def runTorcpByHash():
         print(torhash)
         torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(
             torhash)
-        r = runRcp(torpath, torhash2, torsize, tortag, savepath)
+        r = runRcp(torpath, torhash2, torsize, tortag, savepath, None)
         if r == 200:
             return jsonify({'OK': 200}), 200
     return jsonify({'Error': 401}), 401
@@ -330,7 +406,7 @@ def runTorcpApi():
         ) if 'tortag' in request.json else ''
         savepath = request.json['savepath'].strip(
         ) if 'savepath' in request.json else ''
-        r = runRcp(torpath, torhash, torsize, tortag, savepath)
+        r = runRcp(torpath, torhash, torsize, tortag, savepath, None)
         if r == 200:
             return jsonify({'OK': 200}), 200
     return jsonify({'Error': 401}), 401
@@ -970,7 +1046,7 @@ def startApsScheduler():
     scheduler.print_jobs()
 
 
-def runRcp(torpath, torhash, torsize, tortag, savepath):
+def runRcp(torpath, torhash, torsize, tortag, savepath, tmdbstr):
     if (myconfig.CONFIG.apiRunProgram == 'True') and (myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo):
         if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
             torpath = torpath.replace(
@@ -979,7 +1055,7 @@ def runRcp(torpath, torhash, torsize, tortag, savepath):
                 myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
 
     import rcp
-    return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir=False)
+    return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir=False, tmdbstr=tmdbstr)
 
 
 def loadArgs():
