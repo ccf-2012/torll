@@ -7,25 +7,26 @@
 {% block content %}
 <nav class="nav nav-tabs justify-content-center">
   <a class="nav-link active" href="{{ url_for('rssTaskList') }}">RSS 任务列表</a>
-  <a class="nav-link " href="{{ url_for('rssNew') }}">新建RSS任务</a>
   <a class="nav-link " href="{{ url_for('rssLog') }}">RSS记录</a>
 </nav>
 
+
 <div class="row mx-3 my-3 justify-content-center">
+  <a class=" " href="{{ url_for('rssNew') }}">新建RSS任务</a>
 
     <table id="data" width="100%" style="table-layout: fixed;" class="table">
       <thead>
         <tr>
           <th>最后更新</th>
           <th>站点</th>
-          <th>执行间隔 (分钟)</th>
+          <th>间隔(分钟)</th>
           <th>下载数</th>
           <th>标题包含</th>
           <th>标题不含</th>
           <th>描述包含</th>
           <th>描述不含</th>
           <th>IMDb大于</th>
-          <th>action</th>
+          <th>操作</th>
           <th>active</th>
         </tr>
       </thead>
@@ -58,6 +59,7 @@
         }
       },
       "pageLength": 10,
+      "dom": "tip",
       autoWidth: true,
       scrollX: true,
       full_row_select: false,
@@ -75,15 +77,15 @@
         },
         {
           data: 'site',
-          "width": "10%"
+          "width": "9%"
         },
         {
           data: 'task_interval',
-          "width": "15%"
+          "width": "12%"
         },
         {
           data: 'accept_count',
-          "width": "8%"
+          "width": "6%"
         },
         {
           data: 'title_regex',
@@ -111,13 +113,14 @@
           "width": "8%"
         },
         { data: 'id', searchable: false, 
-          "width": "15%",
+          "width": "18%",
           "render": function (data, type, row) {
             var tstr = (row.active == 2) ? '恢复' : '暂停'
             var linkDelete = '<a href="/rssdel/' + row.id + '">删除</a>';
             var linkToggle = '<a href="/rssactivate/' + row.id + '">'+tstr+'</a>';
+            var linkEdit = '<a href="/rssedit/' + row.id + '">'+'编辑'+'</a>';
             var linkRunOnce = '<a href="/rssrunonce/' + row.id + '">'+'运行'+'</a>';
-            return linkToggle + " | " + linkRunOnce + " | " + linkDelete;
+            return linkToggle + " | " + linkRunOnce + " | " + linkEdit + " | " +  linkDelete;
           },
         },
         { data: 'active','visible' : false, searchable: false },

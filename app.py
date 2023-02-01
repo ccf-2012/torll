@@ -372,7 +372,7 @@ def rssHistoryData():
     search = request.args.get('search[value]')
     if search:
         query = query.filter(db.or_(
-            RSSHistory.site.like(f'%{search}%'),
+            RSSHistory.title.like(f'%{search}%'),
         ))
     total_filtered = query.count()
 
@@ -552,6 +552,48 @@ def rssNew():
         task.total_count = 0
         task.accept_count = 0
         db.session.add(task)
+        db.session.commit()
+
+        job = scheduler.add_job(rssJob, 'interval', args=[
+                                task.id], minutes=task.task_interval, id=str(task.id))
+        return redirect("/rsstasks")
+
+    return render_template('rssnew.html', form=form)
+
+
+@app.route('/rssedit/<id>', methods=['POST', 'GET'])
+@auth.login_required
+def rssEdit(id):
+    task = RSSTask.query.get(id)
+    try:
+        scheduler.remove_job(str(task.id))
+    except:
+        pass
+
+    form = RSSTaskForm(request.form)
+    form.rsslink.data = task.rsslink
+    form.cookie.data = task.cookie
+    form.title_regex.data = task.title_regex
+    form.info_regex.data = task.info_regex
+    form.title_not_regex.data = task.title_not_regex
+    form.info_not_regex.data = task.info_not_regex
+    form.min_imdb.data = task.min_imdb
+    form.task_interval.data = task.task_interval
+
+    if request.method == 'POST':
+        form = RSSTaskForm(request.form)
+        task.rsslink = form.rsslink.data
+        task.site = getSiteName(task.rsslink)
+        task.cookie = form.cookie.data
+        task.title_regex = form.title_regex.data
+        task.info_regex = form.info_regex.data
+        task.title_not_regex = form.title_not_regex.data
+        task.info_not_regex = form.info_not_regex.data
+        task.min_imdb = form.min_imdb.data
+        task.task_interval = form.task_interval.data
+        # task.total_count = 0
+        # task.accept_count = 0
+
         db.session.commit()
 
         job = scheduler.add_job(rssJob, 'interval', args=[
@@ -894,7 +936,7 @@ def manualDownload(rsslogid):
         dbrssitem.imdbstr = imdbstr
     siteIdStr = getSiteId(dbrssitem.infoLink, dbrssitem.imdbstr)
 
-    r = checkDupAddTor(dbrssitem.title, dbrssitem.downloadLink,
+    r = checkDupAddTor(taskitem, dbrssitem.title, dbrssitem.downloadLink,
                        dbrssitem.imdbstr, siteIdStr, forceDownload=True)
     if r == 201:
         dbrssitem.accept = 3

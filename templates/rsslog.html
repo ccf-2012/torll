@@ -3,7 +3,6 @@
 {% block content %}
 <nav class="nav nav-tabs justify-content-center">
 	<a class="nav-link " href="{{ url_for('rssTaskList') }}">RSS 任务列表</a>
-	<a class="nav-link " href="{{ url_for('rssNew') }}">新建RSS任务</a>
 	<a class="nav-link active" href="{{ url_for('rssLog') }}">RSS记录</a>
 </nav>
 
@@ -17,9 +16,9 @@
 			<th>标题</th>
 			<th>IMDb</th>
 			<th>Size</th>
-			<th>Reason</th>
-			<th>Accept</th>
-      <th>Action</th>
+			<th>未收原因</th>
+			<th>状态</th>
+      <th>操作</th>
 		  </tr>
 		</thead>
 		<tbody>
