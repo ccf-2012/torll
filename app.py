@@ -928,7 +928,6 @@ def prcessRssFeeds(rsstask):
         print("%d: %s (%s)" % (rssFeedSum, item.title,
                                 datetime.now().strftime("%H:%M:%S")))
 
-        # dbrssitem = saveRssHistory(rsstask.site, item)
         dbrssitem = RSSHistory(site=rsstask.site, 
                         title=item.title, 
                         infoLink = item.link,
@@ -940,14 +939,12 @@ def prcessRssFeeds(rsstask):
 
         if rsstask.title_regex:
             if not re.search(rsstask.title_regex, item.title, re.I):
-                # print('  >> TITLE_REGEX not match.')
                 dbrssitem.reason = 'TITLE_REGEX'
                 db.session.commit()
                 continue
 
         if rsstask.title_not_regex:
             if re.search(rsstask.title_not_regex, item.title, re.I):
-                # print('  >> TITLE_NOT_REGEX not match.')
                 dbrssitem.reason = 'TITLE_NOT_REGEX'
                 db.session.commit()
                 continue
@@ -990,17 +987,19 @@ def prcessRssFeeds(rsstask):
                 (imdbstr, HumanBytes.format(int(dbrssitem.size)), rssDownloadLink))
 
         if checkMediaDbNameDupe(item.title):
-            dbrssitem.reason = "Name dupe in media lib"
+            dbrssitem.reason = "Name dupe"
             db.session.commit()
             continue
         
-        # success, reason = checkMediaDbTMDbDupe(item.title, imdbstr)
-        # if not success:
-        #     dbrssitem.reason = reason
+        r = checkMediaDbTMDbDupe(item.title, imdbstr)
+        if r != 201:
+            dbrssitem.reason = 'TMDb dupe'
+            db.session.commit()
+            continue
 
         r = addTorrent(rssDownloadLink, siteIdStr, imdbstr)
         if r == 201:
-            # Download
+            # Downloaded
             dbrssitem.accept = 3
             rssAccept += 1
         else:
