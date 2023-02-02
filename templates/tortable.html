@@ -10,7 +10,7 @@
     <thead>
       <tr>
         <th>类别</th>
-        <th>原种种子</th>
+        <th>源站种子</th>
         <th>生成路径</th>
         <th>TMDb</th>
         <th>IMDb</th>
@@ -76,7 +76,8 @@
             "render": function ( data, type, row, meta ) {
               if (data){
                 var s = row.tmdbcat + '/' + row.tmdbid;
-                return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+row.title+'</a>';
+                var s2 = (row.title) ? row.title : s 
+                return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+s2+'</a>';
               }
               else return ''
             }
