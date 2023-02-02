@@ -1,7 +1,7 @@
 # curl -i -H "Content-Type: application/json" -X POST -d '{"torpath" : "~/torccf/frds_10018_tt6710716/真探S03.2019.1080p.WEB-DL.x265.AC3￡cXcY@FRDS", "torhash": "289256b0918c3dccea51a194a3e834664b17eafd", "torsize": "11534336"}' http://localhost:5000/api/torcp
 
 from flask import Flask, render_template, jsonify, redirect
-from flask import request
+from flask import request, abort
 import requests as pyrequests
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -858,9 +858,9 @@ def parseInfoPageIMDbId(doc):
 
 def checkMediaDbTMDbDupe(torname, imdbstr):
     if not torname:
-        return False, 'No torname'
+        return 400
     if (not myconfig.CONFIG.tmdb_api_key):
-        return False, 'tmdb_api_key not set'
+        return 400
 
     p = TMDbNameParser(myconfig.CONFIG.tmdb_api_key, '')
     torTMDb = searchTMDb(p, torname, imdbstr)
@@ -868,9 +868,11 @@ def checkMediaDbTMDbDupe(torname, imdbstr):
     if torTMDb > 0:
         exists = checkMediaDbExistsTMDb(torTMDb, p.tmdbcat)
         if exists:
-            return False, 'Exists TMDb in lib.'
+            return 202
         else:
-            return True, ''
+            return 201
+    else:
+        return 203
 
 
 def addTorrent(downloadLink, siteIdStr, imdbstr):
@@ -1005,8 +1007,8 @@ def prcessRssFeeds(rsstask):
     rsstask.accept_count += rssAccept
     db.session.commit()
 
-    print('RSS - Total: %d, Accepted: %d (%s)' %
-          (rssFeedSum, rssAccept, datetime.now().strftime("%H:%M:%S")))
+    print('RSS %s - Total: %d, Accepted: %d (%s)' %
+          (rsstask.site, rssFeedSum, rssAccept, datetime.now().strftime("%H:%M:%S")))
 
 
 @app.route('/rssmanual/<rsslogid>')
@@ -1014,17 +1016,81 @@ def prcessRssFeeds(rsstask):
 def manualDownload(rsslogid):
     dbrssitem = RSSHistory.query.get(rsslogid)
     taskitem = RSSTask.query.filter(RSSTask.site == dbrssitem.site).first()
-    if taskitem:
-        match, imdbstr = parseDetailPage(dbrssitem.infoLink, taskitem)
-        dbrssitem.imdbstr = imdbstr
-    siteIdStr = genrSiteId(dbrssitem.infoLink, dbrssitem.imdbstr)
 
-    r = checkDupAddTor(taskitem, dbrssitem.title, dbrssitem.downloadLink,
-                       dbrssitem.imdbstr, siteIdStr, forceDownload=True)
-    if r == 201:
-        dbrssitem.accept = 3
-        db.session.commit()
+    imdbstr = ''
+    if taskitem:
+        doc = fetchInfoPage(dbrssitem.link, taskitem.cookie)
+        if doc:
+            imdbstr = parseInfoPageIMDbId(doc)
+            dbrssitem.imdbstr = imdbstr
+        siteIdStr = genrSiteId(dbrssitem.infoLink, imdbstr)
+
+        if not checkMediaDbNameDupe(dbrssitem.title):    
+            r = addTorrent(dbrssitem.downloadLink, siteIdStr, imdbstr)
+            if r == 201:
+                dbrssitem.accept = 3
+                taskitem.accept_count += 1
+                db.session.commit()
     return redirect("/rsslog")
+
+
+@app.route('/api/dupedownload', methods=['POST'])
+# @auth.login_required
+def jsApiDupeDownload():
+    if not request.json or 'torname' not in request.json:
+        abort(400)
+
+    if checkMediaDbNameDupe(request.json['torname']):
+        return jsonify({'Dupe': 'name'}), 202
+
+    imdbstr = ''
+    if 'imdbid' in request.json and request.json['imdbid']:
+        imdbstr = request.json['imdbid'].strip()
+    siteIdStr = ''
+    if 'siteid' in request.json and request.json['siteid']:
+        siteIdStr = request.json['siteid'].strip()
+    forceDownload = False
+    if 'force' in request.json:
+        forceDownload = request.json['force']
+
+    if 'downloadlink' in request.json and validDownloadlink(request.json['downloadlink']):
+        downloadlink = request.json['downloadlink'].strip()
+    else:
+        return jsonify({'no download link': True}), 205
+
+    if not forceDownload:
+        r = checkMediaDbTMDbDupe(request.json['torname'], imdbstr)
+        if r != 201:
+            return jsonify({'TMDb Dupe': False}), r
+
+    if not myconfig.CONFIG.dryrun:
+        print("Added: " + request.json['torname'])
+        r = addTorrent(downloadlink, siteIdStr, imdbstr)
+        if r == 201:
+            return jsonify({'Download': True}), 201
+        else:
+            abort(400)
+    else:
+        # print("DRYRUN: " + request.json['torname'])
+        print("DRYRUN: " + request.json['torname'] + "\n" + request.json['downloadlink'])
+        return jsonify({'DRYRUN': True}), 205
+
+
+@app.route('/api/checkdupeonly', methods=['POST'])
+# @auth.login_required
+def jsApiCheckDupe():
+    if not request.json or 'torname' not in request.json:
+        abort(400)
+    if checkMediaDbNameDupe(request.json['torname']):
+        return jsonify({'Dupe': 'name'}), 202
+    imdbstr = ''
+    if 'imdbid' in request.json and request.json['imdbid']:
+        imdbstr = request.json['imdbid'].strip()
+
+    r = checkMediaDbTMDbDupe(request.json['torname'], imdbstr)
+    if r != 201:
+        return jsonify({'TMDb Dupe': False}), r
+    return jsonify({'No Dupe': True}), 201
 
 
 def rssJob(id):
