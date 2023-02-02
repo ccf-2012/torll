@@ -44,7 +44,7 @@ def getSiteIdDirName(pathStr, savepath):
     return torRootFolder, siteIdFolder
 
 
-def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbstr=None):
+def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcatidstr=None):
     if torpath and torhash:
         if not os.path.exists(torpath):
             print('File/Dir not exists: ' + torpath)
@@ -73,8 +73,8 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbstr
             argv += ["--filename-emby-bracket"]
         if torimdb:
             argv += ["--imdbid", torimdb]
-        if tmdbstr:
-            argv += ["--tmdbid", tmdbstr]
+        if tmdbcatidstr:
+            argv += ["--tmdbid", tmdbcatidstr]
 
         # print(argv)
         if not torsize:
@@ -91,7 +91,7 @@ def torcpByHash(torhash):
     if torhash:
         torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(torhash)
         r = runTorcp(torpath, torhash2, torsize, tortag,
-                     savepath, insertHashDir=ARGS.hash_dir, tmdbstr=ARGS.tmdbstr)
+                     savepath, insertHashDir=ARGS.hash_dir, tmdbcatidstr=ARGS.tmdbcatid)
         return r
     else:
         print("set -I arg")
@@ -107,7 +107,7 @@ def loadArgs():
     parser.add_argument('-G', '--tag', help='tag of the torrent.')
     parser.add_argument('-Z', '--size', help='size of the torrent.')
     parser.add_argument('--hash-dir', action='store_true', help='create hash dir.') 
-    parser.add_argument('--tmdbstr', help='specify TMDb as tv-12345/m-12345.')
+    parser.add_argument('--tmdbcatid', help='specify TMDb as tv-12345/m-12345.')
     parser.add_argument('-C', '--config', help='config file.')
 
     global ARGS
@@ -123,7 +123,7 @@ def main():
     if ARGS.full_path and ARGS.save_path:
         runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size,
                  ARGS.tag, ARGS.save_path, 
-                 insertHashDir=ARGS.hash_dir, tmdbstr=ARGS.tmdbstr)
+                 insertHashDir=ARGS.hash_dir, tmdbcatidstr=ARGS.tmdbcatid)
     else:
         torcpByHash(ARGS.info_hash)
 

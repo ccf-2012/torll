@@ -62,20 +62,21 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
                     'details_tv.php?id=' + str(siteid)
         else:
             detailUrl = SITE_URL_PREFIX[siteAbbrev] + str(siteid)
-    return detailUrl if detailUrl else '#'
+    return detailUrl if detailUrl else ''
 
 
 class TorMediaItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     addedon = db.Column(db.DateTime, default=datetime.now)
     torname = db.Column(db.String(256), index=True)
+    title = db.Column(db.String(256), index=True)
     torsite = db.Column(db.String(64))
     torsiteid = db.Column(db.Integer)
     torsitecat = db.Column(db.String(20))
     torimdb = db.Column(db.String(20), index=True)
     torhash = db.Column(db.String(120))
     torsize = db.Column(db.Integer)
-    tmdbid = db.Column(db.String(120))
+    tmdbid = db.Column(db.Integer)
     tmdbcat = db.Column(db.String(20))
     location = db.Column(db.String(256))
     plexid = db.Column(db.String(120))
@@ -84,6 +85,7 @@ class TorMediaItem(db.Model):
         return {
             'id': self.id,
             'torname': self.torname,
+            'title' : self.title,
             'addedon': self.addedon,
             'torabbrev': self.torsite,
             'torsite': genSiteLink(self.torsite, self.torsiteid),
@@ -116,7 +118,7 @@ class TorcpItemDBObj:
                          torimdb=self.torimdb,
                          torhash=self.torhash,
                          torsize=self.torsize,
-                         tmdbid=tmdbIdStr,
+                         tmdbid=int(tmdbIdStr),
                          tmdbcat=tmdbCat,
                          location=targetDir)
         with app.app_context():
@@ -174,7 +176,7 @@ def torMediaEdit(id):
         warningstr = '%s : 目标不存在' % (destDir)
 
     form = MediaItemForm(request.form)
-    form.tmdbcatid.data = "%s-%s" % (tormedia.tmdbcat, tormedia.tmdbid)
+    form.tmdbcatid.data = "%s-%d" % (tormedia.tmdbcat, tormedia.tmdbid)
 
     if request.method == 'POST':
         form = MediaItemForm(request.form)
@@ -344,7 +346,8 @@ def data():
     if search:
         query = query.filter(db.or_(
             TorMediaItem.torname.like(f'%{search}%'),
-            TorMediaItem.location.like(f'%{search}%')
+            TorMediaItem.location.like(f'%{search}%'),
+            TorMediaItem.title.like(f'%{search}%'),
         ))
     total_filtered = query.count()
 
@@ -356,8 +359,8 @@ def data():
         if col_index is None:
             break
         col_name = request.args.get(f'columns[{col_index}][data]')
-        if col_name not in ['torname', 'torsite', 'addedon', 'torsize']:
-            col_name = 'name'
+        if col_name not in ['torname', 'torsite', 'addedon']:
+            col_name = 'addedon'
         descending = request.args.get(f'order[{i}][dir]') == 'desc'
         col = getattr(TorMediaItem, col_name)
         if descending:
@@ -743,12 +746,12 @@ def validDownloadlink(downlink):
     return any(x in downlink for x in keystr)
 
 
-def searchTMDb(TmdbParser, title, imdb):
+def searchTMDb(tmdbParser, title, imdb):
     if imdb:
-        TmdbParser.parse(title, useTMDb=True, hasIMDbId=imdb)
+        tmdbParser.parse(title, useTMDb=True, hasIMDbId=imdb)
     else:
-        TmdbParser.parse(title, useTMDb=True)
-    return TmdbParser.tmdbid
+        tmdbParser.parse(title, useTMDb=True)
+    return tmdbParser.tmdbid
 
 
 def existsInRssHistory(torname):
@@ -771,10 +774,10 @@ def saveRssHistory(site, item):
         return t
 
 
-def checkMediaDbExistsTMDb(torTMDb, torTMDbCat):
+def checkMediaDbExistsTMDb(torTMDbid, torTMDbCat):
     with app.app_context():
         exists = db.session.query(TorMediaItem.id).filter_by(
-            tmdbcat=torTMDbCat, tmdbid=torTMDb).first() is not None
+            tmdbcat=torTMDbCat, tmdbid=torTMDbid).first() is not None
         return exists
 
 def checkMediaDbNameDupe(torname):
@@ -863,10 +866,10 @@ def checkMediaDbTMDbDupe(torname, imdbstr):
         return 400
 
     p = TMDbNameParser(myconfig.CONFIG.tmdb_api_key, '')
-    torTMDb = searchTMDb(p, torname, imdbstr)
+    tmdbid = searchTMDb(p, torname, imdbstr)
 
-    if torTMDb > 0:
-        exists = checkMediaDbExistsTMDb(torTMDb, p.tmdbcat)
+    if tmdbid > 0:
+        exists = checkMediaDbExistsTMDb(tmdbid, p.tmdbcat)
         if exists:
             return 202
         else:
@@ -1019,7 +1022,7 @@ def manualDownload(rsslogid):
 
     imdbstr = ''
     if taskitem:
-        doc = fetchInfoPage(dbrssitem.link, taskitem.cookie)
+        doc = fetchInfoPage(dbrssitem.infoLink, taskitem.cookie)
         if doc:
             imdbstr = parseInfoPageIMDbId(doc)
             dbrssitem.imdbstr = imdbstr
@@ -1119,7 +1122,7 @@ def startApsScheduler():
     scheduler.print_jobs()
 
 
-def runRcp(torpath, torhash, torsize, tortag, savepath, tmdbstr):
+def runRcp(torpath, torhash, torsize, tortag, savepath, tmdbcatid):
     if (myconfig.CONFIG.apiRunProgram == 'True') and (myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo):
         if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
             torpath = torpath.replace(
@@ -1128,7 +1131,7 @@ def runRcp(torpath, torhash, torsize, tortag, savepath, tmdbstr):
                 myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
 
     import rcp
-    return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir=False, tmdbstr=tmdbstr)
+    return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir=False, tmdbcatidstr=tmdbcatid)
 
 
 def loadArgs():
