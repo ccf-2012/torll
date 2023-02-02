@@ -1040,7 +1040,7 @@ def manualDownload(rsslogid):
 
 
 @app.route('/api/dupedownload', methods=['POST'])
-# @auth.login_required
+@auth.login_required
 def jsApiDupeDownload():
     if not request.json or 'torname' not in request.json:
         abort(400)
@@ -1082,7 +1082,7 @@ def jsApiDupeDownload():
 
 
 @app.route('/api/checkdupeonly', methods=['POST'])
-# @auth.login_required
+@auth.login_required
 def jsApiCheckDupe():
     if not request.json or 'torname' not in request.json:
         abort(400)
