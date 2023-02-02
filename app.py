@@ -110,10 +110,11 @@ class TorcpItemDBObj:
         self.torhash = torhash
         self.torsize = torsize
 
-    def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat):
+    def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle):
         # print(targetDir, mediaName, tmdbIdStr, tmdbCat)
         t = TorMediaItem(torname=mediaName,
                          torsite=self.torsite,
+                         title=tmdbTitle,
                          torsiteid=self.torsiteid,
                          torimdb=self.torimdb,
                          torhash=self.torhash,
@@ -121,6 +122,7 @@ class TorcpItemDBObj:
                          tmdbid=int(tmdbIdStr),
                          tmdbcat=tmdbCat,
                          location=targetDir)
+        
         with app.app_context():
             db.session.add(t)
             db.session.commit()
