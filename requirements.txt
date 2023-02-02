@@ -1,7 +1,7 @@
 sqlalchemy<2.0
 Flask-SQLAlchemy
 flask_httpauth
-torcp>=0.58
+torcp>=0.59
 plexapi
 flask
 qbittorrent-api

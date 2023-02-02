@@ -1,11 +1,11 @@
-# TORDB aka TORCP ui w/ db
+# TORLL aka TORCP list
 * 以web ui形式设置torcp，查看所处理的条目
 * **注意：若本服务在非私有的网络中运行，须万分注意防护**
 
 ## 安装
 ```sh
-git clone https://github.com/ccf-2012/tordb.git
-cd tordb
+git clone https://github.com/ccf-2012/torll.git
+cd torll
 pip install -r requirements.txt
 ```
 
@@ -38,15 +38,15 @@ python3 app.py
 * 简单的示例，仅作硬链：
 ```sh
 #!/bin/bash
-# qbit 中设置完成后命令为：/home/ccf2013/tordb/rcp.sh "%I"
-python3 /home/ccf2013/tordb/rcp.py  -I "$1" >>/home/ccf2013/rcp2.log 2>>/home/ccf2013/rcp2e.log
+# qbit 中设置完成后命令为：/home/ccf2013/torll/rcp.sh "%I"
+python3 /home/ccf2013/torll/rcp.py  -I "$1" >>/home/ccf2013/rcp2.log 2>>/home/ccf2013/rcp2e.log
 ```
 
 * 在暂存目录中建立硬链，上传 gd 盘后删除
 ```sh
 #!/bin/bash
-# qbit 中设置完成后命令为：/home/ccf2013/tordb/rcp.sh "%I"
-python3 /home/ccf2013/tordb/rcp.py  --hash-dir -I "$1" >>/home/ccf2013/rcp2.log 2>>/home/ccf2013/rcp2e.log
+# qbit 中设置完成后命令为：/home/ccf2013/torll/rcp.sh "%I"
+python3 /home/ccf2013/torll/rcp.py  --hash-dir -I "$1" >>/home/ccf2013/rcp2.log 2>>/home/ccf2013/rcp2e.log
 sleep 5
 gclone copy "/home/ccf2013/emby/$1/"  gd1:/media/148/emby/ 
 sleep 100
@@ -56,11 +56,94 @@ rm -rf "/home/ccf2013/emby/$1/"
 > 有一些 qbit 客户端在种子完成后输出参数时，会出现文件名丢失中文的现象，以 `rcp.py` 可仅使用 `%I` 参数完成任务，从而避免这一问题
 
 
+## rcp.py 
+上面的脚本示例中，使用了 `rcp.py`，这是一个对 torcp 的包装，主要功能为：
+1. 在 torll 中已正确设置 qBit 的情况下，仅接收种子的 `%I` (种子hash) 即可工作，通过到qb上查找相关种子取得所需的信息，调用torcp完成处理
+2. 种子作了硬链处理后，信息会存在本地数据库中，torll 中可以查看
+
+
+```
+python3 rcp.py -h 
+
+usage: rcp.py [-h] [-F FULL_PATH] [-I INFO_HASH] [-D SAVE_PATH] [-G TAG] [-Z SIZE] [--hash-dir] [--tmdbcatid TMDBCATID] [-C CONFIG]
+
+wrapper to TORCP to save log in sqlite db.
+
+options:
+  -h, --help            show this help message and exit
+  -F FULL_PATH, --full-path FULL_PATH
+                        full torrent save path.
+  -I INFO_HASH, --info-hash INFO_HASH
+                        info hash of the torrent.
+  -D SAVE_PATH, --save-path SAVE_PATH
+                        qbittorrent save path.
+  -G TAG, --tag TAG     tag of the torrent.
+  -Z SIZE, --size SIZE  size of the torrent.
+  --hash-dir            create hash dir.
+  --tmdbcatid TMDBCATID
+                        specify TMDb as tv-12345/m-12345.
+  -C CONFIG, --config CONFIG
+                        config file.
+```
+
+## API 形式
+在 torll 中已正确设置 qBit 的情况下，torll 还可以接收网络API请求，到qbit中找到种子，取出所需信息进行处理，例：
+```sh
+curl -u admin:password -d torhash=种子hash_bc9f857cc8d721ed5d8ea672d http://192.168.5.6:5006/api/torcp2 
+```
+
+
 ## 对于原 torcp 用户
-* 这个 tordb 要求 torcp 版本 >= 0.58 的依赖，即 torcp 在 v0.58 改写了结构以支持外部代码传参及调用执行；
+* 这个 torll 要求 torcp 版本 >= 0.59 的依赖，即 torcp 在 v0.59 改写了结构以支持外部代码传参及调用执行；
 * 原有的功能和使用方式仍然不受影响，即如果原来有脚本在使用 torcp 跑，即使更新到了 v0.58，也应能继续完成任务；
 
 
+## 使用 torfilter
+使用 [github 上的代码](https://github.com/ccf-2012/torfilter)，修改 `torfilter.js` 以下2部分：
+1. 在头部的 `@connect` 部分，大约在12行：
+```js
+// @connect      192.168.5.6
+```
+
+2. 代码 UserScript 一开始，约在44行，设置地址、用户名和密码：
+```js
+const API_SERVER = 'http://192.168.5.6:5006';
+const API_AUTH_USER = "admin";
+const API_AUTH_PASS = "password";
+```
+即可定向在所设地址上进行查重和发起下载，其中用户名密码为torll中的登陆密码。
+
+
+## 导入Emby/Plex库中的影视条目
+1. 在 `config.ini` 中加入 Emby 或 Plex 的设置，如：
+* Emby
+```ini
+[EMBY]
+server_url = http://192.168.5.6:8096
+user = test
+pass = test
+```
+* Plex
+```ini
+[PLEX]
+server_url=http://192.168.5.6:32400
+; 取得Plex token的步骤： https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+server_token=your-PLEX_token
+rootdir = /gd1/media/plex/
+```
+
+2. 运行 `loadmedia.py` 
+```sh
+python3 loadmedia.py --init-library
+```
+
+
+## 使用 qbpost.py 将 qBit 中的种子导入库中
+* 如果 qBit 中已经有一些以site-id这样形式生成的种子，将它们导入库中，可便于查重和管理
+* 同样，要求在 torll 中已正确设置 qBit
+```sh
+python3 qbpost.py
+```
 
 ---
 to be cont.
