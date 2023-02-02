@@ -78,7 +78,7 @@ def loadEmbyLibrary():
         pi = TorMediaItem(title=item["Name"])
 
         guids = item["ProviderIds"]
-        pi.torimdb = guids['IMDB'] if 'Imdb' in guids else ''
+        pi.torimdb = guids['IMDB'] if 'IMDB' in guids else ''
         pi.tmdbid = guids['Tmdb'] if 'Tmdb' in guids else ''
         # pi.tvdb = guids['Tvdb'] if 'Tvdb' in guids else ''
         if item['Type'] == 'Series':
