@@ -6,13 +6,13 @@
 
 {% block content %}
 <nav class="nav nav-tabs justify-content-center">
-  <a class="nav-link active" href="{{ url_for('rssTaskList') }}">RSS 任务列表</a>
   <a class="nav-link " href="{{ url_for('rssLog') }}">RSS记录</a>
+  <a class="nav-link active" href="{{ url_for('rssTaskList') }}">RSS 任务列表</a>
 </nav>
 
 
 <div class="row mx-3 my-3 justify-content-center">
-  <a class=" " href="{{ url_for('rssNew') }}">新建RSS任务</a>
+  <a class=" " href="{{ url_for('rssNew') }}">+ 新建RSS任务</a>
 
     <table id="data" width="100%" style="table-layout: fixed;" class="table">
       <thead>
