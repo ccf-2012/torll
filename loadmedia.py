@@ -13,7 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from plexapi.server import PlexServer
 import time
-import embyapi
+
 
 
 app = Flask(__name__)
@@ -78,7 +78,7 @@ def loadEmbyLibrary():
         pi = TorMediaItem(title=item["Name"])
 
         guids = item["ProviderIds"]
-        pi.torimdb = guids['Imdb'] if 'Imdb' in guids else ''
+        pi.torimdb = guids['IMDB'] if 'Imdb' in guids else ''
         pi.tmdbid = guids['Tmdb'] if 'Tmdb' in guids else ''
         # pi.tvdb = guids['Tvdb'] if 'Tvdb' in guids else ''
         if item['Type'] == 'Series':
@@ -96,11 +96,11 @@ def loadEmbyLibrary():
         if 'Tmdb' not in guids:
             print("    TMDb Not Found: %s (%s) " % (item["Name"], pd))
             pi.tmdbid = searchTMDb(p, item["Name"], pi.torimdb)
-        print("   %s: (TMDb: %s, IMDb: %s)\n    %s" % (pi.title, pi.tmdbid, pi.torimdb, os.path.dirname(item["Path"])))
+        print("   %s: (TMDb: %s, IMDb: %s)\n    %s" % (pi.title, pi.tmdbid, pi.torimdb, pi.location))
         with app.app_context():
             db.session.add(pi)
             db.session.commit()
-        time.sleep(1)
+        # time.sleep(1)
 
 
 
