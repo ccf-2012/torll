@@ -13,6 +13,7 @@ import argparse
 from urllib.parse import urlparse
 from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField
 from wtforms.validators import DataRequired, NumberRange
+from wtforms.widgets import PasswordInput
 import qbfunc
 from apscheduler.schedulers.background import BackgroundScheduler
 from torcp.tmdbparser import TMDbNameParser
@@ -31,7 +32,7 @@ db = SQLAlchemy(app)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 auth = HTTPBasicAuth()
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(job_defaults={'max_instances': 2})
 
 
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
@@ -142,11 +143,10 @@ def index():
     return render_template('tortable.html')
 
 
-
 class MediaItemForm(Form):
     # location = StringField('存储路径，如果是在本机上，修改此处将尝试改名', validators=[DataRequired()])
     # torimdb = StringField('修改IMDb以重新查询和生成硬链', validators=[DataRequired()])
-    tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 以tv-12345或m12345指定分类和id')
+    tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 分类和id的写法可以是：tv-12345，movie-12345，m12345')
     # tmdbid = StringField('TMDb id')
     submit = SubmitField("保存设置")
 
@@ -221,7 +221,7 @@ class QBSettingForm(Form):
     qbhost = StringField('qBit 主机IP', validators=[DataRequired()])
     qbport = StringField('qBit 端口')
     qbuser = StringField('qBit 用户名', validators=[DataRequired()])
-    qbpass = StringField('qBit 密码', validators=[DataRequired()])
+    qbpass = StringField('qBit 密码', widget=PasswordInput(hide_value=False), validators=[DataRequired()])
     submit = SubmitField("保存设置")
     qbapirun = RadioField('qBit 种子完成后调 API, 还是执行本地 rcp.sh 脚本？', choices=[
         ('True', '调用 API, 适用于 qBit 跑在docker里面的情况'),
@@ -271,7 +271,7 @@ def qbitSetting():
 
 
 class SettingForm(Form):
-    linkdir = StringField('生成目标目录的存储位置', validators=[DataRequired()])
+    linkdir = StringField('目标目录位置', validators=[DataRequired()])
     symbolink = RadioField('硬链还是软链？如果目标目录与qbit的下载目录在不同分区，则需要使用软链', choices=[
         ('', '硬链，hardlink'),
         ('--symbolink', '软链，symbolink')],
@@ -286,7 +286,7 @@ class SettingForm(Form):
         ('en-US', 'en-US'),
         ('zh-CN', 'zh-CN')],
         default='en-US')
-    sep_lang = StringField('分语言目录，以逗号分隔，将不同语言的媒体分别存在不同目录中')
+    sep_lang = StringField('分语言目录，以逗号分隔，将不同语言的媒体分别存在不同目录中；留空表示不分语言')
     submit = SubmitField("保存设置")
 
 
@@ -751,7 +751,7 @@ def searchTMDb(TmdbParser, title, imdb):
     return TmdbParser.tmdbid
 
 
-def existsRssHistory(torname):
+def existsInRssHistory(torname):
     with app.app_context():
         # exists = db.session.query(RSSHistory.id).filter_by(title=torname).first() is not None
         exists = db.session.query(db.exists().where(
@@ -777,8 +777,13 @@ def checkMediaDbExistsTMDb(torTMDb, torTMDbCat):
             tmdbcat=torTMDbCat, tmdbid=torTMDb).first() is not None
         return exists
 
+def checkMediaDbNameDupe(torname):
+    with app.app_context():
+        exists = db.session.query(TorMediaItem.id).filter_by(
+            torname=torname).first() is not None
+        return exists
 
-def getSiteId(detailLink, imdbstr):
+def genrSiteId(detailLink, imdbstr):
     siteAbbrev = getAbbrevSiteName(detailLink)
     if (siteAbbrev == "ttg"):
         m = re.search(r"t\/(\d+)", detailLink, flags=re.A)
@@ -798,9 +803,9 @@ def tryFloat(fstr):
     return f
 
 
-def parseDetailPage(pageUrl, rsstask):
+def fetchInfoPage(pageUrl, pageCookie):
     cookie = SimpleCookie()
-    cookie.load(rsstask.cookie)
+    cookie.load(pageCookie)
     cookies = {k: v.value for k, v in cookie.items()}
     headers = {
         'User-Agent':
@@ -808,130 +813,108 @@ def parseDetailPage(pageUrl, rsstask):
         'Content-Type': 'text/html; charset=UTF-8'
     }
 
-    r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
-    r.encoding = r.apparent_encoding
-    doc = r.text
+    try:
+        r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
+        r.encoding = r.apparent_encoding
+    except:
+        return ''
 
-    match = True
-    if rsstask.info_regex:
-        if not re.search(rsstask.info_regex, doc, flags=re.A):
-            # print('  >> INFO_REGEX not match.')
-            rsstask.reason = 'INFO_REGEX'
-            db.session.commit()
-            match = False
-    if rsstask.info_not_regex:
-        if re.search(rsstask.info_not_regex, doc, flags=re.A):
-            # print('  >> INFO_NOT_REGEX not match.')
-            rsstask.reason = 'INFO_NOT_REGEX'
-            db.session.commit()
-            match = False
+    return r.text
 
-    if rsstask.min_imdb:
-        imdbval = 0
-        m1 = re.search(r'IMDb.*?([0-9.]+)\s*/\s*10', doc, flags=re.A)
-        if m1:
-            imdbval = tryFloat(m1[1])
-        doubanval = 0
-        m2 = re.search(r'豆瓣评分.*?([0-9.]+)/10', doc, flags=re.A)
-        if m2:
-            doubanval = tryFloat(m2[1])
-        if imdbval < 1 and doubanval < 1:
-            ratelist = [x[1] for x in re.finditer(
-                r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)]
-            if len(ratelist) >= 2:
-                doubanval = tryFloat(ratelist[0])
-                imdbval = tryFloat(ratelist[1])
-            elif len(ratelist) == 1:
-                #TODO: 不分辨douban/imdb了
-                doubanval = tryFloat(ratelist[0])
-                imdbval = doubanval
-                # rate1 = re.search(r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)
-                # if rate1:
-                #     imdbval = tryFloat(rate1[1])
-            # print("   >> IMDb: %s, douban: %s" % (imdbval, doubanval))
 
-            if (imdbval < rsstask.min_imdb) and (doubanval < rsstask.min_imdb):
-                # print("   >> MIN_IMDb not match")
-                rsstask.reason = "IMDb: %s, douban: %s" % (imdbval, doubanval)
-                db.session.commit()
-                match = False
+def parseInfoPageIMDbval(doc):
+    imdbval = 0
+    m1 = re.search(r'IMDb.*?([0-9.]+)\s*/\s*10', doc, flags=re.A)
+    if m1:
+        imdbval = tryFloat(m1[1])
+    doubanval = 0
+    m2 = re.search(r'豆瓣评分.*?([0-9.]+)/10', doc, flags=re.A)
+    if m2:
+        doubanval = tryFloat(m2[1])
+    if imdbval < 1 and doubanval < 1:
+        ratelist = [x[1] for x in re.finditer(
+            r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)]
+        if len(ratelist) >= 2:
+            doubanval = tryFloat(ratelist[0])
+            imdbval = tryFloat(ratelist[1])
+        elif len(ratelist) == 1:
+            #TODO: 不分辨douban/imdb了
+            doubanval = tryFloat(ratelist[0])
+            imdbval = doubanval
+            # rate1 = re.search(r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)
+            # if rate1:
+            #     imdbval = tryFloat(rate1[1])
+        # print("   >> IMDb: %s, douban: %s" % (imdbval, doubanval))
+    return imdbval, doubanval
 
+
+def parseInfoPageIMDbId(doc):
     imdbstr = ''
     m1 = re.search(r'www\.imdb\.com\/title\/(tt\d+)', doc, flags=re.A)
     if m1:
         imdbstr = m1[1]
+    return imdbstr
 
-    return match, imdbstr
 
-
-def checkDupAddTor(rsstask, torname, downloadLink, imdbstr, siteIdStr, forceDownload=False):
+def checkMediaDbTMDbDupe(torname, imdbstr):
     if not torname:
-        rsstask.reason = 'no name'
-        db.session.commit()
-        return 400
-
-    if (not myconfig.CONFIG.qbServer):
-        # print("qBittorrent not set, skip")
-        rsstask.reason = 'qBit config'
-        db.session.commit()
-        return 400
-
+        return False, 'No torname'
     if (not myconfig.CONFIG.tmdb_api_key):
-        # print("tmdb_api_key not set, skip")
-        rsstask.reason = 'tmdb_api_key not set'
-        db.session.commit()
-        return 400
+        return False, 'tmdb_api_key not set'
 
     p = TMDbNameParser(myconfig.CONFIG.tmdb_api_key, '')
-
     torTMDb = searchTMDb(p, torname, imdbstr)
 
     if torTMDb > 0:
         exists = checkMediaDbExistsTMDb(torTMDb, p.tmdbcat)
-        if (exists) and (not forceDownload):
-            rsstask.reason = 'exists'
-            db.session.commit()
-            return 202
+        if exists:
+            return False, 'Exists TMDb in lib.'
         else:
-            if downloadLink:
-                if not validDownloadlink(downloadLink):
-                    # print("   >> Not valid torrent downlink: %s ( %s) " %
-                    #       (torname, downloadLink))
-                    rsstask.reason = 'Not valid downlink'
-                    db.session.commit()
-                    return 205
+            return True, ''
 
-                if not myconfig.CONFIG.dryrun:
-                    print("   >> Added: " + torname)
-                    if not qbfunc.addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr):
-                        rsstask.reason = 'qBit Fail'
-                        db.session.commit()
-                        return 400
-                else:
-                    print("   >> DRYRUN: " + torname + "\n   >> " + downloadLink)
 
-            return 201
+def addTorrent(downloadLink, siteIdStr, imdbstr):
+    if (not myconfig.CONFIG.qbServer):
+        return 400
+
+    if not validDownloadlink(downloadLink):
+        return 402
+
+    if not myconfig.CONFIG.dryrun:
+        print("   >> Added: " + siteIdStr)
+        if not qbfunc.addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr):
+            return 400
     else:
-        rsstask.reason = 'TMDb no found'
-        db.session.commit()
-        return 203
+        print("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
+
+    return 201
 
 
-def rssGetDetailAndDownload(rsstask):
+def prcessRssFeeds(rsstask):
     feed = feedparser.parse(rsstask.rsslink)
     rssFeedSum = 0
     rssAccept = 0
     # with app.app_context():
+
     for item in feed.entries:
         rssFeedSum += 1
         if not hasattr(item, 'id'):
-            print('RSS item: !! No id')
+            print('RSS item: No id')
             continue
         if not hasattr(item, 'title'):
-            print('RSS item: !! No title')
+            print('RSS item:  No title')
+            continue
+        if not hasattr(item, 'link'):
+            print('RSS item:  No info link')
+            continue
+        if not hasattr(item, 'links'):
+            print('RSS item:  No download link')
+            continue
+        if len(item.links) <= 1:
+            print('RSS item:  No download link')
             continue
 
-        if existsRssHistory(item.title):
+        if existsInRssHistory(item.title):
             # print("   >> exists in rss history, skip")
             continue
 
@@ -939,12 +922,12 @@ def rssGetDetailAndDownload(rsstask):
                                 datetime.now().strftime("%H:%M:%S")))
 
         # dbrssitem = saveRssHistory(rsstask.site, item)
-        dbrssitem = RSSHistory(site=rsstask.site, title=item.title)
-        if hasattr(item, 'link'):
-            dbrssitem.infoLink = item.link
-        if hasattr(item, 'links') and len(item.links) > 1:
-            dbrssitem.downloadLink = item.links[1]['href']
-            dbrssitem.size = item.links[1]['length']
+        dbrssitem = RSSHistory(site=rsstask.site, 
+                        title=item.title, 
+                        infoLink = item.link,
+                        downloadLink = item.links[1]['href'],
+                        size = item.links[1]['length'])
+
         db.session.add(dbrssitem)
         db.session.commit()
 
@@ -964,34 +947,58 @@ def rssGetDetailAndDownload(rsstask):
 
         imdbstr = ''
         if rsstask.cookie:
-            if hasattr(item, 'link'):
-                match, imdbstr = parseDetailPage(item.link, rsstask)
-                dbrssitem.imdbstr = imdbstr
-                if not match:
-                    # dbrssitem.reason = 'INFO REGEX / IMDb'
-                    # db.session.commit()
+            # Means: will dl wihout cookie, but no dl if cookie is wrong
+            doc = fetchInfoPage(item.link, rsstask.cookie)
+            if not doc:
+                dbrssitem.reason = 'Fetch info page failed'
+                db.session.commit()
+                continue
+            imdbstr = parseInfoPageIMDbId(doc)
+            dbrssitem.imdbstr = imdbstr
+            db.session.commit()
+
+            if rsstask.info_regex:
+                if not re.search(rsstask.info_regex, doc, flags=re.A):
+                    dbrssitem.reason = 'INFO_REGEX'
+                    db.session.commit()
+                    continue
+            if rsstask.info_not_regex:
+                if re.search(rsstask.info_not_regex, doc, flags=re.A):
+                    dbrssitem.reason = 'INFO_NOT_REGEX'
+                    db.session.commit()
+                    continue
+            if rsstask.min_imdb:
+                imdbval, doubanval = parseInfoPageIMDbval(doc)
+                if (imdbval < rsstask.min_imdb) and (doubanval < rsstask.min_imdb):
+                    # print("   >> MIN_IMDb not match")
+                    dbrssitem.reason = "IMDb: %s, douban: %s" % (imdbval, doubanval)
+                    db.session.commit()
                     continue
 
-        siteIdStr = getSiteId(item.link, imdbstr)
+        siteIdStr = genrSiteId(item.link, imdbstr)
 
-        if hasattr(item, 'links') and len(item.links) > 1:
-            rssDownloadLink = item.links[1]['href']
-            dbrssitem.accept = 2
-            print('   %s (%s), %s' %
-                    (imdbstr, HumanBytes.format(int(dbrssitem.size)), rssDownloadLink))
-            r = checkDupAddTor(rsstask, item.title, rssDownloadLink,
-                                imdbstr, siteIdStr, forceDownload=False)
-            # print('   >> %d ' % r)
-            if r == 201:
-                # Download
-                dbrssitem.accept = 3
-                rssAccept += 1
+        rssDownloadLink = item.links[1]['href']
+        dbrssitem.accept = 2
+        print('   %s (%s), %s' %
+                (imdbstr, HumanBytes.format(int(dbrssitem.size)), rssDownloadLink))
+
+        if checkMediaDbNameDupe(item.title):
+            dbrssitem.reason = "Name dupe in media lib"
+            db.session.commit()
+            continue
+        
+        # success, reason = checkMediaDbTMDbDupe(item.title, imdbstr)
+        # if not success:
+        #     dbrssitem.reason = reason
+
+        r = addTorrent(rssDownloadLink, siteIdStr, imdbstr)
+        if r == 201:
+            # Download
+            dbrssitem.accept = 3
+            rssAccept += 1
         else:
-            dbrssitem.reason = 'no download link'
+            dbrssitem.reason = 'qBit Error'
 
-        # ritem = RSSHistory.query.get(dbrssitem.id)
-        # ritem.accept = dbrssitem.accept
-        # ritem.imdbstr = dbrssitem.imdbstr
         db.session.commit()
 
     # rtask = RSSTask.query.get(rsstask.id)
@@ -1010,7 +1017,7 @@ def manualDownload(rsslogid):
     if taskitem:
         match, imdbstr = parseDetailPage(dbrssitem.infoLink, taskitem)
         dbrssitem.imdbstr = imdbstr
-    siteIdStr = getSiteId(dbrssitem.infoLink, dbrssitem.imdbstr)
+    siteIdStr = genrSiteId(dbrssitem.infoLink, dbrssitem.imdbstr)
 
     r = checkDupAddTor(taskitem, dbrssitem.title, dbrssitem.downloadLink,
                        dbrssitem.imdbstr, siteIdStr, forceDownload=True)
@@ -1025,7 +1032,7 @@ def rssJob(id):
         task = RSSTask.query.filter(RSSTask.id == id).first()
         if task:
             # print('Runing task: ' + task.rsslink)
-            rssGetDetailAndDownload(task)
+            prcessRssFeeds(task)
 
 
 def startApsScheduler():
