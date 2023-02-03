@@ -116,10 +116,10 @@ def emptyTable():
         return 0 
 
 
-def plexKeyExists(videokey):
+def plexTitleExists(videotitle):
     with app.app_context():
-        exists = db.session.query(db.exists().where(TorMediaItem.key == videokey)).scalar()
-    #     exists = db.session.query(MediaItem.id).filter_by(key=videokey).first() is not None
+        # exists = db.session.query(db.exists().where(TorMediaItem.videotitle == videotitle)).scalar()
+        exists = db.session.query(TorMediaItem.id).filter_by(videotitle=videotitle).first() is not None
 
     return exists
 
@@ -142,7 +142,8 @@ def loadPlexLibrary():
     for idx, video in enumerate(plex.library.all()):
         for n in range(MAX_RETRY):
             try:
-                pi = TorMediaItem(title=video.title)
+                videotile = video.title
+                # pi = TorMediaItem(title=video.title)
                 # pi.originalTitle = video.originalTitle
                 # pi.librarySectionID = video.librarySectionID
                 # pi.audienceRating = tryFloat(video.audienceRating)
@@ -157,9 +158,10 @@ def loadPlexLibrary():
                     os._exit(1)
             
         # pi.originalTitle = video.originalTitle
-        # if plexKeyExists(video.key):
-        #     continue
-
+        if plexTitleExists(videotile):
+            continue
+        pi = TorMediaItem(title=video.title)
+        
         if video.type == 'movie':
             pi.tmdbcat = 'movie'
         elif video.type == 'show':
@@ -178,7 +180,7 @@ def loadPlexLibrary():
             else:
                 pi.location = os.path.basename(video.locations[0])
         else:
-            print('No location: ', video.title)
+            print('No location: ', videotile)
         imdb = ''
         for guid in video.guids:
             imdbmatch = re.search(r'imdb://(tt\d+)', guid.id, re.I)
@@ -192,12 +194,11 @@ def loadPlexLibrary():
             # if tvdbmatch:
             #     pi.tvdb = tvdbmatch[1]
         if not pi.tmdbid:
-            pi.tmdbid = searchTMDb(p, video.title, imdb)
+            pi.tmdbid = searchTMDb(p, videotile, imdb)
         with app.app_context():
             db.session.add(pi)
             db.session.commit()
-        print("%d : %s , %s , %s, %s" % (idx, video.title,
-              video.originalTitle, video.locations, video.guids))
+        print("%d : %s , %s, %s" % (idx, videotile, video.locations, video.guids))
     print(time.strftime("%H:%M:%S", time.gmtime(time.time()-tstart)))
 
 
