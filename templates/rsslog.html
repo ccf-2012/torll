@@ -106,8 +106,8 @@
       ],
       "createdRow": function (row, data, dataIndex) {
         console.log(data)
-        if (data.accept == 3) {
-          $('td', row).css('background-color', 'rgb(224 242 254)');
+        if (data.accept == 0) {
+          $('td', row).css('background-color', 'rgb(231 229 228)');
         }
         else if  (data.accept == 2) {
           $('td', row).css('background-color', 'rgb(254 226 226)');

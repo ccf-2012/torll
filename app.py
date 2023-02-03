@@ -268,7 +268,7 @@ def qbitSetting():
             progstr =  'sh ' + fn + ' "%I" '
             scriptpath = os.path.dirname(__file__)
             with open(fn, 'w') as f:
-                f.write(f"#!/bin/bash\npython3 {os.path.join(scriptpath, 'rcp.py')}  -I $1 >>{os.path.join(scriptpath, 'rcp2.log')} 2>>{os.path.join(scriptpath, 'rcp2e.log')}\n")
+                f.write(f"#!/bin/sh\npython3 {os.path.join(scriptpath, 'rcp.py')}  -I $1 >>{os.path.join(scriptpath, 'rcp2.log')} 2>>{os.path.join(scriptpath, 'rcp2e.log')}\n")
                 f.close()
             # import stat
             # os.chmod(fn, stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH)
@@ -332,17 +332,18 @@ def editrcp():
     fn = myconfig.CONFIG.rcpshfile
     if os.path.isfile(fn):
         with open(fn, 'r') as f:
-            rcpsh_file = f.read()
+            rcpsh_txt = f.read()
     else:
-        rcpsh_file = ''
+        rcpsh_txt = ''
     msg = ''
     if request.method == 'POST':
-        rcpsh_file = request.form['config_file']
+        rcpsh_txt = request.form['config_file']
+        rcpsh_txt.replace('\r\n', '\n')
         with open(fn, 'w') as f:
-            f.write(str(rcpsh_file))
+            f.write(str(rcpsh_txt))
         msg = "success"
 
-    return render_template('editrcp.html', config_file=rcpsh_file, msg=msg)
+    return render_template('editrcp.html', config_file=rcpsh_txt, msg=msg)
 
 
 @app.route('/api/data')

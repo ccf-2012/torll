@@ -52,6 +52,7 @@
         var editor = ace.edit('editor');
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/sh");
+        editor.session.setNewLineMode("unix");
         editor.setShowPrintMargin(false);  
         editor.session.setUseWrapMode(true);  
 
