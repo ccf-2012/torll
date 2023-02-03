@@ -264,8 +264,12 @@ def qbitSetting():
             postargs = '-d torhash=%I '
             progstr = 'curl ' + authstr + postargs + apiurl
         else:
-            progstr = os.path.join(os.getcwd(), "rcp.sh") + \
-                ' "%F" "%I" "%Z" "%D" "%G" '
+            fn = os.path.join(os.getcwd(), "rcp.sh")
+            progstr =  fn + ' "%I" '
+            with open(fn, 'w') as f:
+                f.write(f"#!/bin/bash\npython3 {os.getcwd()}/rcp.py  -I $1 >>{os.getcwd()}/rcp2.log 2>>{os.getcwd()}rcp2e.log\n")
+                f.close()
+
         r = qbfunc.setAutoRunProgram(progstr)
         if r:
             msg = 'success'
