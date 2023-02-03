@@ -157,11 +157,11 @@ server_token=your-PLEX_token
 rootdir = /gd1/media/plex/
 ```
 
-2. 运行 `loadmedia.py` 
+2. 运行 `loadmb.py` 
 ```sh
-python3 loadmedia.py --init-library
+python3 loadmb.py --init-library
 ```
-
+* 如果要清除库中条目，全部新建，则加 `--empty` 参数
 
 ----
 
@@ -172,11 +172,16 @@ python3 loadmedia.py --init-library
 curl -u admin:password -d torhash=种子hash_bc9f857cc8d721ed5d8ea672d http://192.168.5.6:5006/api/torcp2 
 ```
 
-### 使用 qbpost.py 将 qBit 中的种子导入库中
-* 如果 qBit 中已经有一些以site-id这样形式生成的种子，将它们导入库中，可便于查重和管理
+* 也可以在控制台上手工运行 `rcp.py` 完成任务，例：
+```sh
+python3 rcp.py -I hashcode_bc9f857cc8d721ed5d8ea672d
+```
+
+### 使用 loadqb.py 将 qBit 中的种子导入库中
+* 如果 qBit 中已经有一些以 site-id 形式存储的种子，将它们导入库中，可便于查重和管理
 * 同样，要求在 torll 中已正确设置 qBit
 ```sh
-python3 qbpost.py
+python3 loadqb.py
 ```
 
 

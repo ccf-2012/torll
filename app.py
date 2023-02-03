@@ -338,9 +338,9 @@ def editrcp():
     msg = ''
     if request.method == 'POST':
         rcpsh_txt = request.form['config_file']
-        rcpsh_txt.replace('\r\n', '\n')
+        
         with open(fn, 'w') as f:
-            f.write(str(rcpsh_txt))
+            f.write("\n".join(rcpsh_txt.splitlines()))
         msg = "success"
 
     return render_template('editrcp.html', config_file=rcpsh_txt, msg=msg)
