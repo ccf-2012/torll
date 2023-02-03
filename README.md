@@ -11,7 +11,7 @@ pip install -r requirements.txt
 ```
 
 ## 启动
-* 首次使用需要生成一个用户名密码
+* 首次使用需要加参数 `-G` 生成一个用户名密码
 ```sh
 python3 app.py -G
 ```
@@ -19,7 +19,7 @@ python3 app.py -G
 ```sh
 python3 app.py
 ```
-> 你可以打开 `config.ini` 查看和修改密码。需要注意的是如果这里密码改了，在qbit中的命令和 `torfilter` 中也要相应修改
+> 你可以打开 `config.ini` 查看和修改密码。需要注意的是如果这里密码改了，在 qBit 中的命令和 `torfilter` 中也要相应修改
 
 * 启动成功后，浏览器打开 `http://server.ip:5006/` 登录后使用。
 
@@ -27,26 +27,26 @@ python3 app.py
 ## 设置
 ### 设置 torcp 参数
 
-![torcp setting](https://ptpimg.me/tl68x6.png)
-
 * 在影视种子下载完成后调用 torcp 进行处理时的参数，包括硬链/软链目标目录，TMDb的api key以及语言，Emby/Plex 括号后缀等；
 * 软链(symbolink) 在Emby/Plex中播放以及在qBit中维持作种，都是可行的；但如果删除了源文件/目录，则链接就会失效，这一点与硬链不同，硬链就如同两个分别的文件，删掉任意一个都不影响；
 * 括号后缀是指，生成的文件夹在交给 Emby/Plex 来收录库中时，通过后缀直接确定媒体；
 * TMDb语言决定生成的文件名是中文还是英文，在Plex中可能使用英文会有利一些；
 
 
+![torcp setting](https://ptpimg.me/tl68x6.png)
+
 
 ### 设置 qBittorrent 
-![qb setting](https://ptpimg.me/otvack.png)
-
 * 设置 qbit 的 主机ip，端口，用户名，密码
 * 设置 qbit 完成后直接运行脚本，或者以 API 形式提交 torcp 处理；
+![qb setting](https://ptpimg.me/otvack.png)
 
 
-两种方式作一下解说：
+
+* 两种方式作一下解说：
 #### API 方式
 * 若 qbit 在 docker 中运行，则以 API 形式处理较简单；
-* 以 API 形式调用处理将在 torll 脚本本身所理解的目标目录中进行处理，若 qBit 在docker中，则须设置映射将docker中的路径转换为脚本所识别的路径；
+* 以 API 形式调用的将在 torll 所理解的目录中进行处理，若 qBit 在docker中，则须设置映射将docker中的路径转换为 torll 所识别的路径；
 * 在保存设置时，软件会在 qbit 中设置种子完成后执行的命令；形如：
 ```sh
 curl -u admin:password -d torhash=%I http://192.168.5.6:5006/api/torcp2 
@@ -55,8 +55,8 @@ curl -u admin:password -d torhash=%I http://192.168.5.6:5006/api/torcp2
 * torll 的 API 将完成对种子文件的链接处理，任务就此结束。
 
 #### rcp.sh 方式
-* 若qbit 完成后直接运行脚本，则可以实现较为复杂的操作，例如上传gd以及通知Plex更新等，脚本名为 `rcp.sh`，webui中提供了在线编辑代码的功能
-* 若 qbit 在 docker 中运行，要使用脚本方式进行处理，需要在 docker 中安装 requirements.txt 中的依赖；参考 [torcp中的介绍](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md#3-qbit%E4%BB%A5docker%E5%AE%89%E8%A3%85)
+* 若设置 qBit 完成后运行脚本，则可以实现较为复杂的操作，例如上传 gd 盘以及通知 Plex 更新等，脚本名为 `rcp.sh`，webui 中提供了在线编辑代码的功能
+* 若 qBit 在 docker 中运行，要使用脚本方式进行处理，需要在 docker 中安装 requirements.txt 中的依赖；参考 [torcp中的介绍](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md#3-qbit%E4%BB%A5docker%E5%AE%89%E8%A3%85)
 
 1. 简单的例子，种子完成后直接作硬链：
 ```sh
@@ -93,14 +93,14 @@ python3 /home/ccf2013/torll/notify_plex.py -I "$1"
 ```
 
 ----
-## 种子列表
+## 种子列表及修正
 * 当积累了较多种子，toll 可以方便在查找种子标题，存储路径，可以点击链接到源站查看信息，也可以方便地查看TMDb, IMDb
 * 如果发现匹配错误的条目，可以点击 `修正` ，输入 TMDb 分类和 id ，即会重新生成目标链接
-* 
+
 ![修正匹配](https://ptpimg.me/y2cy5p.png)
 
 
-## 以 site_id 作保存目录下载种子
+## 在添加种子时，生成 site_id 形式的保存目录
 torll 在处理 qBit 中的种子，对 `site_id_imdb` 形式目录保存的种子，如 'pter_87424_tt0075329'，将会识别其中的源站信息和IMDb。这样的目录，有利于追溯查阅信息和保种续种。有两种方式可以在下载种子时生成 site_id：
 1. rss
 2. torfilter 
@@ -128,7 +128,8 @@ const API_SERVER = 'http://192.168.5.6:5006';
 const API_AUTH_USER = "admin";
 const API_AUTH_PASS = "password";
 ```
-即可定向在所设地址上进行查重和发起下载，其中用户名密码为torll中的登陆密码。
+
+即可定向到所设地址，如上例中的 192.168.5.6，去进行查重和发起下载，其中用户名密码为 torll 中的登陆密码。
 
 
 ---
