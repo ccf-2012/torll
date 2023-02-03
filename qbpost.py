@@ -70,7 +70,7 @@ def loadArgs():
 
     ARGS = parser.parse_args()
     if not ARGS.config:
-        ARGS.config = os.path.join(os.getcwd(), 'config.ini')
+        ARGS.config = os.path.join(os.path.dirname(__file__), 'config.ini')
 
 
 def main():

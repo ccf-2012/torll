@@ -91,7 +91,7 @@ def readConfig(cfgFile):
         CONFIG.addPause = config['QBIT'].getboolean('pause', False)
         CONFIG.dryrun = config['QBIT'].getboolean('dryrun', False)
 
-        CONFIG.rcpshfile = os.path.join(os.getcwd(), 'rcp.sh')
+        CONFIG.rcpshfile = os.path.join(os.path.dirname(__file__), 'rcp.sh')
 
 
 def generatePassword(cfgFile):

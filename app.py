@@ -264,10 +264,11 @@ def qbitSetting():
             postargs = '-d torhash=%I '
             progstr = 'curl ' + authstr + postargs + apiurl
         else:
-            fn = os.path.join(os.getcwd(), "rcp.sh")
+            fn = os.path.join(os.path.dirname(__file__), "rcp.sh")
             progstr =  'sh ' + fn + ' "%I" '
+            scriptpath = os.path.dirname(__file__)
             with open(fn, 'w') as f:
-                f.write(f"#!/bin/bash\npython3 {os.getcwd()}/rcp.py  -I $1 >>{os.getcwd()}/rcp2.log 2>>{os.getcwd()}rcp2e.log\n")
+                f.write(f"#!/bin/bash\npython3 {os.path.join(scriptpath, 'rcp.py')}  -I $1 >>{os.path.join(scriptpath, 'rcp2.log')} 2>>{os.path.join(scriptpath, 'rcp2e.log')}\n")
                 f.close()
             # import stat
             # os.chmod(fn, stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH)
@@ -1153,7 +1154,7 @@ def loadArgs():
     global ARGS
     ARGS = parser.parse_args()
     if not ARGS.config:
-        ARGS.config = os.path.join(os.getcwd(), 'config.ini')
+        ARGS.config = os.path.join(os.path.dirname(__file__), 'config.ini')
 
 
 def main():
