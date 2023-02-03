@@ -265,10 +265,12 @@ def qbitSetting():
             progstr = 'curl ' + authstr + postargs + apiurl
         else:
             fn = os.path.join(os.getcwd(), "rcp.sh")
-            progstr =  fn + ' "%I" '
+            progstr =  'sh ' + fn + ' "%I" '
             with open(fn, 'w') as f:
                 f.write(f"#!/bin/bash\npython3 {os.getcwd()}/rcp.py  -I $1 >>{os.getcwd()}/rcp2.log 2>>{os.getcwd()}rcp2e.log\n")
                 f.close()
+            # import stat
+            # os.chmod(fn, stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH)
 
         r = qbfunc.setAutoRunProgram(progstr)
         if r:
