@@ -64,9 +64,6 @@ def loadEmbyLibrary():
     if not (CONFIG.embyServer and CONFIG.embyUser):
         print("Set the EMBY section in config.ini")
         return
-    print("Create Database....")
-    with app.app_context():
-        db.create_all()
 
     print("Connect to the Emby server: " + CONFIG.embyServer)
     ec = EmbyClient(CONFIG.embyServer, CONFIG.embyUser, CONFIG.embyPass)
@@ -118,8 +115,8 @@ def emptyTable():
 
 def plexTitleExists(videotitle):
     with app.app_context():
-        # exists = db.session.query(db.exists().where(TorMediaItem.videotitle == videotitle)).scalar()
-        exists = db.session.query(TorMediaItem.id).filter_by(videotitle=videotitle).first() is not None
+        # exists = db.session.query(db.exists().where(TorMediaItem.title == videotitle)).scalar()
+        exists = db.session.query(TorMediaItem.id).filter_by(title=videotitle).first() is not None
 
     return exists
 
@@ -129,9 +126,6 @@ def loadPlexLibrary():
     if not (CONFIG.plexServer and CONFIG.plexToken):
         print("Set the 'server_token' and 'server_url' in config.ini")
         return
-    print("Create Database....")
-    with app.app_context():
-        db.create_all()
     
     tstart = time.time()
     print("Connect to the Plex server: " + CONFIG.plexServer)
