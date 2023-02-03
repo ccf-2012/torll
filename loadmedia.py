@@ -56,49 +56,52 @@ def isMediaExt(path):
 
 
 def loadEmbyLibrary():
-
-    # configuration = embyapi.Configuration()
-    # configuration.api_key['api_key'] = '9c78cfc58b10433e9504629d2d8d9ce5'
-    # api_instance = embyapi.ActivityLogServiceApi(embyapi.ApiClient(configuration))
-
     if not (CONFIG.embyServer and CONFIG.embyUser):
         print("Set the EMBY section in config.ini")
         return
 
+    tstart = time.time()
     print("Connect to the Emby server: " + CONFIG.embyServer)
     ec = EmbyClient(CONFIG.embyServer, CONFIG.embyUser, CONFIG.embyPass)
     p = TMDbNameParser(CONFIG.tmdb_api_key, 'en')
 
     r = ec.getMediaList()
-    for item in r:
-        print(">> " + item["Name"])
+    for idx, item in enumerate(r):
+        location = ''
+        if item['Type'] == 'Series':
+            tmdbcat = 'tv'
+            location = os.path.relpath(item["Path"], CONFIG.linkDir)
+        elif item['Type'] == 'Movie':
+            tmdbcat = 'movie'
+            location = os.path.relpath(os.path.dirname(item["Path"]), CONFIG.linkDir)
+        else:
+            tmdbcat = item['Type']
+            print("Unknow Type: " + item['Type'])
+
+        if mediaLocationExists(location):
+            continue
+
         pi = TorMediaItem(title=item["Name"])
+        pi.tmdbcat = tmdbcat
+        pi.location = location
 
         guids = item["ProviderIds"]
         pi.torimdb = guids['IMDB'] if 'IMDB' in guids else ''
         pi.torimdb = guids['Imdb'] if 'Imdb' in guids else ''
         pi.tmdbid = guids['Tmdb'] if 'Tmdb' in guids else ''
         # pi.tvdb = guids['Tvdb'] if 'Tvdb' in guids else ''
-        if item['Type'] == 'Series':
-            pi.tmdbcat = 'tv'
-            # pi.location = os.path.basename()
-            pi.location = os.path.relpath(item["Path"], CONFIG.linkDir)
-        elif item['Type'] == 'Movie':
-            pi.tmdbcat = 'movie'
-            pi.location = os.path.relpath(os.path.dirname(item["Path"]), CONFIG.linkDir)
-            # pi.location = os.path.basename(os.path.dirname(item["Path"]))
-        else:
-            print("Unknow Type: " + item['Type'])
 
-        pd = item["PremiereDate"] if "PremiereDate" in item else ""
-        if 'Tmdb' not in guids:
-            print("    TMDb Not Found: %s (%s) " % (item["Name"], pd))
+        # mediaYear = item["PremiereDate"] if "PremiereDate" in item else ""
+        if not pi.torimdb:
+            # print("    TMDb Not Found: %s (%s) " % (item["Name"], pd))
             pi.tmdbid = searchTMDb(p, item["Name"], pi.torimdb)
-        print("   %s: (TMDb: %s, IMDb: %s)\n    %s" % (pi.title, pi.tmdbid, pi.torimdb, pi.location))
+        print("%d :  %s (TMDb: %s, IMDb: %s)\n    %s" % (idx, pi.title, pi.tmdbid, pi.torimdb, pi.location))
         with app.app_context():
             db.session.add(pi)
             db.session.commit()
         # time.sleep(1)
+
+    print(time.strftime("%H:%M:%S", time.gmtime(time.time()-tstart)))
 
 
 
@@ -111,6 +114,12 @@ def emptyTable():
     except:
         db.session.rollback()
         return 0 
+
+def mediaLocationExists(videolocation):
+    with app.app_context():
+        exists = db.session.query(TorMediaItem.id).filter_by(location=videolocation).first() is not None
+
+    return exists
 
 
 def plexTitleExists(videotitle):
@@ -136,7 +145,10 @@ def loadPlexLibrary():
     for idx, video in enumerate(plex.library.all()):
         for n in range(MAX_RETRY):
             try:
-                videotile = video.title
+                videotitle = video.title
+                videotype = video.type
+                videolocations = video.locations
+                videoguids = video.guids
                 # pi = TorMediaItem(title=video.title)
                 # pi.originalTitle = video.originalTitle
                 # pi.librarySectionID = video.librarySectionID
@@ -146,37 +158,42 @@ def loadPlexLibrary():
                 if n < MAX_RETRY:
                     print('Fail to reload the video' + str(e))
                     print('retry %d time.' % (n+1))
-                    time.sleep(2)
+                    time.sleep(10)
                 else:
                     print('Fail to reload the video MAX_RETRY(%d) times' % (MAX_RETRY))
                     os._exit(1)
-            
-        # pi.originalTitle = video.originalTitle
-        if plexTitleExists(videotile):
+
+
+        location = ''
+        if len(videolocations) > 0:
+            if isMediaExt(videolocations[0]):
+                location = os.path.relpath(os.path.dirname(videolocations[0]), CONFIG.plexRootDir)
+                # location = os.path.basename( os.path.dirname(videolocations[0]))
+            else:
+                location = os.path.relpath(videolocations[0], CONFIG.plexRootDir)
+                # location = os.path.basename(videolocations[0])
+        else:
+            print('No location: ', videotitle)
+            os._exit(1)
+
+        if mediaLocationExists(location):
             continue
-        pi = TorMediaItem(title=video.title)
+
+        # if plexTitleExists(videotitle):
+        #     continue
+        pi = TorMediaItem(title=videotitle)
+        pi.location = location
         
-        if video.type == 'movie':
+        if videotype == 'movie':
             pi.tmdbcat = 'movie'
-        elif video.type == 'show':
+        elif videotype == 'show':
             pi.tmdbcat = 'tv'
         else:
-            pi.tmdbcat = video.type
+            pi.tmdbcat = videotype
 
 
-        # pi.guid = video.guid
-        # pi.key = video.key
-        if len(video.locations) > 0:
-            pi.location = ','.join(video.locations)
-            if isMediaExt(video.locations[0]):
-                pi.location = os.path.basename(
-                    os.path.dirname(video.locations[0]))
-            else:
-                pi.location = os.path.basename(video.locations[0])
-        else:
-            print('No location: ', videotile)
         imdb = ''
-        for guid in video.guids:
+        for guid in videoguids:
             imdbmatch = re.search(r'imdb://(tt\d+)', guid.id, re.I)
             if imdbmatch:
                 pi.torimdb = imdbmatch[1]
@@ -188,11 +205,11 @@ def loadPlexLibrary():
             # if tvdbmatch:
             #     pi.tvdb = tvdbmatch[1]
         if not pi.tmdbid:
-            pi.tmdbid = searchTMDb(p, videotile, imdb)
+            pi.tmdbid = searchTMDb(p, videotitle, imdb)
         with app.app_context():
             db.session.add(pi)
             db.session.commit()
-        print("%d : %s , %s, %s" % (idx, videotile, video.locations, video.guids))
+        print("%d : %s , %s, %s" % (idx, videotitle, videolocations, videoguids))
     print(time.strftime("%H:%M:%S", time.gmtime(time.time()-tstart)))
 
 
