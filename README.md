@@ -148,6 +148,8 @@ server_url = http://192.168.5.6:8096
 user = test
 pass = test
 ```
+> Emby 当前假设媒体根目录为 torcp 的目标根目录，即直接链接的场景，后续再看
+
 * Plex
 ```ini
 [PLEX]
@@ -180,6 +182,8 @@ python3 rcp.py -I hashcode_bc9f857cc8d721ed5d8ea672d
 ### 使用 loadqb.py 将 qBit 中的种子导入库中
 * 如果 qBit 中已经有一些以 site-id 形式存储的种子，将它们导入库中，可便于查重和管理
 * 同样，要求在 torll 中已正确设置 qBit
+* 当前代码是仅找出保存路径带有 site_id 特征的种子进行处理，可根据自己需要作调整
+
 ```sh
 python3 loadqb.py
 ```
@@ -219,6 +223,34 @@ options:
 
 > 对于原 torcp 用户，这个 torll 要求 torcp 版本 >= 0.59 的依赖，即 torcp 在 v0.59 改写了结构以支持外部代码传参及调用执行；原有的功能和使用方式仍然不受影响，即如果原来有脚本在使用 torcp 跑，即使更新到了 v0.58，也应能继续完成任务；
 > torcp 不依赖数据库可直接运行，仍然有其使用场景
+
+
+
+### notify_plex.py 
+* 对于 gd 盘，Plex 无法感知有文件变动
+* 所以当新的文件（夹）添加进了媒体库时，可以使用 `notify_plex.py` 通知Plex Server进行更新
+* 所需要的参数也同样，仅需要用种子的 hash 值即可
+
+```
+$ python3 notify_plex.py -h
+usage: notify_plex.py [-h] -I INFO_HASH [-C CONFIG]
+
+Notify plex server to add a file/folder.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -I INFO_HASH, --info-hash INFO_HASH
+                        info hash of the torrent.
+  -C CONFIG, --config CONFIG
+                        config file.
+```
+
+
+例：
+```
+$ python3 notify_plex.py -I 5c23a9a2e36145f994029bf2871ce63e37d59ea5
+Movie/ko/Fukuoka (2020) {tmdb-576112}
+```
 
 ---
 to be cont.

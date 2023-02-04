@@ -69,6 +69,8 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcat
                 "--tmdb-origin-name"]
         if CONFIG.lang:
             argv += ["--lang", CONFIG.lang]
+        if CONFIG.genre:
+            argv += ["--genre", CONFIG.genre]
         if CONFIG.bracket == '--emby-bracket':
             argv += ["--filename-emby-bracket"]
         if torimdb:

@@ -76,6 +76,7 @@ def readConfig(cfgFile):
         #     CONFIG.bracket = '--' + CONFIG.bracket
         CONFIG.tmdbLang = config['TORCP'].get('tmdb_lang', 'en-US')
         CONFIG.lang = config['TORCP'].get('lang', 'cn,ja,ko')
+        CONFIG.genre = config['TORCP'].get('genre', '')
         CONFIG.symbolink = config['TORCP'].get('symbolink', '')
 
     if 'QBIT' in config:
@@ -113,7 +114,7 @@ def generatePassword(cfgFile):
         config.write(f)
 
 
-def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, tmdb_api_key, symbolink):
+def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, genre, tmdb_api_key, symbolink):
     config = configparser.ConfigParser()
     config.read(cfgFile)
     if not config.has_section('TORCP'):
@@ -122,6 +123,7 @@ def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, tmdb_api_key
     config.set('TORCP', 'bracket', bracket)
     config.set('TORCP', 'tmdb_lang', tmdbLang)
     config.set('TORCP', 'lang', lang)
+    config.set('TORCP', 'genre', genre)
     config.set('TORCP', 'symbolink', symbolink)
     if not config.has_section('TMDB'):
         config.add_section('TMDB')
@@ -133,6 +135,7 @@ def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, tmdb_api_key
     CONFIG.bracket = config['TORCP'].get('bracket', '')
     CONFIG.tmdbLang = config['TORCP'].get('tmdb_lang', 'en-US')
     CONFIG.lang = config['TORCP'].get('lang', 'cn,ja,ko')
+    CONFIG.genre = config['TORCP'].get('genre', '')
     CONFIG.tmdb_api_key = config['TMDB'].get('api_key', '')
     CONFIG.symbolink = config['TORCP'].get('symbolink', '')
 

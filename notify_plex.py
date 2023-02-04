@@ -1,4 +1,4 @@
-from app import TorMediaItem, TorcpItemDBObj, queryByHash
+from app import queryByHash
 from plexapi.server import PlexServer
 from myconfig import CONFIG, readConfig
 import argparse

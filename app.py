@@ -297,7 +297,8 @@ class SettingForm(Form):
         ('en-US', 'en-US'),
         ('zh-CN', 'zh-CN')],
         default='en-US')
-    sep_lang = StringField('分语言目录，以逗号分隔，将不同语言的媒体分别存在不同目录中；留空表示不分语言')
+    sep_lang = StringField('分语言目录，以逗号分隔，如 cn,ja,ko 将不同语言的媒体分到不同目录中；留空表示不分')
+    sep_genre = StringField('分类型目录，以逗号分隔，如 动画,纪录 将不同类型的媒体分到不同目录中；留空表示不分')
     submit = SubmitField("保存设置")
 
 
@@ -310,6 +311,7 @@ def setting():
     form.bracket.data = myconfig.CONFIG.bracket
     form.tmdb_lang.data = myconfig.CONFIG.tmdbLang
     form.sep_lang.data = myconfig.CONFIG.lang
+    form.sep_genre.data = myconfig.CONFIG.genre
     form.symbolink.data = myconfig.CONFIG.symbolink
     msg = ''
     if request.method == 'POST':
@@ -319,6 +321,7 @@ def setting():
                                       bracket=form.bracket.data,
                                       tmdbLang=form.tmdb_lang.data,
                                       lang=form.sep_lang.data,
+                                      genre=form.sep_genre.data,
                                       tmdb_api_key=form.tmdb_key.data,
                                       symbolink=form.symbolink.data)
         msg = 'success'
