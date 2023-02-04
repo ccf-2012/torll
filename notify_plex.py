@@ -39,7 +39,8 @@ def main():
 
         if lib:
             for n in range(MAX_RETRY):
-                try:    
+                try:
+                    print(mediaPath)
                     lib.update(path=os.path.join(CONFIG.plexRootDir, mediaPath))
                     break
                 except Exception as e:

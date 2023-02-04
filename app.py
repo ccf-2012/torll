@@ -297,8 +297,8 @@ class SettingForm(Form):
         ('en-US', 'en-US'),
         ('zh-CN', 'zh-CN')],
         default='en-US')
-    sep_lang = StringField('分语言目录，以逗号分隔，如 cn,ja,ko 将不同语言的媒体分到不同目录中；留空表示不分')
-    sep_genre = StringField('分类型目录，以逗号分隔，如 动画,纪录 将不同类型的媒体分到不同目录中；留空表示不分')
+    sep_lang = StringField('按语言分目录，以逗号分隔，如 cn,ja,ko 将不同语言的媒体分到不同目录中；留空表示不分')
+    sep_genre = StringField('按类型分目录，以逗号分隔，使用TMDb语言对应的分类词；留空表示不分')
     submit = SubmitField("保存设置")
 
 
