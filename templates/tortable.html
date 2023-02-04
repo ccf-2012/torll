@@ -1,12 +1,20 @@
 {% extends "base.html" %}
 {% block stylesheet %}
-
+<style>
+table {
+    table-layout:fixed;
+}
+td{
+    overflow:hidden;
+    text-overflow: ellipsis;
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="table-responsive my-2 mx-1">
 
-  <table id="data" width="100%" style="table-layout: fixed;"  class="table table-striped">
+  <table id="data" class="table table-striped row-border order-column" style="width:100%">
     <thead>
       <tr>
         <th>类别</th>
@@ -21,14 +29,14 @@
     <tbody>
     </tbody>
   </table>
-  
+
 </div>
 
 {% endblock %}
 
 {% block script %}
   <script>
-    
+
     $(document).ready(function () {
       var table = $('#data').DataTable({
         language: {
@@ -48,19 +56,19 @@
         ajax: '/api/data',
         "dom": `<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'f>>
             <'row'<'col-sm-12'tr>>
-            <'row'<'col-sm-12 col-md-5'l><'col-sm-12 col-md-7'p>>`,        
+            <'row'<'col-sm-12 col-md-5'l><'col-sm-12 col-md-7'p>>`,
         "pageLength": 25,
-        autoWidth: true,
+        autoWidth: false,
         scrollX: true,
         full_row_select: false,
         serverSide: true,
-        order: [[6, 'desc']],
+        order: [[5, 'desc']],
         columns: [
           {data: 'tmdbcat',
-           "width": "6%" 
+           "width": "5%"
           },
           {data: 'torname',
-          "width": "20%",
+          "width": "30%",
           "render": function ( data, type, row, meta ) {
               if (data) {
                 return '<a href="'+row.torsite+'" target="_blank">'+row.torname+'</a>';
@@ -69,21 +77,21 @@
             }
           },
           {data: 'location',
-          "width": "25%" 
+          "width": "25%"
           },
           {data: 'tmdbid', orderable: false,
             "width": "15%",
             "render": function ( data, type, row, meta ) {
               if (data){
                 var s = row.tmdbcat + '/' + row.tmdbid;
-                var s2 = (row.title) ? row.title : s 
+                var s2 = (row.title) ? row.title : s
                 return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+s2+'</a>';
               }
               else return ''
             }
           },
           {data: 'torimdb', orderable: false,
-            "width": "7%",
+            "width": "8%",
             "render": function ( data, type, row, meta ) {
               if (data){
                 return '<a href="https://www.imdb.com/title/'+data+'" target="_blank">'+data+'</a>';
@@ -92,20 +100,20 @@
             }
           },
           {data: 'addedon',
-            "width": "10%",
+            "width": "8%",
             "render": function (data) {
                 var date = new Date(data);
                 return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
-            }            
+            }
           },
-          {"width":"10%",
+          {"width":"9%",
             "render": function (data, type, row) {
               var linkDelete = '<a href="/mediadel/' + row.id + '">删除</a>';
-              var linkEdit = '<a href="/mediaedit/' + row.id + '">'+'修正'+'</a>'; 
+              var linkEdit = '<a href="/mediaedit/' + row.id + '">'+'修正'+'</a>';
               return linkEdit + " | " +  linkDelete;
             },
           }
-          
+
         ],
       });
 
