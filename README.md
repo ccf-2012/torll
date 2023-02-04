@@ -1,5 +1,5 @@
-# TORLL aka TORCP ls -l
-* 以web ui形式设置torcp，查看所处理的条目
+# TORLL aka TORCP ui
+* 以 web ui 形式设置 torcp，查看所处理的条目
 * **注意：若本服务在非私有的网络中运行，须万分注意防护**
 
 
@@ -101,7 +101,7 @@ python3 /home/ccf2013/torll/notify_plex.py -I "$1"
 
 
 ## 在添加种子时，生成 site_id 形式的保存目录
-torll 在处理 qBit 中的种子，对 `site_id_imdb` 形式目录保存的种子，如 'pter_87424_tt0075329'，将会识别其中的源站信息和IMDb。这样的目录，有利于追溯查阅信息和保种续种。有两种方式可以在下载种子时生成 site_id：
+torll 在处理 qBit 中的种子，对 `site_id_imdb` 形式目录保存的种子，如 'pter_87424_tt0075329'，将会识别其中的源站信息和IMDb。这样的目录，有利于追溯查阅信息和保种续种(Credit to @boomPa)。有两种方式可以在下载种子时生成 site_id：
 1. rss
 2. torfilter 
 

@@ -37,6 +37,10 @@
                 {{form.sep_lang.label(class='form-label')}} 
                 {{ form.sep_lang(class="form-control") }}
             </div> 
+            <div class="form-group mb-3">
+                {{form.sep_genre.label(class='form-label')}} 
+                {{ form.sep_genre(class="form-control") }}
+            </div> 
             {{form.bracket.label(class='form-check-label')}} 
             <div class="form-check mb-3">
                 {% for subfield in form.bracket %}
