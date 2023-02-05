@@ -1203,7 +1203,7 @@ class TorrentCache(db.Model):
 
 @app.route('/api/searchresult')
 @auth.login_required
-def data():
+def searchResultData():
     query = TorrentCache.query
 
     # search filter
