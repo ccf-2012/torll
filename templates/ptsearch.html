@@ -87,11 +87,11 @@
 
                 },
                 {
-                    data: 'imdbval',
+                    data: 'imdbstr',
                     "width": "10%",
                     "render": function (data, type, row, meta) {
                         if (data) {
-                            return '<a href="https://www.imdb.com/title/"' + row.imdbstr + ' target="_blank">' + row.imdbval + '</a>';
+                            return '<a href="https://www.imdb.com/title/"' + data + ' target="_blank">' + row.imdbval + '</a>';
                         }
                         else return ''
                     }

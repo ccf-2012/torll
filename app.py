@@ -1262,13 +1262,11 @@ def parseRowToDbItem(row, hosturl, cursite):
     dbitem.tagzz = True if row.select_one(cursite["tagzz"]) else False
     eleimdb = row.select_one(cursite["imdbstr"])
     if eleimdb:
-        if cursite["imdbstr"].startswith('['):
-            s = cursite["imdbstr"]
-            # attr = re.search(r'\[(.*?)\]',s).group(1)
-            attr = s[s.find("[")+1:s.find("]")]
-            dbitem.imdbstr = eleimdb[attr]
+        m = re.search(r'\[(.*?)\]', cursite["imdbstr"], re.I)
+        if m:
+            dbitem.imdbstr = eleimdb[m[1]]
         else:
-            dbitem.imdbstr = eleimdb.get_text(strip=True) if eleimdb else ''
+            dbitem.imdbstr = eleimdb.get_text(strip=True)
     else:
         dbitem.imdbstr = ''
     if dbitem.imdbstr and not dbitem.imdbstr.startswith('tt'):
@@ -1346,14 +1344,14 @@ def resultDownload(cacheid):
 
         imdbstr = ''
         if taskitem:
-            doc = fetchInfoPage(dbcacheitem.infoLink, taskitem.cookie)
+            doc = fetchInfoPage(dbcacheitem.infolink, taskitem.cookie)
             if doc:
                 imdbstr = parseInfoPageIMDbId(doc)
                 dbcacheitem.imdbstr = imdbstr
-    siteIdStr = genrSiteId(dbcacheitem.infoLink, dbcacheitem.imdbstr)
+    siteIdStr = genrSiteId(dbcacheitem.infolink, dbcacheitem.imdbstr)
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):    
-    r = addTorrent(dbcacheitem.downloadLink, siteIdStr, dbcacheitem.imdbstr)
+    r = addTorrent(dbcacheitem.downlink, siteIdStr, dbcacheitem.imdbstr)
     if r == 201:
         db.session.commit()
     return redirect("/rsslog")
