@@ -1178,6 +1178,7 @@ class TorrentCache(db.Model):
     downnum = db.Column(db.Integer)
     torsizestr = db.Column(db.String(16))
     tordatestr = db.Column(db.String(32))
+    dlcount = db.Column(db.Integer, default=0)
 
     def to_dict(self):
         return {
@@ -1198,6 +1199,7 @@ class TorrentCache(db.Model):
             'downnum': self.downnum,
             'torsizestr': self.torsizestr,
             'tordatestr': self.tordatestr,
+            'dlcount': self.dlcount,
         }
 
 
@@ -1353,8 +1355,9 @@ def resultDownload(cacheid):
     # if not checkMediaDbNameDupe(dbcacheitem.title):    
     r = addTorrent(dbcacheitem.downlink, siteIdStr, dbcacheitem.imdbstr)
     if r == 201:
+        dbcacheitem.dlcount += 1
         db.session.commit()
-    return redirect("/rsslog")
+    return redirect("/ptsearch")
 
 
 def rssJob(id):
