@@ -10,7 +10,7 @@ import logging
 from flask_httpauth import HTTPBasicAuth
 import myconfig
 import argparse
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField
 from wtforms.validators import DataRequired, NumberRange
 from wtforms.widgets import PasswordInput
@@ -128,6 +128,21 @@ class TorcpItemDBObj:
             db.session.commit()
 
 
+class TorcpItemCallbackObj:
+    def __init__(self):
+        self.tmdbid = -1
+        self.tmdbcat = ''
+        self.mediaName = ''
+        self.targetDir = ''
+
+    def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle):
+        print(targetDir, mediaName, tmdbIdStr, tmdbCat)
+        self.tmdbid = int(tmdbIdStr)
+        self.tmdbcat = tmdbCat
+        self.mediaName = mediaName
+        self.targetDir = targetDir
+
+
 def queryByHash(qbhash):
     with app.app_context():
         query = db.session.query(TorMediaItem).filter(
@@ -150,6 +165,7 @@ def index():
 class MediaItemForm(Form):
     # location = StringField('存储路径，如果是在本机上，修改此处将尝试改名', validators=[DataRequired()])
     # torimdb = StringField('修改IMDb以重新查询和生成硬链', validators=[DataRequired()])
+    mbRootDir = StringField('媒体库根目录，如果是GD盘则将其mount到本地')
     tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 分类和id的写法可以是：tv-12345，movie-12345，m12345')
     # tmdbid = StringField('TMDb id')
     submit = SubmitField("保存设置")
@@ -170,35 +186,39 @@ def parseTMDbStr(tmdbstr):
 @auth.login_required
 def torMediaEdit(id):
     tormedia = TorMediaItem.query.get(id)
-    destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
-
-    if os.path.exists(destDir):
-        warningstr = '此影视种子所链目录将被删除：%s' % (destDir)
-    else:
-        warningstr = '%s : 目标不存在' % (destDir)
-
     form = MediaItemForm(request.form)
     form.tmdbcatid.data = "%s-%d" % (tormedia.tmdbcat, tormedia.tmdbid)
+    if not myconfig.CONFIG.mbRootDir:
+        myconfig.CONFIG.mbRootDir = myconfig.CONFIG.linkDir
+    form.mbRootDir.data = myconfig.CONFIG.mbRootDir
+    destDir = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
+    if os.path.exists(destDir):
+        warningstr = '此影视目录将被重新识别并移动：%s' % (destDir)
+    else:
+        warningstr = '%s : 目标不存在' % (destDir)
 
     if request.method == 'POST':
         form = MediaItemForm(request.form)
         # cat, tmdbstr = parseTMDbStr(form.tmdbcatid.data)
+        myconfig.updateMediaRootDir(ARGS.config, form.mbRootDir.data)
+        oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
+        if os.path.exists(oldpath):
+            import rcp
+            targetLocation = rcp.runTorcpMove(
+                    sourceDir=oldpath,
+                    targetDir=myconfig.CONFIG.mbRootDir,
+                    tmdbcatidstr=form.tmdbcatid.data)
 
-        if os.path.exists(destDir):
-            print("Deleting ", destDir)
-            try:
-                shutil.rmtree(destDir)
-            except:
-                pass
-        # print("Delete complete")
+            tormedia.location = targetLocation
+            db.session.commit()
+            
+            warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+            shutil.rmtree(oldpath)
+        else:
+            warningstr = '目录不存在：' + oldpath
 
-        torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(
-            tormedia.torhash)
-        r = runRcp(torpath, torhash2, torsize, tortag, savepath, form.tmdbcatid.data)
-        
-        db.session.delete(tormedia)
-        db.session.commit()
-        return redirect("/")
+        return render_template('mediaeditresult.html', msg=warningstr)
+        # return redirect("/")
 
     return render_template('mediaedit.html', form=form, msg=warningstr)
 
@@ -1106,6 +1126,82 @@ def jsApiCheckDupe():
     if r != 201:
         return jsonify({'TMDb Dupe': False}), r
     return jsonify({'No Dupe': True}), 201
+
+
+class PtSearchForm(Form):
+    searchStr = StringField('输入 关键词 或 IMDb 在所配的PT站中进行查找')
+    submit = SubmitField("查找")
+
+
+def requestSearchPT(pageUrl, pageCookie):
+    cookie = SimpleCookie()
+    cookie.load(pageCookie)
+    cookies = {k: v.value for k, v in cookie.items()}
+    headers = {
+        'User-Agent':
+        'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
+        'Content-Type': 'text/html; charset=UTF-8'
+    }
+
+    try:
+        r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
+        r.encoding = r.apparent_encoding
+    except:
+        return ''
+
+    return r
+
+from bs4 import BeautifulSoup
+# from lxml import etree
+class TorResult:
+    def __init__(self, title, infolink, description, downlink):
+        self.title = title
+        self.infolink = infolink
+        self.description = description
+        self.downlink = downlink
+
+
+@app.route('/ptsearch', methods=['POST', 'GET'])
+def ptSearch():
+    form = PtSearchForm(request.form)
+    import siteconfig
+    PT_SITES = siteconfig.loadSiteConfig()
+
+    result = []
+    if request.method == 'POST':
+        form = PtSearchForm(request.form)
+
+        sitehost = "pterclub"
+        cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
+        # if cursite
+        pturl = cursite['searchurl']+form.searchStr.data
+        ptcookie = cursite['cookie']
+        doc = requestSearchPT(pturl, ptcookie)
+        if doc:
+            soup = BeautifulSoup(doc.content, 'html.parser')
+            # table = soup.find('table', id="torrenttable")
+            table = soup.select_one(cursite["tortable"])
+            torlist = soup.select(cursite["torlist"])
+            for row in torlist:
+                # collist = row.find_all('td', recursive=False)
+                # tornamecol = collist[cursite["tornamecol"]]
+                eleTitle = row.select_one(cursite["infolink"])
+                if eleTitle:
+                    eleDownload = row.select_one(cursite["downlink"])
+                    subtitleEle = row.select_one(cursite["subtitle"])
+                    title = eleTitle.get_text(strip=True)
+                    subtitle = subtitleEle.get_text() if subtitleEle else ''
+                    subtitle = subtitle.removeprefix(title)
+                    host = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
+                    dllink = urljoin(host, eleDownload['href'])
+                    infolink = urljoin(host, eleTitle['href'])
+                    n = TorResult(title=title, 
+                                infolink=infolink, 
+                                description=subtitle,
+                                downlink=dllink)
+                    result.append(n)
+
+    return render_template('ptsearch.html', form=form, result=result)
 
 
 def rssJob(id):

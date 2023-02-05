@@ -21,6 +21,7 @@ class configData():
     addPause = False
     dryrun = False
     linkDir = ''
+    mbRootDir = ''
     bracket = ''
     tmdbLang = 'en'
     lang = 'cn,ja,ko'
@@ -71,6 +72,9 @@ def readConfig(cfgFile):
 
     if 'TORCP' in config:
         CONFIG.linkDir = config['TORCP'].get('linkdir', '')
+        CONFIG.mbRootDir = config['TORCP'].get('mbrootdir', '')
+        if not CONFIG.mbRootDir:
+            CONFIG.mbRootDir = CONFIG.linkDir
         CONFIG.bracket = config['TORCP'].get('bracket', '')
         # if not CONFIG.bracket.startswith('--'):
         #     CONFIG.bracket = '--' + CONFIG.bracket
@@ -112,6 +116,17 @@ def generatePassword(cfgFile):
           (CONFIG.basicAuthUser, CONFIG.basicAuthPass))
     with open(cfgFile, 'w') as f:
         config.write(f)
+
+
+def updateMediaRootDir(cfgFile, mbRootDir):
+    config = configparser.ConfigParser()
+    config.read(cfgFile)
+    if not config.has_section('TORCP'):
+        config.add_section('TORCP')
+    config.set('TORCP', 'mbrootdir', mbRootDir)
+    with open(cfgFile, 'w') as f:
+        config.write(f)
+    CONFIG.mbRootDir = config['TORCP'].get('mbrootdir', '')
 
 
 def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, genre, tmdb_api_key, symbolink):

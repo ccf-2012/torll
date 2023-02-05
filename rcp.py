@@ -1,4 +1,4 @@
-from app import TorcpItemDBObj, initDatabase
+from app import TorcpItemDBObj, TorcpItemCallbackObj, initDatabase
 import os
 from torcp.torcp import Torcp
 from myconfig import readConfig, CONFIG
@@ -42,6 +42,46 @@ def getSiteIdDirName(pathStr, savepath):
     l = relativePath.split(os.path.sep)
     torRootFolder = os.path.join(savepath, l[0]) if len(l) > 0 else npath
     return torRootFolder, siteIdFolder
+
+def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
+    if sourceDir:
+        if not os.path.exists(sourceDir):
+            print('File/Dir not exists: ' + sourceDir)
+            return ""
+        # torimdb = extractIMDbFromTag(tortag)
+        # rootdir, site_id_imdb = getSiteIdDirName(sourceDir, savepath)
+
+        # site, siteid, torimdb = parseSiteId(site_id_imdb, imdbstr)
+        # if insertHashDir:
+        #     targetDir = os.path.join(CONFIG.linkDir, torhash)
+        # else:
+        #     targetDir = CONFIG.linkDir
+        argv = [sourceDir, "-d", targetDir, "-s",
+                "--tmdb-api-key", CONFIG.tmdb_api_key,
+                "--tmdb-lang", CONFIG.tmdbLang,
+                "--make-log",
+                CONFIG.bracket,
+                "-e", "srt",
+                "--extract-bdmv",
+                "--tmdb-origin-name"]
+        if CONFIG.lang:
+            argv += ["--lang", CONFIG.lang]
+        if CONFIG.genre:
+            argv += ["--genre", CONFIG.genre]
+        if CONFIG.bracket == '--emby-bracket':
+            argv += ["--filename-emby-bracket"]
+        if torimdb:
+            argv += ["--imdbid", torimdb]
+        if tmdbcatidstr:
+            argv += ["--tmdbid", tmdbcatidstr]
+        argv += ["--move-run"]
+
+        # print(argv)
+        eo = TorcpItemCallbackObj()
+        o = Torcp()
+        o.main(argv, eo)
+        return eo.targetDir
+    return ''
 
 
 def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcatidstr=None):
