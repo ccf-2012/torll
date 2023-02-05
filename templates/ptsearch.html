@@ -20,28 +20,26 @@
 
 </div>
 
-{% if result %}
-<div class="row my-3 mx-3">
-    <table class="table table-striped">    
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>下载</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for t in result %}     
-        <tr>
-            <td><a href="{{ t.infolink }}">{{ t.title }}</a><br/>
-            {{ t.description }}</td>
-            <td><a href="{{ t.downlink }}">下载</a></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-    </table>
-</div>
-{% endif %}
 
+
+<div class="row mx-2 my-3 justify-content-center">
+
+    <table id="data" width="100%" style="table-layout: fixed;" class="table">
+		<thead>
+		  <tr>
+			<th>站点</th>
+			<th>标题</th>
+			<th>IMDb/豆瓣</th>
+			<th>Size</th>
+			<th>Date</th>
+            <th>操作</th>
+		  </tr>
+		</thead>
+		<tbody>
+  
+		</tbody>
+	  </table>
+</div>
 
 {% endblock %}
 
@@ -49,5 +47,76 @@
 
 {% block script %}
 
+<script>
 
+    $(document).ready(function () {
+        $('#data').DataTable({
+            language: {
+                "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
+                "lengthMenu": "每页显示  _MENU_ 条",
+                "search": "查找: ",
+                "zeroRecords": "现在这里空空的",
+                "infoEmpty": "没什么可说的",
+                "paginate": {
+                    'first': '首页',
+                    'previous': '前页',
+                    'next': '后页',
+                    'last': '最末页'
+                }
+            },
+            "pageLength": 25,
+            autoWidth: true,
+            scrollX: true,
+            full_row_select: false,
+            ajax: '/api/searchresult',
+            serverSide: true,
+            order: [[0, 'desc']],
+            columns: [
+                {
+                    data: 'site',
+                },
+                {
+                    data: 'tortitle',
+                    "width": "50%",
+                    "render": function (data, type, row, meta) {
+                        if (data) {
+                            return '<a href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
+                        }
+                        else return ''
+                    }
+
+                },
+                {
+                    data: 'imdbval',
+                    "width": "6%",
+                    "render": function (data, type, row, meta) {
+                        if (data) {
+                            return '<a href="https://www.imdb.com/title/"' + row.imdbstr + ' target="_blank">' + row.imdbval + '</a>';
+                        }
+                        else return ''
+                    }
+                },
+                {
+                    data: 'torsizestr',
+                    "width": "10%"
+                },
+                {
+                    data: 'tordatestr',
+                    "width": "15%"
+                },
+                {
+                    data: 'id', searchable: false,
+                    "width": "10%",
+                    "render": function (data, type, row) {
+                        var linkDownload = '<a href="/dlresult/' + row.id + '">' + '下载' + '</a>';
+                        return linkDownload;
+                    },
+                },
+
+            ],
+        });
+
+    });
+  
+  </script>
 {% endblock %}    

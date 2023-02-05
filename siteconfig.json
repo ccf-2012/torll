@@ -1,0 +1,41 @@
+{
+  "sites": [
+    {
+      "site": "pterclub",
+      "tortable": "table.torrents",
+      "torlist": "table.torrents > tr",
+      "infolink": ".torrentname a[href*=details]",
+      "downlink": ".torrentname a[href*=download]",
+      "subtitle": ".torrentname div > div:nth-child(2)",
+      "searchurl": "https://pterclub.com/torrents.php?search=",
+      "searchIMDburl": "https://pterclub.com/torrents.php?search=",
+      "tagzz": "a.chs_tag-sub",
+      "taggy": "a.chs_tag-gy",
+      "imdbval": "[data-imdbid]",
+      "doubanval": "[data-doubanid]",
+      "imdbstr": "[data-imdbid]",
+      "seednum": "td:nth-child(6)",
+      "downnum": "td:nth-child(7)",
+      "torsize": "td:nth-child(5)",
+      "tordate" : "td:nth-child(4) > span"
+    },
+    {
+      "site": "chdbits",
+      "tortable": "table.torrents",
+      "torlist": "table.torrents > tr",
+      "infolink": "table.torrentname a[href*=details]",
+      "downlink": "table.torrentname a[href*=download]",
+      "subtitle": ".subtitle",
+      "searchurl": "https://chdbits.co/torrents.php?search="
+    },
+    {
+      "site": "audiences",
+      "tortable": "#torrenttable",
+      "torlist": "#torrenttable > tr",
+      "infolink": ".torrents-name a[href*=details]",
+      "downlink": ".torrents-name a[href*=download]",
+      "subtitle": ".torrents-name > table > tr > td ",
+      "searchurl": "https://audiences.me/torrents.php?search="
+    }
+  ]
+}

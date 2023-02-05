@@ -838,6 +838,12 @@ def tryFloat(fstr):
         f = 0.0
     return f
 
+def tryint(instr):
+    try:
+        string_int = int(instr)
+    except ValueError:
+        string_int = 0
+    return string_int
 
 def fetchInfoPage(pageUrl, pageCookie):
     cookie = SimpleCookie()
@@ -1050,6 +1056,7 @@ def prcessRssFeeds(rsstask):
 @auth.login_required
 def manualDownload(rsslogid):
     dbrssitem = RSSHistory.query.get(rsslogid)
+    ## TODO: count download number on 1st site of the name
     taskitem = RSSTask.query.filter(RSSTask.site == dbrssitem.site).first()
 
     imdbstr = ''
@@ -1152,13 +1159,137 @@ def requestSearchPT(pageUrl, pageCookie):
     return r
 
 from bs4 import BeautifulSoup
-# from lxml import etree
-class TorResult:
-    def __init__(self, title, infolink, description, downlink):
-        self.title = title
-        self.infolink = infolink
-        self.description = description
-        self.downlink = downlink
+
+class TorrentCache(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    addedon = db.Column(db.DateTime, default=datetime.now)
+    site = db.Column(db.String(32))
+    searchword = db.Column(db.String(64))
+    tortitle = db.Column(db.String(256))
+    infolink = db.Column(db.String(256))
+    subtitle = db.Column(db.String(256))
+    downlink = db.Column(db.String(256))
+    taggy = db.Column(db.Boolean)
+    tagzz = db.Column(db.Boolean)
+    imdbstr = db.Column(db.String(32))
+    imdbval = db.Column(db.Float, default=0.0)
+    doubanval = db.Column(db.Float, default=0.0)
+    seednum = db.Column(db.Integer)
+    downnum = db.Column(db.Integer)
+    torsizestr = db.Column(db.String(16))
+    tordatestr = db.Column(db.String(32))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'addedon': self.addedon,
+            'site': self.site,
+            'searchword' : self.searchword,
+            'tortitle': self.tortitle,
+            'infolink': self.infolink,
+            'subtitle': self.subtitle,
+            'downlink': self.downlink,
+            'taggy': self.taggy,
+            'tagzz': self.tagzz,
+            'imdbstr': self.imdbstr,
+            'imdbval': self.imdbval,
+            'doubanval': self.doubanval,
+            'seednum': self.seednum,
+            'downnum': self.downnum,
+            'torsizestr': self.torsizestr,
+            'tordatestr': self.tordatestr,
+        }
+
+
+@app.route('/api/searchresult')
+@auth.login_required
+def data():
+    query = TorrentCache.query
+
+    # search filter
+    search = request.args.get('search[value]')
+    if search:
+        query = query.filter(db.or_(
+            TorrentCache.tortitle.like(f'%{search}%'),
+            TorrentCache.subtitle.like(f'%{search}%'),
+        ))
+    total_filtered = query.count()
+
+    # sorting
+    order = []
+    i = 0
+    while True:
+        col_index = request.args.get(f'order[{i}][column]')
+        if col_index is None:
+            break
+        col_name = request.args.get(f'columns[{col_index}][data]')
+        if col_name not in ['tortitle', 'torsizestr', 'addedon']:
+            col_name = 'id'
+        descending = request.args.get(f'order[{i}][dir]') == 'desc'
+        col = getattr(TorrentCache, col_name)
+        if descending:
+            col = col.desc()
+        order.append(col)
+        i += 1
+    if order:
+        query = query.order_by(*order)
+
+    # pagination
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    query = query.offset(start).limit(length)
+
+    # response
+    return {
+        'data': [tor.to_dict() for tor in query],
+        'recordsFiltered': total_filtered,
+        'recordsTotal': TorrentCache.query.count(),
+        'draw': request.args.get('draw', type=int),
+    }
+
+
+def parseRowToDbItem(row, hosturl, cursite):
+    dbitem = TorrentCache()
+    eleTitle = row.select_one(cursite["infolink"])
+    eleDownload = row.select_one(cursite["downlink"])
+    subtitleEle = row.select_one(cursite["subtitle"])
+    dbitem.title = eleTitle.get_text(strip=True)
+    subtitle = subtitleEle.get_text() if subtitleEle else ''
+    dbitem.subtitle = subtitle.removeprefix(eleTitle.get_text())
+    dbitem.dllink = urljoin(hosturl, eleDownload['href'])
+    dbitem.infolink = urljoin(hosturl, eleTitle['href'])
+    dbitem.taggy = True if row.select_one(cursite["taggy"]) else False
+    dbitem.tagzz = True if row.select_one(cursite["tagzz"]) else False
+    eleimdb = row.select_one(cursite["imdbstr"])
+    if eleimdb:
+        if cursite["imdbstr"].startswith('['):
+            m = re.search(r'\[(.*)\]', cursite["imdbstr"], re.I)
+            if m:
+                dbitem.imdbstr = eleimdb[m[1]]
+        else:
+            dbitem.imdbstr = eleimdb.get_text(strip=True) if eleimdb else ''
+    else:
+        dbitem.imdbstr = ''
+    if dbitem.imdbstr and not dbitem.imdbstr.startswith('tt'):
+        dbitem.imdbstr = 'tt'+ dbitem.imdbstr
+    eleimdbval = row.select_one(cursite["imdbval"])
+    dbitem.imdbval = tryFloat(eleimdbval.get_text(strip=True)) if eleimdbval else 0.0
+    eledoubanval = row.select_one(cursite["doubanval"])
+    dbitem.doubanval = tryFloat(eledoubanval.get_text(strip=True)) if eledoubanval else 0.0
+    eleseednum = row.select_one(cursite["seednum"])
+    dbitem.seednum = tryint(eleseednum.get_text(strip=True)) if eleseednum else 0
+    eledownnum = row.select_one(cursite["downnum"])
+    dbitem.downnum = tryint(eledownnum.get_text(strip=True)) if eledownnum else 0
+    eletorsize = row.select_one(cursite["torsize"])
+    dbitem.torsizestr = eletorsize.get_text(strip=True) if eletorsize else ''
+    eletordate = row.select_one(cursite["tordate"])
+    if cursite["tordate"].endswith('span'):
+        dbitem.tordatestr = eletordate["title"] if eletordate else ''
+    else:
+        dbitem.tordatestr = eletordate.get_text(strip=True) if eletordate else ''
+
+    return dbitem
+
 
 
 @app.route('/ptsearch', methods=['POST', 'GET'])
@@ -1167,7 +1298,6 @@ def ptSearch():
     import siteconfig
     PT_SITES = siteconfig.loadSiteConfig()
 
-    result = []
     if request.method == 'POST':
         form = PtSearchForm(request.form)
 
@@ -1175,32 +1305,28 @@ def ptSearch():
         cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
         # if cursite
         pturl = cursite['searchurl']+form.searchStr.data
-        ptcookie = cursite['cookie']
+
+        ## TODO: using rsstask cookie
+        taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
+        if not taskitem:
+            abort(401)        
+        ptcookie = taskitem.cookie
         doc = requestSearchPT(pturl, ptcookie)
         if doc:
             soup = BeautifulSoup(doc.content, 'html.parser')
-            # table = soup.find('table', id="torrenttable")
-            table = soup.select_one(cursite["tortable"])
+            hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
             torlist = soup.select(cursite["torlist"])
             for row in torlist:
-                # collist = row.find_all('td', recursive=False)
-                # tornamecol = collist[cursite["tornamecol"]]
                 eleTitle = row.select_one(cursite["infolink"])
-                if eleTitle:
-                    eleDownload = row.select_one(cursite["downlink"])
-                    subtitleEle = row.select_one(cursite["subtitle"])
-                    title = eleTitle.get_text(strip=True)
-                    subtitle = subtitleEle.get_text() if subtitleEle else ''
-                    subtitle = subtitle.removeprefix(title)
-                    host = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
-                    dllink = urljoin(host, eleDownload['href'])
-                    infolink = urljoin(host, eleTitle['href'])
-                    n = TorResult(title=title, 
-                                infolink=infolink, 
-                                description=subtitle,
-                                downlink=dllink)
-                    result.append(n)
+                if not eleTitle:
+                    continue
+                dbitem = parseRowToDbItem(row, hosturl, cursite)
+                dbitem.site = sitehost
+                dbitem.searchword = form.searchStr.data
 
+                db.session.add(dbitem)
+                db.session.commit()
+    
     return render_template('ptsearch.html', form=form, result=result)
 
 
