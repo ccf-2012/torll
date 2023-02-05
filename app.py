@@ -1253,19 +1253,20 @@ def parseRowToDbItem(row, hosturl, cursite):
     eleTitle = row.select_one(cursite["infolink"])
     eleDownload = row.select_one(cursite["downlink"])
     subtitleEle = row.select_one(cursite["subtitle"])
-    dbitem.title = eleTitle.get_text(strip=True)
+    dbitem.tortitle = eleTitle.get_text(strip=True)
     subtitle = subtitleEle.get_text() if subtitleEle else ''
     dbitem.subtitle = subtitle.removeprefix(eleTitle.get_text())
-    dbitem.dllink = urljoin(hosturl, eleDownload['href'])
+    dbitem.downlink = urljoin(hosturl, eleDownload['href'])
     dbitem.infolink = urljoin(hosturl, eleTitle['href'])
     dbitem.taggy = True if row.select_one(cursite["taggy"]) else False
     dbitem.tagzz = True if row.select_one(cursite["tagzz"]) else False
     eleimdb = row.select_one(cursite["imdbstr"])
     if eleimdb:
         if cursite["imdbstr"].startswith('['):
-            m = re.search(r'\[(.*)\]', cursite["imdbstr"], re.I)
-            if m:
-                dbitem.imdbstr = eleimdb[m[1]]
+            s = cursite["imdbstr"]
+            # attr = re.search(r'\[(.*?)\]',s).group(1)
+            attr = s[s.find("[")+1:s.find("]")]
+            dbitem.imdbstr = eleimdb[attr]
         else:
             dbitem.imdbstr = eleimdb.get_text(strip=True) if eleimdb else ''
     else:
@@ -1296,7 +1297,12 @@ def parseRowToDbItem(row, hosturl, cursite):
 def ptSearch():
     form = PtSearchForm(request.form)
     import siteconfig
-    PT_SITES = siteconfig.loadSiteConfig()
+
+    r = siteconfig.loadSiteConfig()
+    if r:
+        PT_SITES = r["sites"]
+    else:
+        abort(402)
 
     if request.method == 'POST':
         form = PtSearchForm(request.form)
@@ -1316,7 +1322,7 @@ def ptSearch():
             soup = BeautifulSoup(doc.content, 'html.parser')
             hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
             torlist = soup.select(cursite["torlist"])
-            for row in torlist:
+            for row in reversed(torlist):
                 eleTitle = row.select_one(cursite["infolink"])
                 if not eleTitle:
                     continue
@@ -1327,7 +1333,30 @@ def ptSearch():
                 db.session.add(dbitem)
                 db.session.commit()
     
-    return render_template('ptsearch.html', form=form, result=result)
+    return render_template('ptsearch.html', form=form)
+
+@app.route('/dlresult/<cacheid>')
+@auth.login_required
+def resultDownload(cacheid):
+    dbcacheitem = TorrentCache.query.get(cacheid)
+
+    if not dbcacheitem.imdbstr:
+        ## TODO: using rsstask cookie
+        taskitem = RSSTask.query.filter(RSSTask.site == dbcacheitem.site).first()
+
+        imdbstr = ''
+        if taskitem:
+            doc = fetchInfoPage(dbcacheitem.infoLink, taskitem.cookie)
+            if doc:
+                imdbstr = parseInfoPageIMDbId(doc)
+                dbcacheitem.imdbstr = imdbstr
+    siteIdStr = genrSiteId(dbcacheitem.infoLink, dbcacheitem.imdbstr)
+
+    # if not checkMediaDbNameDupe(dbcacheitem.title):    
+    r = addTorrent(dbcacheitem.downloadLink, siteIdStr, dbcacheitem.imdbstr)
+    if r == 201:
+        db.session.commit()
+    return redirect("/rsslog")
 
 
 def rssJob(id):
