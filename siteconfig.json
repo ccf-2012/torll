@@ -4,38 +4,201 @@
       "site": "pterclub",
       "tortable": "table.torrents",
       "torlist": "table.torrents > tr",
-      "infolink": ".torrentname a[href*=details]",
-      "downlink": ".torrentname a[href*=download]",
+      "tortitle": ".torrentname a[href*=details]",
+      "infolink": {
+        "path": ".torrentname a[href*=details]",
+        "method": "attr",
+        "arg": "href"
+      },
+      "downlink": {
+        "path": ".torrentname a[href*=download]",
+        "method": "attr",
+        "arg": "href"
+      },
       "subtitle": ".torrentname div > div:nth-child(2)",
       "searchurl": "https://pterclub.com/torrents.php?search=",
-      "searchIMDburl": "https://pterclub.com/torrents.php?search=",
+      "searchIMDburl": "https://pterclub.com/torrents.php?search_area=4&search=",
       "tagzz": "a.chs_tag-sub",
       "taggy": "a.chs_tag-gy",
-      "imdbval": "[data-imdbid]",
       "doubanval": "[data-doubanid]",
-      "imdbstr": "[data-imdbid]",
+      "imdbval": "[data-imdbid]",
+      "imdbstr": {
+        "path": "[data-imdbid]",
+        "method": "attr",
+        "arg": "data-imdbid"
+      },
+      "doubanid": {
+        "path": "[data-doubanid]",
+        "method": "attr",
+        "arg": "data-doubanid"
+      },
       "seednum": "td:nth-child(6)",
       "downnum": "td:nth-child(7)",
       "torsize": "td:nth-child(5)",
-      "tordate" : "td:nth-child(4) > span"
+      "tordate" : {
+        "path":"td:nth-child(4) > span",
+        "method":"attr",
+        "arg": "title"
+      }
     },
     {
       "site": "chdbits",
       "tortable": "table.torrents",
       "torlist": "table.torrents > tr",
-      "infolink": "table.torrentname a[href*=details]",
-      "downlink": "table.torrentname a[href*=download]",
+      "tortitle": "table.torrentname a[href*=details]",
+      "infolink": {
+        "path": "table.torrentname a[href*=details]",
+        "method": "attr",
+        "arg": "href"
+
+      },
+      "downlink": {
+        "path": "table.torrentname a[href*=download]",
+        "method": "attr",
+        "arg": "href"
+      },
       "subtitle": ".subtitle",
-      "searchurl": "https://chdbits.co/torrents.php?search="
+      "searchurl": "https://chdbits.co/torrents.php?search=",
+      "searchIMDburl": "https://chdbits.co/torrents.php?search_area=4&search=",
+      "tagzz": "div.tag-sub",
+      "taggy": "div.tag-gy",
+      "imdbval": "table.torrentname > tr > td:nth-child(2)",
+      "doubanval": "",
+      "imdbstr": "",
+      "seednum": "td:nth-child(6)",
+      "downnum": "td:nth-child(7)",
+      "torsize": "td:nth-child(5)",
+      "tordate" : {
+        "path":"td:nth-child(4) > span",
+        "method":"attr",
+        "arg": "title"
+      }
     },
     {
       "site": "audiences",
       "tortable": "#torrenttable",
       "torlist": "#torrenttable > tr",
-      "infolink": ".torrents-name a[href*=details]",
-      "downlink": ".torrents-name a[href*=download]",
-      "subtitle": ".torrents-name > table > tr > td ",
-      "searchurl": "https://audiences.me/torrents.php?search="
-    }
+      "tortitle": ".torrents-name a[href*=details]",
+      "infolink": {
+        "path": ".torrents-name a[href*=details]",
+        "method": "attr",
+        "arg": "href"
+      },
+      "downlink": {
+        "path": ".torrents-name a[href*=download]",
+        "method": "attr",
+        "arg": "href"
+      },
+      "subtitle": ".torrents-name > table > tr > td > span:last-child",
+      "searchurl": "https://audiences.me/torrents.php?search=",
+      "searchIMDburl": "https://audiences.me/torrents.php?search_area=4&search=",
+      "tagzz": "span.tzz",
+      "taggy": "span.tgy",
+      "doubanval": "a[href*=douban]",
+      "imdbval": "a[href*=imdb]",
+      "imdbstr": {
+        "path": "a[href*=imdb]",
+        "method": "attr-reimdb",
+        "arg": "href"
+      },
+      "doubanid": {
+        "path": "a[href*=douban]",
+        "method": "attr-redouban",
+        "arg": "href"
+      },
+      "seednum": "td:nth-child(6)",
+      "downnum": "td:nth-child(7)",
+      "torsize": "td:nth-child(5)",
+      "tordate" : {
+        "path":"td:nth-child(4) > span",
+        "method":"attr",
+        "arg": "title"
+      }
+    },
+    {
+      "site": "ourbits",
+      "tortable": "table.torrents",
+      "torlist": "table.torrents > tr",
+      "tortitle": ".torrentname a[href*=details]",
+      "infolink": {
+        "path": ".torrentname a[href*=details]",
+        "method": "attr",
+        "arg": "href"
+      },
+      "downlink": {
+        "path": ".torrentname a[href*=download]",
+        "method": "attr",
+        "arg": "href"
+      },
+      "subtitle":  ".torrentname > tr > td",
+      "searchurl": "https://ourbits.club/torrents.php?search=",
+      "searchIMDburl": "https://ourbits.club/torrents.php?search_area=4&search=",
+      "tagzz": "div.tag-zz",
+      "taggy": "div.tag-gy",
+      "doubanval": "[data-doubanid]",
+      "imdbval": "[data-imdbid]",
+      "imdbstr": {
+        "path": "[data-imdbid]",
+        "method": "attr",
+        "arg": "data-imdbid"
+      },
+      "doubanid": {
+        "path": "[data-doubanid]",
+        "method": "attr",
+        "arg": "data-doubanid"
+      },
+      "seednum": "td:nth-child(6)",
+      "downnum": "td:nth-child(7)",
+      "torsize": "td.rowfollow:nth-child(5)",
+      "tordate" : {
+        "path":"td:nth-child(4) > span",
+        "method":"attr",
+        "arg": "title"
+      }
+    },
+    {
+      "site": "hdsky",
+      "tortable": "table.torrents",
+      "torlist": "table.torrents > tr",
+      "tortitle": ".torrentname a[href*=details]",
+      "infolink": {
+        "path": ".torrentname a[href*=details]",
+        "method": "attr",
+        "arg": "href"
+      },
+      "downlink": {
+        "path": "form[action*=download]",
+        "method": "attr",
+        "arg": "action"
+      },
+      "subtitle": {
+        "path": ".torrentname a[href*=details]",
+        "method": "parent-text"
+      },
+      "searchurl": "https://hdsky.me//torrents.php?search=",
+      "searchIMDburl": "https://hdsky.me//torrents.php?search_area=4&search=",
+      "tagzz": "span[style*=magenta]",
+      "taggy": "span[style*=darkgreen]",
+      "doubanval": "a[href*=douban]",
+      "imdbval": "a[href*=imdb]",
+      "imdbstr": {
+        "path": "a[href*=imdb]",
+        "method": "attr-reimdb",
+        "arg": "href"
+      },
+      "doubanid": {
+        "path": "a[href*=douban]",
+        "method": "attr-redouban",
+        "arg": "href"
+      },
+      "seednum": "td:nth-child(6)",
+      "downnum": "td:nth-child(7)",
+      "torsize": "td.rowfollow:nth-child(5)",
+      "tordate" : {
+        "path":"td:nth-child(4) > span",
+        "method":"attr",
+        "arg": "title"
+      }
+    }        
   ]
 }

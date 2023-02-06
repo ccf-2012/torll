@@ -1258,46 +1258,88 @@ def searchResultData():
     }
 
 
+def selectElement(row, siteJson, key):
+    if not siteJson:
+        return ''
+    if key not in siteJson:
+        return ''
+    eleJson = siteJson[key]
+    if not isinstance(eleJson, str):
+        ele = row.select_one(eleJson["path"])
+        if not ele:
+            return ''
+        if "method" in eleJson:
+            if eleJson["method"] == "text":
+                return ele.get_text()
+            elif eleJson["method"] == "attr":
+                if "arg" in eleJson:
+                    return ele[eleJson["arg"]]
+                else:
+                    m = re.search(r'\[(.*?)\]', eleJson["path"], re.I)
+                    return ele[m[1]] if m else ''
+            elif eleJson["method"] == "attr-reimdb":
+                attrstr = ele[eleJson["arg"]]
+                m = re.search(r'title/(tt\d+)', attrstr, re.I)
+                return m[1] if m else ''
+            elif eleJson["method"] == "attr-redouban":
+                attrstr = ele[eleJson["arg"]]
+                m = re.search(r'subject/(\d+)', attrstr, re.I)
+                return m[1] if m else ''
+            elif eleJson["method"] == "parent-text":
+                return ele.parent.get_text(strip=True)
+            else:
+                # not supported yet
+                return ''
+
+        else:
+            return ele.get_text(strip=True)
+    else:
+        if not eleJson.strip():
+            return ''
+        ele = row.select_one(eleJson)
+        return ele.get_text(strip=True) if ele else ''
+
+
 def parseRowToDbItem(row, hosturl, cursite):
     dbitem = TorrentCache()
-    eleTitle = row.select_one(cursite["infolink"])
-    eleDownload = row.select_one(cursite["downlink"])
-    subtitleEle = row.select_one(cursite["subtitle"])
-    dbitem.tortitle = eleTitle.get_text(strip=True)
-    subtitle = subtitleEle.get_text() if subtitleEle else ''
-    dbitem.subtitle = subtitle.removeprefix(eleTitle.get_text())
-    dbitem.downlink = urljoin(hosturl, eleDownload['href'])
-    dbitem.infolink = urljoin(hosturl, eleTitle['href'])
-    dbitem.taggy = True if row.select_one(cursite["taggy"]) else False
-    dbitem.tagzz = True if row.select_one(cursite["tagzz"]) else False
-    eleimdb = row.select_one(cursite["imdbstr"])
-    if eleimdb:
-        m = re.search(r'\[(.*?)\]', cursite["imdbstr"], re.I)
-        if m:
-            dbitem.imdbstr = eleimdb[m[1]]
-        else:
-            dbitem.imdbstr = eleimdb.get_text(strip=True)
-    else:
-        dbitem.imdbstr = ''
+    dbitem.tortitle = selectElement(row, cursite, "tortitle")
+    dbitem.downlink = selectElement(row, cursite, "downlink")
+    if dbitem.downlink:
+        dbitem.downlink = urljoin(hosturl, dbitem.downlink)
+    dbitem.infolink = selectElement(row, cursite, "infolink")
+    if dbitem.infolink:
+        dbitem.infolink = urljoin(hosturl, dbitem.infolink)
+    
+    dbitem.subtitle = selectElement(row, cursite, "subtitle")
+    if dbitem.subtitle:
+        dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
+
+    dbitem.taggy = True if selectElement(row, cursite, "taggy") else False
+    dbitem.tagzz = True if selectElement(row, cursite, "tagzz") else False
+
+    dbitem.imdbstr = selectElement(row, cursite, "imdbstr")
     if dbitem.imdbstr and not dbitem.imdbstr.startswith('tt'):
-        dbitem.imdbstr = 'tt'+ dbitem.imdbstr
-    eleimdbval = row.select_one(cursite["imdbval"])
-    dbitem.imdbval = tryFloat(eleimdbval.get_text(strip=True)) if eleimdbval else 0.0
-    eledoubanval = row.select_one(cursite["doubanval"])
-    dbitem.doubanval = tryFloat(eledoubanval.get_text(strip=True)) if eledoubanval else 0.0
-    eleseednum = row.select_one(cursite["seednum"])
-    dbitem.seednum = tryint(eleseednum.get_text(strip=True)) if eleseednum else 0
-    eledownnum = row.select_one(cursite["downnum"])
-    dbitem.downnum = tryint(eledownnum.get_text(strip=True)) if eledownnum else 0
-    eletorsize = row.select_one(cursite["torsize"])
-    dbitem.torsizestr = eletorsize.get_text(strip=True) if eletorsize else ''
-    eletordate = row.select_one(cursite["tordate"])
-    if cursite["tordate"].endswith('span'):
-        dbitem.tordatestr = eletordate["title"] if eletordate else ''
-    else:
-        dbitem.tordatestr = eletordate.get_text(strip=True) if eletordate else ''
+        dbitem.imdbstr = 'tt'+ dbitem.imdbstr.zfill(7)
+
+    dbitem.doubanidstr = selectElement(row, cursite, "doubanid")
+
+    eleimdbval = selectElement(row, cursite, "imdbval")
+    dbitem.imdbval = tryFloat(eleimdbval)
+
+    eledoubanval = selectElement(row, cursite, "doubanval")
+    dbitem.doubanval = tryFloat(eledoubanval)
+
+    eleseednum = selectElement(row, cursite, "seednum")
+    dbitem.seednum = tryint(eleseednum)
+
+    eledownnum = selectElement(row, cursite, "downnum")
+    dbitem.downnum = tryint(eledownnum)
+
+    dbitem.eletorsize = selectElement(row, cursite, "torsize")
+    dbitem.tordate = selectElement(row, cursite, "tordate")
 
     return dbitem
+
 
 
 
