@@ -197,7 +197,7 @@ def torMediaEdit(id):
 
     if request.method == 'POST':
         form = MediaItemForm(request.form)
-        # cat, tmdbstr = parseTMDbStr(form.tmdbcatid.data)
+        tmdbcat, tmdbidstr = parseTMDbStr(form.tmdbcatid.data)
         myconfig.updateMediaRootDir(ARGS.config, form.mbRootDir.data)
         oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
         if os.path.exists(oldpath):
@@ -208,6 +208,8 @@ def torMediaEdit(id):
                     tmdbcatidstr=form.tmdbcatid.data)
 
             if tormedia.location != targetLocation:
+                tormedia.tmdbcat = tmdbcat
+                tormedia.tmdbid = tryint(tmdbidstr)
                 tormedia.location = targetLocation
                 db.session.commit()
                 warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)

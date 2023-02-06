@@ -102,7 +102,7 @@ python3 /home/ccf2013/torll/notify_plex.py -I "$1"
 * 如果发现匹配错误的条目，可以点击 `修正` ，以新输入的 TMDb 分类和 id 作 torcp `--move-run` 
 * 如果所下载的种子已经传到 GD 盘，可以将 GD 盘 mount 到本地，这里输入 mount 后的媒体库的路径
 
-![修正匹配](https://ptpimg.me/y2cy5p.png)
+![修正匹配](https://ptpimg.me/218uav.png)
 
 
 ## 在添加种子时，生成 site_id 形式的保存目录
