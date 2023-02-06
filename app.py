@@ -132,13 +132,15 @@ class TorcpItemCallbackObj:
         self.tmdbcat = ''
         self.mediaName = ''
         self.targetDir = ''
+        self.tmdbTitle = ''
 
     def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle):
-        print(targetDir, mediaName, tmdbIdStr, tmdbCat)
+        # print(targetDir, mediaName, tmdbIdStr, tmdbCat)
         self.tmdbid = int(tmdbIdStr)
         self.tmdbcat = tmdbCat
         self.mediaName = mediaName
         self.targetDir = targetDir
+        self.tmdbTitle = tmdbTitle
 
 
 def queryByHash(qbhash):
@@ -202,7 +204,7 @@ def torMediaEdit(id):
         oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
         if os.path.exists(oldpath):
             import rcp
-            targetLocation = rcp.runTorcpMove(
+            targetLocation, tmdbTitle = rcp.runTorcpMove(
                     sourceDir=oldpath,
                     targetDir=myconfig.CONFIG.mbRootDir,
                     tmdbcatidstr=form.tmdbcatid.data)
@@ -211,6 +213,7 @@ def torMediaEdit(id):
                 tormedia.tmdbcat = tmdbcat
                 tormedia.tmdbid = tryint(tmdbidstr)
                 tormedia.location = targetLocation
+                tormedia.title = tmdbTitle
                 db.session.commit()
                 warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
                 shutil.rmtree(oldpath)

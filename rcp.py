@@ -80,8 +80,8 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
         eo = TorcpItemCallbackObj()
         o = Torcp()
         o.main(argv, eo)
-        return eo.targetDir
-    return ''
+        return eo.targetDir, eo.tmdbTitle
+    return '', ''
 
 
 def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcatidstr=None):
