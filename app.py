@@ -207,12 +207,15 @@ def torMediaEdit(id):
                     targetDir=myconfig.CONFIG.mbRootDir,
                     tmdbcatidstr=form.tmdbcatid.data)
 
-            tormedia.location = targetLocation
-            db.session.commit()
-            
-            warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
-            shutil.rmtree(oldpath)
-            moved = True
+            if tormedia.location != targetLocation:
+                tormedia.location = targetLocation
+                db.session.commit()
+                warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+                shutil.rmtree(oldpath)
+                moved = True
+            else:
+                warningstr = '影视内容位置没变：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+                moved = False
         else:
             warningstr = '目录不存在：' + oldpath
             moved = False
