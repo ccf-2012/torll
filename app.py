@@ -166,7 +166,7 @@ class MediaItemForm(Form):
     mbRootDir = StringField('媒体库根目录，如果是GD盘则将其mount到本地')
     tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 分类和id的写法可以是：tv-12345，movie-12345，m12345')
     # tmdbid = StringField('TMDb id')
-    submit = SubmitField("保存设置")
+    submit = SubmitField("执行修正")
 
 
 def parseTMDbStr(tmdbstr):

@@ -1,5 +1,9 @@
 # TORLL aka TORCP ui
 * 以 web ui 形式设置 torcp，查看所处理的条目
+  1. 如果有识别错误的条目，可在 ui 中修正
+  2. 可以设置 rss 任务，进行日常的下载，支持查重
+  3. 可作为 torfilter 的后端，即在 pt 站上提交查重下载到 torll
+  4. 可以搜索 pt 站上种子发起下载
 * **注意：若本服务在非私有的网络中运行，须万分注意防护**
 
 
@@ -30,7 +34,7 @@ python3 app.py
 * 在影视种子下载完成后调用 torcp 进行处理时的参数，包括硬链/软链目标目录，TMDb的api key以及语言，Emby/Plex 括号后缀等；
 * 软链(symbolink) 在Emby/Plex中播放以及在qBit中维持作种，都是可行的；但如果删除了源文件/目录，则链接就会失效，这一点与硬链不同，硬链就如同两个分别的文件，删掉任意一个都不影响；
 * 括号后缀是指，生成的文件夹在交给 Emby/Plex 来收录库中时，通过后缀直接确定媒体；
-* TMDb语言决定生成的文件名是中文还是英文，在Plex中可能使用英文会有利一些；
+* TMDb 语言决定生成的文件名是中文还是英文；
 
 
 ![torcp setting](https://ptpimg.me/tl68x6.png)
@@ -95,15 +99,18 @@ python3 /home/ccf2013/torll/notify_plex.py -I "$1"
 ----
 ## 种子列表及修正
 * 当积累了较多种子，toll 可以方便在查找种子标题，存储路径，可以点击链接到源站查看信息，也可以方便地查看TMDb, IMDb
-* 如果发现匹配错误的条目，可以点击 `修正` ，输入 TMDb 分类和 id ，即会重新生成目标链接
+* 如果发现匹配错误的条目，可以点击 `修正` ，以新输入的 TMDb 分类和 id 作 torcp `--move-run` 
+* 如果所下载的种子已经传到 GD 盘，可以将 GD 盘 mount 到本地，这里输入 mount 后的媒体库的路径
 
 ![修正匹配](https://ptpimg.me/y2cy5p.png)
 
 
 ## 在添加种子时，生成 site_id 形式的保存目录
-torll 在处理 qBit 中的种子，对 `site_id_imdb` 形式目录保存的种子，如 'pter_87424_tt0075329'，将会识别其中的源站信息和IMDb。这样的目录，有利于追溯查阅信息和保种续种(Credit to @boomPa)。有两种方式可以在下载种子时生成 site_id：
+* torll 在处理 qBit 中的种子，对 `site_id_imdb` 形式目录保存的种子，如 'pter_87424_tt0075329'，将会识别其中的源站信息和IMDb。这样的目录，有利于追溯查阅信息和保种续种(Credit to @boomPa)。
+* 有三种方式可以在下载种子时生成 site_id 目录：
 1. rss
 2. torfilter 
+3. 在torll中查找种子，发起下载
 
 ## 设置 RSS
 * 在RSS任务列表，新建RSS任务，填写 rss 链接、站点cookie，运行间隔
@@ -131,6 +138,10 @@ const API_AUTH_PASS = "password";
 
 即可定向到所设地址，如上例中的 192.168.5.6，去进行查重和发起下载，其中用户名密码为 torll 中的登陆密码。
 
+
+## 在 torll 中查找
+* 当前支持 pter 站
+* 建设中...
 
 ---
 # 一些辅助工具
