@@ -8,7 +8,7 @@
 
 <div class="row mx-2 my-3 justify-content-center">
 
-    <table id="data" width="100%" style="table-layout: fixed;" class="table">
+  <table id="data" class="table table-striped row-border order-column" style="width:100%">
 		<thead>
 		  <tr>
 			<th>时间</th>
@@ -92,7 +92,7 @@
         { data: 'id', searchable: false, 
           "width": "10%",
           "render": function (data, type, row) {
-            var linkStart = (row.accept == 0) ? '<a href="/rssmanual/' + row.id + '">下载</a>' : ''
+            var linkStart = (row.accept in [0,2]) ? '<a href="/rssmanual/' + row.id + '">下载</a>' : ''
             return linkStart;
           },
         },
@@ -103,7 +103,7 @@
         if (data.accept == 0) {
           $('td', row).css('background-color', 'rgb(219 234 254)');
         }
-        else if  (data.accept == 2) {
+        else if  (data.accept == 3) {
           $('td', row).css('background-color', 'rgb(231 229 228)');
         }
       }

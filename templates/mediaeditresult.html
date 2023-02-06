@@ -8,10 +8,12 @@
             <span class="my-3 mt-4 mr-auto" ><h4>修改影视种子条目</h4></span>  
         </div>
 
-        <div class="alert alert-danger" role="alert">
+        <div class="alert {% if moved %}alert-success{% else %}alert-danger{% endif %}" role="alert">
             <h5 class="alert-heading">请检查!</h4>
             {{ msg }}
         </div>
     </div>
 </div>
+
+<a class=" " href="/mediaedit/{{ mid }}">再试一下</a>
 {% endblock %}             

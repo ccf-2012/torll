@@ -1,5 +1,3 @@
-# curl -i -H "Content-Type: application/json" -X POST -d '{"torpath" : "~/torccf/frds_10018_tt6710716/真探S03.2019.1080p.WEB-DL.x265.AC3￡cXcY@FRDS", "torhash": "289256b0918c3dccea51a194a3e834664b17eafd", "torsize": "11534336"}' http://localhost:5000/api/torcp
-
 from flask import Flask, render_template, jsonify, redirect
 from flask import request, abort
 import requests as pyrequests
@@ -214,10 +212,12 @@ def torMediaEdit(id):
             
             warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
             shutil.rmtree(oldpath)
+            moved = True
         else:
             warningstr = '目录不存在：' + oldpath
+            moved = False
 
-        return render_template('mediaeditresult.html', msg=warningstr)
+        return render_template('mediaeditresult.html', msg=warningstr, moved=moved, mid=id)
         # return redirect("/")
 
     return render_template('mediaedit.html', form=form, msg=warningstr)
