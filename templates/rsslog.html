@@ -8,7 +8,7 @@
 
 <div class="row mx-2 my-3 justify-content-center">
 
-  <table id="data" class="table table-striped row-border order-column" style="width:100%">
+  <table id="data" class="table row-border order-column" style="width:100%">
 		<thead>
 		  <tr>
 			<th>时间</th>
@@ -92,15 +92,14 @@
         { data: 'id', searchable: false, 
           "width": "10%",
           "render": function (data, type, row) {
-            var linkStart = (row.accept in [0,2]) ? '<a href="/rssmanual/' + row.id + '">下载</a>' : ''
+            var linkStart = ([0,2].includes(row.accept)) ? '<a href="/rssmanual/' + row.id + '">下载</a>' : ''
             return linkStart;
           },
         },
 
       ],
       "createdRow": function (row, data, dataIndex) {
-        console.log(data)
-        if (data.accept == 0) {
+        if (data.accept == 2) {
           $('td', row).css('background-color', 'rgb(219 234 254)');
         }
         else if  (data.accept == 3) {

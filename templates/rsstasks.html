@@ -14,7 +14,7 @@
 <div class="row mx-2 my-3 justify-content-center">
   <a class=" " href="{{ url_for('rssNew') }}">+ 新建RSS任务</a>
 
-    <table id="data" class="table table-striped row-border order-column" style="width:100%">
+    <table id="data" class="table row-border order-column" style="width:100%">
       <thead>
         <tr>
           <th>最后更新</th>
@@ -126,7 +126,6 @@
         { data: 'active','visible' : false, searchable: false },
       ],
       "createdRow": function (row, data, dataIndex) {
-        console.log(data)
         if (data.active == 2) {
           // $(row).addClass('redClass');
           $('td', row).css('background-color', 'rgb(231 229 228)');
