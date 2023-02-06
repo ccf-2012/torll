@@ -74,10 +74,11 @@
             columns: [
                 {
                     data: 'site',
+                    "width": "10%",
                 },
                 {
                     data: 'tortitle',
-                    "width": "50%",
+                    "width": "40%",
                     "render": function (data, type, row, meta) {
                         if (data) {
                             return '<a href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
@@ -91,7 +92,7 @@
                     "width": "10%",
                     "render": function (data, type, row, meta) {
                         if (data) {
-                            return '<a href="https://www.imdb.com/title/"' + data + ' target="_blank">' + row.imdbval + '</a>';
+                            return '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbval + '</a>';
                         }
                         else return ''
                     }
