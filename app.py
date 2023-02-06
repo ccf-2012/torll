@@ -1148,7 +1148,7 @@ class PtSearchForm(Form):
     submit = SubmitField("查找")
 
 
-def requestSearchPT(pageUrl, pageCookie):
+def requestPtPage(pageUrl, pageCookie):
     cookie = SimpleCookie()
     cookie.load(pageCookie)
     cookies = {k: v.value for k, v in cookie.items()}
@@ -1257,6 +1257,8 @@ def searchResultData():
         'draw': request.args.get('draw', type=int),
     }
 
+def remove_non_ascii(string):
+    return ''.join(char for char in string if ord(char) < 128)
 
 def selectElement(row, siteJson, key):
     if not siteJson:
@@ -1300,15 +1302,19 @@ def selectElement(row, siteJson, key):
         return ele.get_text(strip=True) if ele else ''
 
 
-def parseRowToDbItem(row, hosturl, cursite):
+
+def parseRowToDbItem(row, hosturl, cursite, passkey=''):
     dbitem = TorrentCache()
     dbitem.tortitle = selectElement(row, cursite, "tortitle")
     dbitem.downlink = selectElement(row, cursite, "downlink")
     if dbitem.downlink:
-        dbitem.downlink = urljoin(hosturl, dbitem.downlink)
+        dbitem.downlink = hosturl + dbitem.downlink
+    if passkey:
+        dbitem.downlink = dbitem.downlink + "&passkey="+passkey
+
     dbitem.infolink = selectElement(row, cursite, "infolink")
     if dbitem.infolink:
-        dbitem.infolink = urljoin(hosturl, dbitem.infolink)
+        dbitem.infolink = hosturl + dbitem.infolink
     
     dbitem.subtitle = selectElement(row, cursite, "subtitle")
     if dbitem.subtitle:
@@ -1335,8 +1341,8 @@ def parseRowToDbItem(row, hosturl, cursite):
     eledownnum = selectElement(row, cursite, "downnum")
     dbitem.downnum = tryint(eledownnum)
 
-    dbitem.eletorsize = selectElement(row, cursite, "torsize")
-    dbitem.tordate = selectElement(row, cursite, "tordate")
+    dbitem.torsizestr = selectElement(row, cursite, "torsize")
+    dbitem.tordatestr = selectElement(row, cursite, "tordate")
 
     return dbitem
 
@@ -1360,23 +1366,32 @@ def ptSearch():
         sitehost = "pterclub"
         cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
         # if cursite
-        pturl = cursite['searchurl']+form.searchStr.data
 
         ## TODO: using rsstask cookie
         taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
         if not taskitem:
             abort(401)        
         ptcookie = taskitem.cookie
-        doc = requestSearchPT(pturl, ptcookie)
+
+        pturl = cursite['searchurl']+form.searchStr.data
+        hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
+        if "passkey" in cursite:
+            ucpJson = cursite["passkey"]
+            usercpurl = urljoin(hosturl, ucpJson["usercp"])
+            usercpdoc = requestPtPage(usercpurl, ptcookie)
+            soup = BeautifulSoup(usercpdoc.content, 'html.parser')
+            passkey = selectElement(soup, ucpJson, "keypath")
+            passkey = remove_non_ascii(passkey)
+            
+        doc = requestPtPage(pturl, ptcookie)
         if doc:
             soup = BeautifulSoup(doc.content, 'html.parser')
-            hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
             torlist = soup.select(cursite["torlist"])
             for row in reversed(torlist):
                 eleTitle = row.select_one(cursite["infolink"])
                 if not eleTitle:
                     continue
-                dbitem = parseRowToDbItem(row, hosturl, cursite)
+                dbitem = parseRowToDbItem(row, hosturl, cursite, passkey=passkey)
                 dbitem.site = sitehost
                 dbitem.searchword = form.searchStr.data
 

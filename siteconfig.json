@@ -46,11 +46,14 @@
       "tortable": "table.torrents",
       "torlist": "table.torrents > tr",
       "tortitle": "table.torrentname a[href*=details]",
+      "passkey":{
+        "usercp":"usercp.php",
+        "keypath": "table > tr:nth-child(4) > td.rowfollow"
+      },
       "infolink": {
         "path": "table.torrentname a[href*=details]",
         "method": "attr",
         "arg": "href"
-
       },
       "downlink": {
         "path": "table.torrentname a[href*=download]",
@@ -79,6 +82,10 @@
       "tortable": "#torrenttable",
       "torlist": "#torrenttable > tr",
       "tortitle": ".torrents-name a[href*=details]",
+      "passkey":{
+        "usercp":"usercp.php",
+        "keypath": "#passkey"
+      },
       "infolink": {
         "path": ".torrents-name a[href*=details]",
         "method": "attr",
@@ -120,6 +127,10 @@
       "tortable": "table.torrents",
       "torlist": "table.torrents > tr",
       "tortitle": ".torrentname a[href*=details]",
+      "passkey":{
+        "usercp":"usercp.php",
+        "keypath": "table > tr:nth-child(4) > td.rowfollow"
+      },
       "infolink": {
         "path": ".torrentname a[href*=details]",
         "method": "attr",
