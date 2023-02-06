@@ -83,7 +83,7 @@ class TorMediaItem(db.Model):
         return {
             'id': self.id,
             'torname': self.torname,
-            'title' : self.title,
+            'title': self.title,
             'addedon': self.addedon,
             'torabbrev': self.torsite,
             'torsite': genSiteLink(self.torsite, self.torsiteid),
@@ -166,7 +166,7 @@ class MediaItemForm(Form):
     # location = StringField('存储路径，如果是在本机上，修改此处将尝试改名', validators=[DataRequired()])
     # torimdb = StringField('修改IMDb以重新查询和生成硬链', validators=[DataRequired()])
     mbRootDir = StringField('媒体库根目录，如果是GD盘则将其mount到本地')
-    tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 分类和id的写法可以是：tv-12345，movie-12345，m12345')
+    tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 分类和id的写法可以是：tv-12345，movie-12345或简写为m12345')
     # tmdbid = StringField('TMDb id')
     submit = SubmitField("执行修正")
 
