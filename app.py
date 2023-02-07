@@ -1185,7 +1185,7 @@ class TorrentCache(db.Model):
     seednum = db.Column(db.Integer)
     downnum = db.Column(db.Integer)
     torsizestr = db.Column(db.String(16))
-    tordatestr = db.Column(db.String(32))
+    tordate = db.Column(db.DateTime)
     dlcount = db.Column(db.Integer, default=0)
 
     def to_dict(self):
@@ -1206,7 +1206,7 @@ class TorrentCache(db.Model):
             'seednum': self.seednum,
             'downnum': self.downnum,
             'torsizestr': self.torsizestr,
-            'tordatestr': self.tordatestr,
+            'tordate': self.tordate,
             'dlcount': self.dlcount,
         }
 
@@ -1259,6 +1259,11 @@ def searchResultData():
 
 def remove_non_ascii(string):
     return ''.join(char for char in string if ord(char) < 128)
+
+def striptag(titlestr):
+    s = re.sub(r'\[?(国语|中字|官方|禁转|原创)\]?', '', titlestr)
+    s = re.sub(r'\[?Checked by \w+\]?', '', s)
+    return s
 
 def selectElement(row, siteJson, key):
     if not siteJson:
@@ -1319,6 +1324,7 @@ def parseRowToDbItem(row, hosturl, cursite, passkey=''):
     dbitem.subtitle = selectElement(row, cursite, "subtitle")
     if dbitem.subtitle:
         dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
+        dbitem.subtitle = striptag(dbitem.subtitle)
 
     dbitem.taggy = True if selectElement(row, cursite, "taggy") else False
     dbitem.tagzz = True if selectElement(row, cursite, "tagzz") else False
@@ -1342,63 +1348,82 @@ def parseRowToDbItem(row, hosturl, cursite, passkey=''):
     dbitem.downnum = tryint(eledownnum)
 
     dbitem.torsizestr = selectElement(row, cursite, "torsize")
-    dbitem.tordatestr = selectElement(row, cursite, "tordate")
-
+    tordatestr = selectElement(row, cursite, "tordate") # 2023-01-30 12:58:38
+    dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
     return dbitem
 
 
-
-
-@app.route('/ptsearch', methods=['POST', 'GET'])
-def ptSearch():
-    form = PtSearchForm(request.form)
+def searchPtSites(seachWord, sites):
     import siteconfig
 
     r = siteconfig.loadSiteConfig()
     if r:
         PT_SITES = r["sites"]
     else:
-        abort(402)
+        return 402
+
+    sitehost = sites[0]
+    cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
+    # if cursite
+
+    ## TODO: using rsstask cookie
+    taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
+    if not taskitem:
+        abort(401)        
+    ptcookie = taskitem.cookie
+
+    pturl = cursite['searchurl']+seachWord
+    hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
+    passkey = ''
+    if "passkey" in cursite:
+        ucpJson = cursite["passkey"]
+        usercpurl = urljoin(hosturl, ucpJson["usercp"])
+        usercpdoc = requestPtPage(usercpurl, ptcookie)
+        soup = BeautifulSoup(usercpdoc.content, 'html.parser')
+        passkey = selectElement(soup, ucpJson, "keypath")
+        passkey = remove_non_ascii(passkey)
+        
+    doc = requestPtPage(pturl, ptcookie)
+    if doc:
+        soup = BeautifulSoup(doc.content, 'html.parser')
+        torlist = soup.select(cursite["torlist"])
+        for row in reversed(torlist):
+            eleTitle = row.select_one(cursite["tortitle"])
+            if not eleTitle:
+                continue
+            dbitem = parseRowToDbItem(row, hosturl, cursite, passkey=passkey)
+            dbitem.site = sitehost
+            dbitem.searchword = seachWord
+
+            db.session.add(dbitem)
+            db.session.commit()
+
+    return 200
+
+
+@app.route('/ptsearch', methods=['POST', 'GET'])
+def ptSearch():
+    form = PtSearchForm(request.form)
 
     if request.method == 'POST':
         form = PtSearchForm(request.form)
+        sites = ['pterclub']
+        searchPtSites(form.searchStr.data, sites)
 
-        sitehost = "pterclub"
-        cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
-        # if cursite
-
-        ## TODO: using rsstask cookie
-        taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
-        if not taskitem:
-            abort(401)        
-        ptcookie = taskitem.cookie
-
-        pturl = cursite['searchurl']+form.searchStr.data
-        hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
-        if "passkey" in cursite:
-            ucpJson = cursite["passkey"]
-            usercpurl = urljoin(hosturl, ucpJson["usercp"])
-            usercpdoc = requestPtPage(usercpurl, ptcookie)
-            soup = BeautifulSoup(usercpdoc.content, 'html.parser')
-            passkey = selectElement(soup, ucpJson, "keypath")
-            passkey = remove_non_ascii(passkey)
-            
-        doc = requestPtPage(pturl, ptcookie)
-        if doc:
-            soup = BeautifulSoup(doc.content, 'html.parser')
-            torlist = soup.select(cursite["torlist"])
-            for row in reversed(torlist):
-                eleTitle = row.select_one(cursite["infolink"])
-                if not eleTitle:
-                    continue
-                dbitem = parseRowToDbItem(row, hosturl, cursite, passkey=passkey)
-                dbitem.site = sitehost
-                dbitem.searchword = form.searchStr.data
-
-                db.session.add(dbitem)
-                db.session.commit()
     
     return render_template('ptsearch.html', form=form)
+
+
+import json
+@app.route('/api/ptsearch', methods=['POST'])
+def aptPtSearch():
+    if request.method == 'POST':
+        r = request.get_json()
+        sites = ['pterclub']
+        searchPtSites(r["searchword"], sites)
+
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
 
 @app.route('/dlresult/<cacheid>')
 @auth.login_required

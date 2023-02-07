@@ -1,11 +1,37 @@
 {% extends "base.html" %}
-
+{% block stylesheet %}
+<style>
+.sub-title {
+    word-break: break-all;
+    margin-top: 2px;
+    margin-left: 4px;
+    color: #8c8c8c!important;
+    font-size: 9px;
+}
+ .tag-zz {
+    font-size: 9px;
+    margin: 0 1px 0 1px;
+    border-radius: 2px;
+    padding: 1px 3px;
+    /* background: #3e6aa0; */
+    background: #426ab9;
+    color: #fff;
+ }
+ .tag-gy {
+    font-size: 9px;
+    margin: 0 1px 0 1px;
+    padding: 1px 3px;
+    background: #3e93a0;
+    color: #ffffff;
+ }
+</style>
+{% endblock %}
 {% block content %}
 
 <div class="row my-3 justify-content-center">
     <div class="col-md-8">
         <div class="row">
-            <span class="my-3 mt-4 mr-auto" ><h4>查找种子</h4></span>  
+            <span class="my-3 mt-4 mr-auto" ><h4>搜索种子</h4></span>  
         </div>
         <form method="post">
             <div class="form-group mb-3">
@@ -13,24 +39,23 @@
                 {{ form.searchStr(class="form-control") }}
             </div>
 
-            {{form.submit(class='btn btn-primary')}}
-
+            <!-- {{form.submit(class='btn btn-primary')}} -->
+            <button id='ptsearch' type='button' class='btn btn-default' >搜索</button>
         </form>
     </div>
 
 </div>
 
 
-
 <div class="row mx-2 my-3 justify-content-center">
-
     <table id="data" class="table table-striped row-border order-column" style="width:100%">
 		<thead>
 		  <tr>
 			<th>站点</th>
 			<th>标题</th>
-			<th>IMDb/豆瓣</th>
+			<th>IMDb</th>
 			<th>Size</th>
+			<th>S/L</th>
 			<th>Date</th>
             <th>操作</th>
 		  </tr>
@@ -46,7 +71,25 @@
 
 
 {% block script %}
-
+<script>
+$("#ptsearch").click(function(){
+        var searchword = $('#searchStr').val();
+        var sites = 'pterclub';
+        var dict = {searchword:searchword,sites:sites};
+        $.ajax({            
+            url:'/api/ptsearch',
+            method: 'POST',
+            data : JSON.stringify(dict),
+            contentType: "application/json",
+            success:function(response){
+                // var table=('#tableid').Datatable();
+                // table.ajax.reload();
+                $('#data').DataTable().ajax.reload();
+            }
+        });
+    });
+</script>
+    
 <script>
 
     $(document).ready(function () {
@@ -65,12 +108,12 @@
                 }
             },
             "pageLength": 25,
-            autoWidth: false,
+            autoWidth: true,
             scrollX: true,
             full_row_select: false,
             ajax: '/api/searchresult',
             serverSide: true,
-            order: [[0, 'desc']],
+            order: [[5, 'desc']],
             columns: [
                 {
                     data: 'site',
@@ -78,10 +121,14 @@
                 },
                 {
                     data: 'tortitle',
-                    "width": "40%",
+                    "width": "60%",
                     "render": function (data, type, row, meta) {
                         if (data) {
-                            return '<a href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
+                            var l1 = '<a href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
+                            var l2 = '<span class="sub-title">'+row.subtitle+'</span>';
+                            var tagzz = row.tagzz ? '<span class="tag-zz ">中字</span>' : '' ;
+                            var taggy = row.taggy ? '<span class="tag-gy ">国语</span>' : '' ;
+                            return l1 + '<br>' + tagzz + taggy + l2;
                         }
                         else return ''
                     }
@@ -99,15 +146,26 @@
                 },
                 {
                     data: 'torsizestr',
-                    "width": "10%"
+                    "width": "6%"
                 },
                 {
-                    data: 'tordatestr',
-                    "width": "15%"
+                    data: 'seednum',
+                    "width": "7%",
+                    "render": function (data, type, row) {
+                        return row.seednum +' / ' + row.downnum
+                    }
+                },
+                {
+                    data: 'tordate',
+                    "width": "10%",
+                    "render": function (data) {
+                        var date = new Date(data);
+                        return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+                    }
                 },
                 {
                     data: 'id', searchable: false,
-                    "width": "10%",
+                    "width": "8%",
                     "render": function (data, type, row) {
                         var linkDownload = '<a href="/dlresult/' + row.id + '">' + '下载' + '</a>';
                         return linkDownload;
