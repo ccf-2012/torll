@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 {% block stylesheet %}
 <style>
+.tortitle  {
+    word-break: break-all;
+    /* color: #000;
+    margin: 2px 1px; */
+    font-size: 14px;
+}
 .sub-title {
     word-break: break-all;
     margin-top: 2px;
     margin-left: 4px;
     color: #8c8c8c!important;
-    font-size: 9px;
+    font-size: 12px;
 }
  .tag-zz {
     font-size: 9px;
@@ -40,7 +46,7 @@
             </div>
 
             <!-- {{form.submit(class='btn btn-primary')}} -->
-            <button id='ptsearch' type='button' class='btn btn-default' >搜索</button>
+            <button id='ptsearch' type='button' class='btn btn-primary' >搜索</button>
         </form>
     </div>
 
@@ -124,7 +130,7 @@ $("#ptsearch").click(function(){
                     "width": "60%",
                     "render": function (data, type, row, meta) {
                         if (data) {
-                            var l1 = '<a href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
+                            var l1 = '<a class="tortitle" href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
                             var l2 = '<span class="sub-title">'+row.subtitle+'</span>';
                             var tagzz = row.tagzz ? '<span class="tag-zz ">中字</span>' : '' ;
                             var taggy = row.taggy ? '<span class="tag-gy ">国语</span>' : '' ;

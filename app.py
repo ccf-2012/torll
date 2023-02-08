@@ -8,7 +8,7 @@ import logging
 from flask_httpauth import HTTPBasicAuth
 import myconfig
 import argparse
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField
 from wtforms.validators import DataRequired, NumberRange
 from wtforms.widgets import PasswordInput
@@ -20,6 +20,8 @@ import re
 from http.cookies import SimpleCookie
 from humanbytes import HumanBytes
 import shutil
+import lxml.html
+import json
 
 
 app = Flask(__name__)
@@ -1164,9 +1166,8 @@ def requestPtPage(pageUrl, pageCookie):
     except:
         return ''
 
-    return r
+    return r.text
 
-from bs4 import BeautifulSoup
 
 class TorrentCache(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1179,9 +1180,10 @@ class TorrentCache(db.Model):
     downlink = db.Column(db.String(256))
     taggy = db.Column(db.Boolean)
     tagzz = db.Column(db.Boolean)
-    imdbstr = db.Column(db.String(32))
+    imdbstr = db.Column(db.String(16))
     imdbval = db.Column(db.Float, default=0.0)
     doubanval = db.Column(db.Float, default=0.0)
+    doubanid = db.Column(db.String(16))
     seednum = db.Column(db.Integer)
     downnum = db.Column(db.Integer)
     torsizestr = db.Column(db.String(16))
@@ -1257,146 +1259,110 @@ def searchResultData():
         'draw': request.args.get('draw', type=int),
     }
 
+
 def remove_non_ascii(string):
     return ''.join(char for char in string if ord(char) < 128)
+
 
 def striptag(titlestr):
     s = re.sub(r'\[?(国语|中字|官方|禁转|原创)\]?', '', titlestr)
     s = re.sub(r'\[?Checked by \w+\]?', '', s)
     return s
 
-def selectElement(row, siteJson, key):
+
+## xpath method
+
+def xpathGetElement(row, siteJson, key):
     if not siteJson:
         return ''
     if key not in siteJson:
         return ''
     eleJson = siteJson[key]
     if not isinstance(eleJson, str):
-        ele = row.select_one(eleJson["path"])
-        if not ele:
-            return ''
-        if "method" in eleJson:
-            if eleJson["method"] == "text":
-                return ele.get_text()
-            elif eleJson["method"] == "attr":
-                if "arg" in eleJson:
-                    return ele[eleJson["arg"]]
-                else:
-                    m = re.search(r'\[(.*?)\]', eleJson["path"], re.I)
-                    return ele[m[1]] if m else ''
-            elif eleJson["method"] == "attr-reimdb":
-                attrstr = ele[eleJson["arg"]]
-                m = re.search(r'title/(tt\d+)', attrstr, re.I)
+        elestring = row.xpath(eleJson["path"])
+        if elestring and "method" in eleJson:
+            if eleJson["method"] == "re_imdb":
+                m = re.search(r'title/(tt\d+)', elestring, re.I)
                 return m[1] if m else ''
-            elif eleJson["method"] == "attr-redouban":
-                attrstr = ele[eleJson["arg"]]
-                m = re.search(r'subject/(\d+)', attrstr, re.I)
+            elif eleJson["method"] == "re_douban":
+                m = re.search(r'subject/(\d+)', elestring, re.I)
                 return m[1] if m else ''
-            elif eleJson["method"] == "parent-text":
-                return ele.parent.get_text(strip=True)
-            else:
-                # not supported yet
-                return ''
-
-        else:
-            return ele.get_text(strip=True)
+        return ''
     else:
         if not eleJson.strip():
             return ''
-        ele = row.select_one(eleJson)
-        return ele.get_text(strip=True) if ele else ''
+        return row.xpath(eleJson)
 
 
-
-def parseRowToDbItem(row, hosturl, cursite, passkey=''):
-    dbitem = TorrentCache()
-    dbitem.tortitle = selectElement(row, cursite, "tortitle")
-    dbitem.downlink = selectElement(row, cursite, "downlink")
-    if dbitem.downlink:
-        dbitem.downlink = hosturl + dbitem.downlink
-    if passkey:
-        dbitem.downlink = dbitem.downlink + "&passkey="+passkey
-
-    dbitem.infolink = selectElement(row, cursite, "infolink")
-    if dbitem.infolink:
-        dbitem.infolink = hosturl + dbitem.infolink
-    
-    dbitem.subtitle = selectElement(row, cursite, "subtitle")
-    if dbitem.subtitle:
-        dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
-        dbitem.subtitle = striptag(dbitem.subtitle)
-
-    dbitem.taggy = True if selectElement(row, cursite, "taggy") else False
-    dbitem.tagzz = True if selectElement(row, cursite, "tagzz") else False
-
-    dbitem.imdbstr = selectElement(row, cursite, "imdbstr")
-    if dbitem.imdbstr and not dbitem.imdbstr.startswith('tt'):
-        dbitem.imdbstr = 'tt'+ dbitem.imdbstr.zfill(7)
-
-    dbitem.doubanidstr = selectElement(row, cursite, "doubanid")
-
-    eleimdbval = selectElement(row, cursite, "imdbval")
-    dbitem.imdbval = tryFloat(eleimdbval)
-
-    eledoubanval = selectElement(row, cursite, "doubanval")
-    dbitem.doubanval = tryFloat(eledoubanval)
-
-    eleseednum = selectElement(row, cursite, "seednum")
-    dbitem.seednum = tryint(eleseednum)
-
-    eledownnum = selectElement(row, cursite, "downnum")
-    dbitem.downnum = tryint(eledownnum)
-
-    dbitem.torsizestr = selectElement(row, cursite, "torsize")
-    tordatestr = selectElement(row, cursite, "tordate") # 2023-01-30 12:58:38
-    dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
-    return dbitem
-
-
-def searchPtSites(seachWord, sites):
+def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     import siteconfig
-
     r = siteconfig.loadSiteConfig()
     if r:
         PT_SITES = r["sites"]
     else:
-        return 402
+        return 401 # site not configured
 
-    sitehost = sites[0]
     cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
-    # if cursite
-
-    ## TODO: using rsstask cookie
-    taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
-    if not taskitem:
-        abort(401)        
-    ptcookie = taskitem.cookie
+    if not cursite:
+        return 401 # site not configured
 
     pturl = cursite['searchurl']+seachWord
     hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
     passkey = ''
     if "passkey" in cursite:
         ucpJson = cursite["passkey"]
-        usercpurl = urljoin(hosturl, ucpJson["usercp"])
-        usercpdoc = requestPtPage(usercpurl, ptcookie)
-        soup = BeautifulSoup(usercpdoc.content, 'html.parser')
-        passkey = selectElement(soup, ucpJson, "keypath")
-        passkey = remove_non_ascii(passkey)
+        if "usercp" in ucpJson and "keypath" in ucpJson:
+            usercpurl = hosturl + ucpJson["usercp"]
+            usercpdoc = requestPtPage(usercpurl, siteCookie)
+            if not usercpdoc:
+                return 404
+            usercplh = lxml.html.fromstring(usercpdoc)
+            passkey = usercplh.xpath(ucpJson["keypath"])
+            passkey = remove_non_ascii(passkey)
         
-    doc = requestPtPage(pturl, ptcookie)
-    if doc:
-        soup = BeautifulSoup(doc.content, 'html.parser')
-        torlist = soup.select(cursite["torlist"])
-        for row in reversed(torlist):
-            eleTitle = row.select_one(cursite["tortitle"])
-            if not eleTitle:
-                continue
-            dbitem = parseRowToDbItem(row, hosturl, cursite, passkey=passkey)
-            dbitem.site = sitehost
-            dbitem.searchword = seachWord
+    doc = requestPtPage(pturl, siteCookie)
+    if not doc:
+        return 404 # page not fetched 
 
-            db.session.add(dbitem)
-            db.session.commit()
+    htmltree = lxml.html.fromstring(doc)
+    torlist = htmltree.xpath(cursite["torlist"])
+    for row in torlist:
+        title = xpathGetElement(row, cursite, "tortitle")
+        if not title:
+            continue
+        dbitem = TorrentCache()
+        dbitem.tortitle = title
+        dbitem.infolink = xpathGetElement(row, cursite, "infolink")
+
+        # TODO: add passkey for downlink
+        dbitem.downlink = xpathGetElement(row, cursite, "downlink")
+
+        dbitem.subtitle = xpathGetElement(row, cursite, "subtitle")
+        if dbitem.subtitle:
+            # dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
+            dbitem.subtitle = striptag(dbitem.subtitle)
+
+        dbitem.tagzz = True if xpathGetElement(row, cursite, "tagzz") else False
+        dbitem.taggy = True if xpathGetElement(row, cursite, "taggy") else False
+        dbitem.doubanval = tryFloat(xpathGetElement(row, cursite, "doubanval"))
+        dbitem.imdbval = tryFloat(xpathGetElement(row, cursite, "imdbval"))
+        dbitem.imdbstr = xpathGetElement(row, cursite, "imdbstr")
+        if dbitem.imdbstr and not dbitem.imdbstr.startswith('tt'):
+            dbitem.imdbstr = 'tt'+ dbitem.imdbstr.zfill(7)
+        dbitem.doubanid = xpathGetElement(row, cursite, "doubanid")
+        dbitem.seednum = tryint(xpathGetElement(row, cursite, "seednum"))
+        dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
+        dbitem.torsizestr = xpathGetElement(row, cursite, "torsize")
+        tordatestr = xpathGetElement(row, cursite, "tordate")
+        dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
+
+        dbitem.site = sitehost
+        dbitem.searchword = seachWord
+
+        # print(dbitem.__dict__)
+
+        db.session.add(dbitem)
+        db.session.commit()
 
     return 200
 
@@ -1407,22 +1373,57 @@ def ptSearch():
 
     if request.method == 'POST':
         form = PtSearchForm(request.form)
-        sites = ['pterclub']
-        searchPtSites(form.searchStr.data, sites)
+        
+        sitehost = 'pterclub'
+        ## TODO: using rsstask cookie
+        taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
+        if not taskitem:
+            abort(402)
+        ptcookie = taskitem.cookie
 
-    
+        xpathSearchPtSites(sitehost, ptcookie, form.searchStr.data)
+
     return render_template('ptsearch.html', form=form)
 
 
-import json
+
 @app.route('/api/ptsearch', methods=['POST'])
 def aptPtSearch():
     if request.method == 'POST':
         r = request.get_json()
-        sites = ['pterclub']
-        searchPtSites(r["searchword"], sites)
+
+        sitehost = 'pterclub'
+        ## TODO: using rsstask cookie
+        taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
+        if not taskitem:
+            abort(402)
+        ptcookie = taskitem.cookie
+
+        xpathSearchPtSites(sitehost, ptcookie, r["searchword"])
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+
+def getfulllink(sitehost, rellink):
+    if rellink.startswith('http'):
+        return rellink
+    if rellink.startswith('/'):
+        rellink = rellink[1:]
+
+    import siteconfig
+    r = siteconfig.loadSiteConfig()
+    if r:
+        PT_SITES = r["sites"]
+    else:
+        return '' # site not configured
+
+    cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
+    if not cursite:
+        return '' # site not configured
+
+    hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(cursite['searchurl']))
+    return hosturl + rellink
+
 
 
 @app.route('/dlresult/<cacheid>')
@@ -1430,20 +1431,22 @@ def aptPtSearch():
 def resultDownload(cacheid):
     dbcacheitem = TorrentCache.query.get(cacheid)
 
+    infolink = getfulllink(dbcacheitem.site, dbcacheitem.infolink)
+    downlink = getfulllink(dbcacheitem.site, dbcacheitem.downlink)
     if not dbcacheitem.imdbstr:
         ## TODO: using rsstask cookie
         taskitem = RSSTask.query.filter(RSSTask.site == dbcacheitem.site).first()
 
         imdbstr = ''
         if taskitem:
-            doc = fetchInfoPage(dbcacheitem.infolink, taskitem.cookie)
+            doc = fetchInfoPage(infolink, taskitem.cookie)
             if doc:
                 imdbstr = parseInfoPageIMDbId(doc)
                 dbcacheitem.imdbstr = imdbstr
-    siteIdStr = genrSiteId(dbcacheitem.infolink, dbcacheitem.imdbstr)
+    siteIdStr = genrSiteId(infolink, dbcacheitem.imdbstr)
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):    
-    r = addTorrent(dbcacheitem.downlink, siteIdStr, dbcacheitem.imdbstr)
+    r = addTorrent(downlink, siteIdStr, dbcacheitem.imdbstr)
     if r == 201:
         dbcacheitem.dlcount += 1
         db.session.commit()

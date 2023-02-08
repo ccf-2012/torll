@@ -11,4 +11,4 @@ urllib3
 feedparser
 wtforms
 apscheduler
-bs4
+lxml
