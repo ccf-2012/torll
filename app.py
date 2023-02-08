@@ -1156,13 +1156,15 @@ def requestPtPage(pageUrl, pageCookie):
     cookie.load(pageCookie)
     cookies = {k: v.value for k, v in cookie.items()}
     headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
         'User-Agent':
-        'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78",
         'Content-Type': 'text/html; charset=UTF-8'
     }
 
     try:
         r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
+        print(r.encoding, r.apparent_encoding)
         r.encoding = r.apparent_encoding
     except:
         return ''
