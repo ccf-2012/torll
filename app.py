@@ -9,7 +9,7 @@ from flask_httpauth import HTTPBasicAuth
 import myconfig
 import argparse
 from urllib.parse import urlparse
-from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField
+from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField, SelectField
 from wtforms.validators import DataRequired, NumberRange
 from wtforms.widgets import PasswordInput
 import qbfunc
@@ -22,6 +22,7 @@ from humanbytes import HumanBytes
 import shutil
 import lxml.html
 import json
+import siteconfig
 
 
 app = Flask(__name__)
@@ -1197,7 +1198,7 @@ class TorrentCache(db.Model):
             'site': self.site,
             'searchword' : self.searchword,
             'tortitle': self.tortitle,
-            'infolink': self.infolink,
+            'infolink': getfulllink(self.site,self.infolink),
             'subtitle': self.subtitle,
             'downlink': self.downlink,
             'taggy': self.taggy,
@@ -1295,7 +1296,6 @@ def xpathGetElement(row, siteJson, key):
 
 
 def xpathSearchPtSites(sitehost, siteCookie, seachWord):
-    import siteconfig
     r = siteconfig.loadSiteConfig()
     if r:
         PT_SITES = r["sites"]
@@ -1375,16 +1375,11 @@ def ptSearch():
         form = PtSearchForm(request.form)
         
         sitehost = 'pterclub'
-        ## TODO: using rsstask cookie
-        taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
-        if not taskitem:
-            abort(402)
-        ptcookie = taskitem.cookie
+        ptcookie = getSiteCookie(sitehost)
 
         xpathSearchPtSites(sitehost, ptcookie, form.searchStr.data)
 
     return render_template('ptsearch.html', form=form)
-
 
 
 @app.route('/api/ptsearch', methods=['POST'])
@@ -1393,15 +1388,17 @@ def aptPtSearch():
         r = request.get_json()
 
         sitehost = 'pterclub'
-        ## TODO: using rsstask cookie
-        taskitem = RSSTask.query.filter(RSSTask.site == sitehost).first()
-        if not taskitem:
-            abort(402)
-        ptcookie = taskitem.cookie
-
+        ptcookie = getSiteCookie(sitehost)
         xpathSearchPtSites(sitehost, ptcookie, r["searchword"])
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+
+def getSiteCookie(sitehost):
+    dbsiteitem = PtSite.query.filter(PtSite.site == sitehost).first()
+    if not dbsiteitem:
+        return ''
+    return dbsiteitem.cookie
 
 
 def getfulllink(sitehost, rellink):
@@ -1410,7 +1407,6 @@ def getfulllink(sitehost, rellink):
     if rellink.startswith('/'):
         rellink = rellink[1:]
 
-    import siteconfig
     r = siteconfig.loadSiteConfig()
     if r:
         PT_SITES = r["sites"]
@@ -1451,6 +1447,64 @@ def resultDownload(cacheid):
         dbcacheitem.dlcount += 1
         db.session.commit()
     return redirect("/ptsearch")
+
+
+class PtSite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    addedon = db.Column(db.DateTime, default=datetime.now)
+    site = db.Column(db.String(32))
+    cookie = db.Column(db.String(1024))
+    internlink = db.Column(db.String(256))
+
+
+class PtSiteForm(Form):
+    site = SelectField(u'选择站点', choices=[('pterclub', 'PTerClub'), ('chdbits', 'CHDBits'), ('audiences', 'Audiences')])
+    cookie = StringField('Cookie')
+    internlink = StringField('官种链接')
+    submit = SubmitField("添加")
+
+
+
+@app.route('/sites',  methods=['POST', 'GET'])
+@auth.login_required
+def sitesConfig():
+    r = siteconfig.loadSiteConfig()
+    if r:
+        PT_SITES = r["sites"]
+    else:
+        abort(403)
+
+    form = PtSiteForm(request.form)
+    form.site.choices = [(row["site"], row["site"]) for row in PT_SITES]
+    return render_template('ptsites.html', form=form)
+
+
+@app.route('/ajax/sitedata',  methods=['GET', 'POST'])
+def ajaxGetSiteData():
+    if request.method == 'POST':
+        r = request.get_json()
+        sitehost = r['site']
+        exists = db.session.query(PtSite.id).filter_by(site=sitehost).first() is not None
+        if not exists:
+            dbsite = PtSite(site=r['site'],cookie=r['cookie'])
+        else:
+            dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
+            dbsite.cookie = r['cookie']
+        db.session.add(dbsite)
+        db.session.commit()
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+    if request.method == 'GET':
+        sitehost = request.args.get('site')
+        if not sitehost:
+            abort(404)
+
+        dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
+        if not dbsite:
+            return json.dumps({'cookie':''}), 200, {'ContentType':'application/json'} 
+        ptcookie = dbsite.cookie
+        return json.dumps({'cookie':ptcookie}), 200, {'ContentType':'application/json'} 
+    
 
 
 def rssJob(id):

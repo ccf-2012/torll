@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block stylesheet %}
+<style>
+.alert {
+   width:40%;    
+}
+</style>
+{% endblock %}
+{% block content %}
+
+
+<div class="row my-3 justify-content-center">
+    <div class="col-10">
+        <div class="row">
+            <span class="my-3 mt-4 mr-auto">
+                <h4>配置 PT 站点</h4>
+            </span>
+        </div>
+        <form class="row form-horizontal" method="post">
+            <div class="input-group mb-3">
+                <div class="col-sm-3">
+                    <label class="visually-hidden" for="site">选择站点</label>
+                    <select class="form-select" id="site">
+                       <option selected>选择站点</option>
+                      {% for s in form.site.choices %}
+                        <option value="{{ s[0] }}">{{ s[1] }}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+                                
+                <input id="cookie" type="text" class="form-control col-sm-8" placeholder="设置 Cookie" aria-label="设置 Cookie"
+                    aria-describedby="button-addon2">
+                <button id='savecookie' class="btn btn-primary" type="button" >
+                    <span id="busy" role="status" aria-hidden="true"></span>
+                    保存
+                  </button>
+
+            </div>
+        </form>
+    </div>
+
+</div>
+
+
+<div class="row mx-2 my-3 justify-content-center">
+    <table id="data" class="table table-striped row-border order-column" style="width:100%">
+        <thead>
+            <tr>
+                <th>站点</th>
+                <th>标题</th>
+                <th>IMDb</th>
+                <th>Size</th>
+                <th>S/L</th>
+                <th>Date</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+
+{% block script %}
+<script>
+    $('#savecookie').click(function () {
+        $("#busy").addClass("spinner-border spinner-border-sm")
+        $('#savecookie').prop('disabled', true);
+
+        var dict = { site: $('#site').val(), cookie: $('#cookie').val() };
+        $.ajax({
+            url: '/ajax/sitedata',
+            type: 'post',
+            // data : dict,
+            data: JSON.stringify(dict),
+            contentType: "application/json",
+            // dataType: "json",        
+            success: function (response) {
+                // t = JSON.parse(response)
+                console.log('saved')
+            },
+            complete: function(xhr, textStatus) {
+                $('#savecookie').prop('disabled', false);
+                $("#busy").removeClass("spinner-border spinner-border-sm");
+            },
+        });
+
+    });
+
+    $('#site').change(function () {
+        var dict = { site: $(this).val() };
+        // console.log(dict)
+        $.ajax({
+            url: '/ajax/sitedata',
+            type: 'get',
+            data: { site: $(this).val() },
+            // data : JSON.stringify(dict),
+            contentType: "application/json",
+            // dataType: "json",        
+            success: function (response) {
+                t = JSON.parse(response)
+                $("#cookie").val(t.cookie)
+                $("#msg").hide()
+            },
+            complete: function (xhr, textStatus) {
+                // console.log(xhr.status);
+                if (xhr.status == 402) {
+                    $("#cookie").val('还没有设置');
+                }
+            }
+        });
+
+    })
+
+    $(document).ready(function () {
+        $('#site').change();
+        $("#msg").hide()
+    });
+</script>
+{% endblock %}

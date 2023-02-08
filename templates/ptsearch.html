@@ -46,7 +46,10 @@
             </div>
 
             <!-- {{form.submit(class='btn btn-primary')}} -->
-            <button id='ptsearch' type='button' class='btn btn-primary' >搜索</button>
+                    <button id='ptsearch' class="btn btn-primary" type="button" >
+                        <span id="busy" role="status" aria-hidden="true"></span>
+                        搜索
+                      </button>
         </form>
     </div>
 
@@ -80,6 +83,8 @@
 <script>
 $("#ptsearch").click(function(){
         var searchword = $('#searchStr').val();
+        $("#busy").addClass("spinner-border spinner-border-sm")
+        $('#ptsearch').prop('disabled', true);
         var sites = 'pterclub';
         var dict = {searchword:searchword,sites:sites};
         $.ajax({            
@@ -91,6 +96,10 @@ $("#ptsearch").click(function(){
                 // var table=('#tableid').Datatable();
                 // table.ajax.reload();
                 $('#data').DataTable().ajax.reload();
+            },
+            complete: function(xhr, textStatus) {
+                $('#ptsearch').prop('disabled', false);
+                $("#busy").removeClass("spinner-border spinner-border-sm");
             }
         });
     });
@@ -99,6 +108,7 @@ $("#ptsearch").click(function(){
 <script>
 
     $(document).ready(function () {
+        // $("#busy").hide();
         $('#data').DataTable({
             language: {
                 "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
