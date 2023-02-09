@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block stylesheet %}
 <style>
-.alert {
-   width:40%;    
-}
+    .alert {
+        width: 40%;
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -21,19 +21,19 @@
                 <div class="col-sm-3">
                     <label class="visually-hidden" for="site">选择站点</label>
                     <select class="form-select" id="site">
-                       <option selected>选择站点</option>
-                      {% for s in form.site.choices %}
+                        <option selected>选择站点</option>
+                        {% for s in form.site.choices %}
                         <option value="{{ s[0] }}">{{ s[1] }}</option>
-                      {% endfor %}
-                  </select>
+                        {% endfor %}
+                    </select>
                 </div>
-                                
-                <input id="cookie" type="text" class="form-control col-sm-8" placeholder="设置 Cookie" aria-label="设置 Cookie"
-                    aria-describedby="button-addon2">
-                <button id='savecookie' class="btn btn-primary" type="button" >
+
+                <input id="cookie" type="text" class="form-control col-sm-8" placeholder="设置 Cookie"
+                    aria-label="设置 Cookie" aria-describedby="button-addon2">
+                <button id='savecookie' class="btn btn-primary" type="button">
                     <span id="busy" role="status" aria-hidden="true"></span>
                     保存
-                  </button>
+                </button>
 
             </div>
         </form>
@@ -80,9 +80,9 @@
             // dataType: "json",        
             success: function (response) {
                 // t = JSON.parse(response)
-                console.log('saved')
+                console.log('saved');
             },
-            complete: function(xhr, textStatus) {
+            complete: function (xhr, textStatus) {
                 $('#savecookie').prop('disabled', false);
                 $("#busy").removeClass("spinner-border spinner-border-sm");
             },

@@ -1,35 +1,38 @@
 {% extends "base.html" %}
 {% block stylesheet %}
 <style>
-.tortitle  {
-    word-break: break-all;
-    /* color: #000;
+    .tortitle {
+        word-break: break-all;
+        /* color: #000;
     margin: 2px 1px; */
-    font-size: 14px;
-}
-.sub-title {
-    word-break: break-all;
-    margin-top: 2px;
-    margin-left: 4px;
-    color: #8c8c8c!important;
-    font-size: 12px;
-}
- .tag-zz {
-    font-size: 9px;
-    margin: 0 1px 0 1px;
-    border-radius: 2px;
-    padding: 1px 3px;
-    /* background: #3e6aa0; */
-    background: #426ab9;
-    color: #fff;
- }
- .tag-gy {
-    font-size: 9px;
-    margin: 0 1px 0 1px;
-    padding: 1px 3px;
-    background: #3e93a0;
-    color: #ffffff;
- }
+        font-size: 14px;
+    }
+
+    .sub-title {
+        word-break: break-all;
+        margin-top: 2px;
+        margin-left: 4px;
+        color: #8c8c8c !important;
+        font-size: 12px;
+    }
+
+    .tag-zz {
+        font-size: 9px;
+        margin: 0 1px 0 1px;
+        border-radius: 2px;
+        padding: 1px 3px;
+        /* background: #3e6aa0; */
+        background: #426ab9;
+        color: #fff;
+    }
+
+    .tag-gy {
+        font-size: 9px;
+        margin: 0 1px 0 1px;
+        padding: 1px 3px;
+        background: #3e93a0;
+        color: #ffffff;
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -37,19 +40,20 @@
 <div class="row my-3 justify-content-center">
     <div class="col-md-8">
         <div class="row">
-            <span class="my-3 mt-4 mr-auto" ><h4>搜索种子</h4></span>  
+            <span class="my-3 mt-4 mr-auto">
+                <h4>搜索种子</h4>
+            </span>
         </div>
         <form method="post">
             <div class="form-group mb-3">
-                {{ form.searchStr.label(class='form-label')}} 
+                {{ form.searchStr.label(class='form-label')}}
                 {{ form.searchStr(class="form-control") }}
             </div>
 
-            <!-- {{form.submit(class='btn btn-primary')}} -->
-                    <button id='ptsearch' class="btn btn-primary" type="button" >
-                        <span id="busy" role="status" aria-hidden="true"></span>
-                        搜索
-                      </button>
+            <button id='ptsearch' class="btn btn-primary" type="button">
+                <span id="busy" role="status" aria-hidden="true"></span>
+                搜索
+            </button>
         </form>
     </div>
 
@@ -58,21 +62,21 @@
 
 <div class="row mx-2 my-3 justify-content-center">
     <table id="data" class="table table-striped row-border order-column" style="width:100%">
-		<thead>
-		  <tr>
-			<th>站点</th>
-			<th>标题</th>
-			<th>IMDb</th>
-			<th>Size</th>
-			<th>S/L</th>
-			<th>Date</th>
-            <th>操作</th>
-		  </tr>
-		</thead>
-		<tbody>
-  
-		</tbody>
-	  </table>
+        <thead>
+            <tr>
+                <th>站点</th>
+                <th>标题</th>
+                <th>IMDb</th>
+                <th>Size</th>
+                <th>S/L</th>
+                <th>Date</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
 </div>
 
 {% endblock %}
@@ -81,30 +85,30 @@
 
 {% block script %}
 <script>
-$("#ptsearch").click(function(){
+    $("#ptsearch").click(function () {
         var searchword = $('#searchStr').val();
         $("#busy").addClass("spinner-border spinner-border-sm")
         $('#ptsearch').prop('disabled', true);
         var sites = 'pterclub';
-        var dict = {searchword:searchword,sites:sites};
-        $.ajax({            
-            url:'/api/ptsearch',
+        var dict = { searchword: searchword, sites: sites };
+        $.ajax({
+            url: '/api/ptsearch',
             method: 'POST',
-            data : JSON.stringify(dict),
+            data: JSON.stringify(dict),
             contentType: "application/json",
-            success:function(response){
+            success: function (response) {
                 // var table=('#tableid').Datatable();
                 // table.ajax.reload();
                 $('#data').DataTable().ajax.reload();
             },
-            complete: function(xhr, textStatus) {
+            complete: function (xhr, textStatus) {
                 $('#ptsearch').prop('disabled', false);
                 $("#busy").removeClass("spinner-border spinner-border-sm");
             }
         });
     });
 </script>
-    
+
 <script>
 
     $(document).ready(function () {
@@ -141,9 +145,9 @@ $("#ptsearch").click(function(){
                     "render": function (data, type, row, meta) {
                         if (data) {
                             var l1 = '<a class="tortitle" href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
-                            var l2 = '<span class="sub-title">'+row.subtitle+'</span>';
-                            var tagzz = row.tagzz ? '<span class="tag-zz ">中字</span>' : '' ;
-                            var taggy = row.taggy ? '<span class="tag-gy ">国语</span>' : '' ;
+                            var l2 = '<span class="sub-title">' + row.subtitle + '</span>';
+                            var tagzz = row.tagzz ? '<span class="tag-zz ">中字</span>' : '';
+                            var taggy = row.taggy ? '<span class="tag-gy ">国语</span>' : '';
                             return l1 + '<br>' + tagzz + taggy + l2;
                         }
                         else return ''
@@ -168,7 +172,7 @@ $("#ptsearch").click(function(){
                     data: 'seednum',
                     "width": "7%",
                     "render": function (data, type, row) {
-                        return row.seednum +' / ' + row.downnum
+                        return row.seednum + ' / ' + row.downnum
                     }
                 },
                 {
@@ -192,6 +196,6 @@ $("#ptsearch").click(function(){
         });
 
     });
-  
-  </script>
-{% endblock %}    
+
+</script>
+{% endblock %}

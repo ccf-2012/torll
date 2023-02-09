@@ -231,7 +231,45 @@ def torMediaEdit(id):
         return render_template('mediaeditresult.html', msg=warningstr, moved=moved, mid=id)
         # return redirect("/")
 
-    return render_template('mediaedit.html', form=form, msg=warningstr)
+    return render_template('mediaedit.html', form=form, msg=warningstr, mid=id)
+
+
+@app.route('/api/mediaedit', methods=['POST'])
+@auth.login_required
+def apiTorMediaEdit():
+    if request.method == 'POST':
+        r = request.get_json()
+
+        tormedia = TorMediaItem.query.get(r["id"])
+
+        form = MediaItemForm(request.form)
+        tmdbcat, tmdbidstr = parseTMDbStr(r["tmdbcatid"])
+        myconfig.updateMediaRootDir(ARGS.config, r["mbRootDir"])
+        oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
+        if os.path.exists(oldpath):
+            import rcp
+            targetLocation, tmdbTitle = rcp.runTorcpMove(
+                    sourceDir=oldpath,
+                    targetDir=myconfig.CONFIG.mbRootDir,
+                    tmdbcatidstr=form.tmdbcatid.data)
+
+            if tormedia.location != targetLocation:
+                tormedia.tmdbcat = tmdbcat
+                tormedia.tmdbid = tryint(tmdbidstr)
+                tormedia.location = targetLocation
+                tormedia.title = tmdbTitle
+                db.session.commit()
+                warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+                shutil.rmtree(oldpath)
+                moved = True
+            else:
+                warningstr = '影视内容位置没变：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+                moved = False
+        else:
+            warningstr = '目录不存在：' + oldpath
+            moved = False
+
+        return json.dumps({'msg':warningstr}), 200, {'ContentType':'application/json'} 
 
 
 @app.route('/mediadel/<id>')
@@ -1386,7 +1424,7 @@ def ptSearch():
 
 
 @app.route('/api/ptsearch', methods=['POST'])
-def aptPtSearch():
+def apiPtSearch():
     if request.method == 'POST':
         r = request.get_json()
 
