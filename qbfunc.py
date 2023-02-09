@@ -113,3 +113,45 @@ def addQbitWithTag(downlink, imdbtag, siteIdStr=None):
         return False
 
     return True
+
+
+
+def addQbitFileWithTag(filecontent, imdbtag, siteIdStr=None):
+    qbClient = qbittorrentapi.Client(
+        host=myconfig.CONFIG.qbServer, port=myconfig.CONFIG.qbPort, username=myconfig.CONFIG.qbUser, password=myconfig.CONFIG.qbPass)
+
+    try:
+        qbClient.auth_log_in()
+    except qbittorrentapi.LoginFailed as e:
+        print(e)
+        return False
+
+    if not qbClient:
+        return False
+
+    try:
+        # curr_added_on = time.time()
+        if siteIdStr:
+            result = qbClient.torrents_add(
+                torrent_files=filecontent,
+                save_path=siteIdStr,
+                # download_path=download_location,
+                # category=timestamp,
+                tags=[imdbtag],
+                use_auto_torrent_management=False)
+        else:
+            result = qbClient.torrents_add(
+                torrent_files=filecontent,
+                tags=[imdbtag],
+                use_auto_torrent_management=False)
+        # breakpoint()
+        if 'OK' in result.upper():
+            pass
+            # print('   >> Torrent added.')
+        else:
+            print('   >> Torrent not added! something wrong with qb api ...')
+    except Exception as e:
+        print('   >> Torrent not added! Exception: '+str(e))
+        return False
+
+    return True

@@ -32,19 +32,7 @@
 
   $(document).ready(function () {
     $('#data').DataTable({
-      language: {
-        "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
-        "lengthMenu": "每页显示  _MENU_ 条",
-        "search": "查找: ",
-        "zeroRecords": "现在这里空空的",
-        "infoEmpty": "没什么可说的",
-        "paginate": {
-          'first': '首页',
-          'previous': '前页',
-          'next': '后页',
-          'last': '最末页'
-        }
-      },
+      language: DATATABLE_LANG,
       "pageLength": 25,
       autoWidth: false,
       scrollX: true,

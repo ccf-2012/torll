@@ -46,12 +46,8 @@
     <table id="data" class="table table-striped row-border order-column" style="width:100%">
         <thead>
             <tr>
+                <th>最后更新</th>
                 <th>站点</th>
-                <th>标题</th>
-                <th>IMDb</th>
-                <th>Size</th>
-                <th>S/L</th>
-                <th>Date</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -72,7 +68,7 @@
 
         var dict = { site: $('#site').val(), cookie: $('#cookie').val() };
         $.ajax({
-            url: '/ajax/sitedata',
+            url: '/api/sitesetting',
             type: 'post',
             // data : dict,
             data: JSON.stringify(dict),
@@ -81,6 +77,7 @@
             success: function (response) {
                 // t = JSON.parse(response)
                 console.log('saved');
+                $('#data').DataTable().ajax.reload();
             },
             complete: function (xhr, textStatus) {
                 $('#savecookie').prop('disabled', false);
@@ -94,7 +91,7 @@
         var dict = { site: $(this).val() };
         // console.log(dict)
         $.ajax({
-            url: '/ajax/sitedata',
+            url: '/api/sitesetting',
             type: 'get',
             data: { site: $(this).val() },
             // data : JSON.stringify(dict),
@@ -108,16 +105,91 @@
             complete: function (xhr, textStatus) {
                 // console.log(xhr.status);
                 if (xhr.status == 402) {
-                    $("#cookie").val('还没有设置');
+                    $("#cookie").val('');
                 }
             }
         });
 
     })
 
+    function editClick(id) {
+        apiSiteSetting(id, 'edit')
+    }
+    function deleteClick(id) {
+        apiSiteSetting(id, 'delete')
+    }
+    function apiSiteSetting(id, op) {
+        $.ajax({
+            url: '/api/sitesetting',
+            type: 'get',
+            data: { site: id, op: op },
+            contentType: "application/json",
+            success: function (response) {
+                t = JSON.parse(response);
+                $("#msg").hide();
+                if (op == 'delete'){
+                    $('#data').DataTable().ajax.reload();
+                }
+                else {
+                    $("#site").val(t.site);
+                    $("#cookie").val(t.cookie);
+                }
+            },
+            complete: function (xhr, textStatus) {
+                // console.log(xhr.status);
+                if (xhr.status == 402) {
+                    $("#cookie").val('还没有设置');
+                }
+            }
+        });
+    }
+
     $(document).ready(function () {
         $('#site').change();
         $("#msg").hide()
+
+
+        $('#data').DataTable({
+            language: DATATABLE_LANG,
+            "pageLength": 10,
+            "dom": "tip",
+            autoWidth: true,
+            scrollX: true,
+            full_row_select: false,
+            ajax: '/api/sitelistdata',
+            serverSide: true,
+            order: [[0, 'desc']],
+            columns: [
+                {
+                    data: 'last_update',
+                    "width": "15%",
+                    "render": function (data) {
+                        var date = new Date(data);
+                        return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+                    }
+                },
+                {
+                    data: 'site',
+                    "width": "30%"
+                },
+
+                {
+                    data: 'id', searchable: false,
+                    "width": "18%",
+                    "render": function (data, type, row) {
+                        // var linkDelete = '<a href="/sitedel/' + row.id + '">删除</a>';
+                        var linkDelete = '<a href="#" onclick="deleteClick(\'' + row.site + '\');return false;">' + '删除' + '</a>';
+                        var linkEdit = '<a href="#" onclick="editClick(\'' + row.site + '\');return false;">' + '编辑' + '</a>';
+                        var linkRunOnce = '<a href="/sitenews/' + row.id + '">' + '站新' + '</a>';
+                        return linkEdit + " | " + linkDelete + " | " + linkRunOnce;
+                    },
+                },
+            ],
+            drawCallback: function (settings) {
+                var pagination = $(this).closest('.dataTables_wrapper').find('.dataTables_paginate');
+                pagination.toggle(this.api().page.info().pages > 1);
+            }
+        });
     });
 </script>
 {% endblock %}

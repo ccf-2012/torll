@@ -123,7 +123,7 @@ class TorcpItemDBObj:
                          tmdbid=tryint(tmdbIdStr),
                          tmdbcat=tmdbCat,
                          location=targetDir)
-        
+
         with app.app_context():
             db.session.add(t)
             db.session.commit()
@@ -169,7 +169,8 @@ class MediaItemForm(Form):
     # location = StringField('存储路径，如果是在本机上，修改此处将尝试改名', validators=[DataRequired()])
     # torimdb = StringField('修改IMDb以重新查询和生成硬链', validators=[DataRequired()])
     mbRootDir = StringField('媒体库根目录，如果是GD盘则将其mount到本地')
-    tmdbcatid = StringField('修改TMDb以重新查询和生成硬链, 分类和id的写法可以是：tv-12345，movie-12345或简写为m12345')
+    tmdbcatid = StringField(
+        '修改TMDb以重新查询和生成硬链, 分类和id的写法可以是：tv-12345，movie-12345或简写为m12345')
     # tmdbid = StringField('TMDb id')
     submit = SubmitField("执行修正")
 
@@ -177,7 +178,8 @@ class MediaItemForm(Form):
 def parseTMDbStr(tmdbstr):
     if tmdbstr.isnumeric():
         return '', tmdbstr
-    m = re.search(r'(m(ovie)?|t(v)?)[-_]?(\d+)', tmdbstr.strip(), flags=re.A | re.I)
+    m = re.search(r'(m(ovie)?|t(v)?)[-_]?(\d+)',
+                  tmdbstr.strip(), flags=re.A | re.I)
     if m:
         catstr = 'movie' if m[1].startswith('m') else 'tv'
         return catstr, m[4]
@@ -194,9 +196,9 @@ def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
     if os.path.exists(oldpath):
         import rcp
         targetLocation, tmdbTitle = rcp.runTorcpMove(
-                sourceDir=oldpath,
-                targetDir=myconfig.CONFIG.mbRootDir,
-                tmdbcatidstr=tmdbcatidstr)
+            sourceDir=oldpath,
+            targetDir=myconfig.CONFIG.mbRootDir,
+            tmdbcatidstr=tmdbcatidstr)
 
         if tormedia.location != targetLocation:
             tormedia.tmdbcat = tmdbcat
@@ -204,11 +206,13 @@ def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
             tormedia.location = targetLocation
             tormedia.title = tmdbTitle
             db.session.commit()
-            warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+            warningstr = '影视内容已经移至：' + \
+                os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
             shutil.rmtree(oldpath)
             moved = True
         else:
-            warningstr = '影视内容位置没变：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+            warningstr = '影视内容位置没变：' + \
+                os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
             moved = False
     else:
         warningstr = '目录不存在：' + oldpath
@@ -234,7 +238,8 @@ def torMediaEdit(id):
 
     if request.method == 'POST':
         form = MediaItemForm(request.form)
-        moved, warningstr = torMediaEditFunc(id, form.tmdbcatid.data, form.mbRootDir.data)
+        moved, warningstr = torMediaEditFunc(
+            id, form.tmdbcatid.data, form.mbRootDir.data)
 
         return render_template('mediaeditresult.html', msg=warningstr, moved=moved, mid=id)
 
@@ -246,7 +251,7 @@ def torMediaEdit(id):
 def apiTorMediaEdit():
     r = request.get_json()
     moved, msg = torMediaEditFunc(r["id"], r["tmdbcatid"], r["mbRootDir"])
-    return json.dumps({'msg':msg, 'moved':moved}), 200, {'ContentType':'application/json'} 
+    return json.dumps({'msg': msg, 'moved': moved}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/mediadel/<id>')
@@ -261,7 +266,7 @@ def torMediaDel(id):
             shutil.rmtree(destDir)
         except:
             pass
-    
+
     db.session.delete(tormedia)
     db.session.commit()
     return redirect("/")
@@ -271,7 +276,8 @@ class QBSettingForm(Form):
     qbhost = StringField('qBit 主机IP', validators=[DataRequired()])
     qbport = StringField('qBit 端口')
     qbuser = StringField('qBit 用户名', validators=[DataRequired()])
-    qbpass = StringField('qBit 密码', widget=PasswordInput(hide_value=False), validators=[DataRequired()])
+    qbpass = StringField('qBit 密码', widget=PasswordInput(
+        hide_value=False), validators=[DataRequired()])
     submit = SubmitField("保存设置")
     qbapirun = RadioField('qBit 种子完成后调 API, 还是执行本地 rcp.sh 脚本？', choices=[
         ('True', '调用 API, 适用于 qBit 跑在docker里面的情况'),
@@ -311,10 +317,11 @@ def qbitSetting():
             progstr = 'curl ' + authstr + postargs + apiurl
         else:
             fn = os.path.join(os.path.dirname(__file__), "rcp.sh")
-            progstr =  'sh ' + fn + ' "%I" '
+            progstr = 'sh ' + fn + ' "%I" '
             scriptpath = os.path.dirname(__file__)
             with open(fn, 'w') as f:
-                f.write(f"#!/bin/sh\npython3 {os.path.join(scriptpath, 'rcp.py')}  -I $1 >>{os.path.join(scriptpath, 'rcp2.log')} 2>>{os.path.join(scriptpath, 'rcp2e.log')}\n")
+                f.write(
+                    f"#!/bin/sh\npython3 {os.path.join(scriptpath, 'rcp.py')}  -I $1 >>{os.path.join(scriptpath, 'rcp2.log')} 2>>{os.path.join(scriptpath, 'rcp2e.log')}\n")
                 f.close()
             # import stat
             # os.chmod(fn, stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH)
@@ -387,7 +394,7 @@ def editrcp():
     msg = ''
     if request.method == 'POST':
         rcpsh_txt = request.form['config_file']
-        
+
         with open(fn, 'w') as f:
             f.write("\n".join(rcpsh_txt.splitlines()))
         msg = "success"
@@ -798,7 +805,6 @@ def rssRunOnce(id):
     return redirect("/rsstasks")
 
 
-
 def validDownloadlink(downlink):
     keystr = ['passkey', 'downhash', 'totheglory.im/dl/',
               'totheglory.im/rssdd.php', 'download.php?hash=']
@@ -839,11 +845,13 @@ def checkMediaDbExistsTMDb(torTMDbid, torTMDbCat):
             tmdbcat=torTMDbCat, tmdbid=torTMDbid).first() is not None
         return exists
 
+
 def checkMediaDbNameDupe(torname):
     with app.app_context():
         exists = db.session.query(TorMediaItem.id).filter_by(
             torname=torname).first() is not None
         return exists
+
 
 def genrSiteId(detailLink, imdbstr):
     siteAbbrev = getAbbrevSiteName(detailLink)
@@ -864,12 +872,14 @@ def tryFloat(fstr):
         f = 0.0
     return f
 
+
 def tryint(instr):
     try:
         string_int = int(instr)
     except ValueError:
         string_int = 0
     return string_int
+
 
 def fetchInfoPage(pageUrl, pageCookie):
     cookie = SimpleCookie()
@@ -960,6 +970,32 @@ def addTorrent(downloadLink, siteIdStr, imdbstr):
     return 201
 
 
+def addTorrentViaPageDownload(downloadLink, sitecookie, siteIdStr, imdbstr):
+    if (not myconfig.CONFIG.qbServer):
+        return 400
+    cookie = SimpleCookie()
+    cookie.load(sitecookie)
+    cookies = {k: v.value for k, v in cookie.items()}
+    headers = {
+        'User-Agent':
+        'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
+        'Content-Type': 'text/html; charset=UTF-8'
+    }
+
+    response = pyrequests.get(downloadLink, headers=headers, cookies=cookies)
+    if not response.status_code == 200:
+        return 402
+
+    if not myconfig.CONFIG.dryrun:
+        print("   >> Added: " + siteIdStr)
+        if not qbfunc.addQbitFileWithTag(response.content, imdbstr, siteIdStr):
+            return 400
+    else:
+        print("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
+
+    return 201
+
+
 def prcessRssFeeds(rsstask):
     feed = feedparser.parse(rsstask.rsslink)
     rssFeedSum = 0
@@ -989,13 +1025,13 @@ def prcessRssFeeds(rsstask):
             continue
 
         print("%d: %s (%s)" % (rssFeedSum, item.title,
-                                datetime.now().strftime("%H:%M:%S")))
+                               datetime.now().strftime("%H:%M:%S")))
 
-        dbrssitem = RSSHistory(site=rsstask.site, 
-                        title=item.title, 
-                        infoLink = item.link,
-                        downloadLink = item.links[1]['href'],
-                        size = item.links[1]['length'])
+        dbrssitem = RSSHistory(site=rsstask.site,
+                               title=item.title,
+                               infoLink=item.link,
+                               downloadLink=item.links[1]['href'],
+                               size=item.links[1]['length'])
 
         db.session.add(dbrssitem)
         db.session.commit()
@@ -1038,7 +1074,8 @@ def prcessRssFeeds(rsstask):
                 imdbval, doubanval = parseInfoPageIMDbval(doc)
                 if (imdbval < rsstask.min_imdb) and (doubanval < rsstask.min_imdb):
                     # print("   >> MIN_IMDb not match")
-                    dbrssitem.reason = "IMDb: %s, douban: %s" % (imdbval, doubanval)
+                    dbrssitem.reason = "IMDb: %s, douban: %s" % (
+                        imdbval, doubanval)
                     db.session.commit()
                     continue
 
@@ -1047,13 +1084,13 @@ def prcessRssFeeds(rsstask):
         rssDownloadLink = item.links[1]['href']
         dbrssitem.accept = 2
         print('   %s (%s), %s' %
-                (imdbstr, HumanBytes.format(int(dbrssitem.size)), rssDownloadLink))
+              (imdbstr, HumanBytes.format(int(dbrssitem.size)), rssDownloadLink))
 
         if checkMediaDbNameDupe(item.title):
             dbrssitem.reason = "Name dupe"
             db.session.commit()
             continue
-        
+
         r = checkMediaDbTMDbDupe(item.title, imdbstr)
         if r != 201:
             dbrssitem.reason = 'TMDb dupe'
@@ -1082,7 +1119,7 @@ def prcessRssFeeds(rsstask):
 @auth.login_required
 def manualDownload(rsslogid):
     dbrssitem = RSSHistory.query.get(rsslogid)
-    ## TODO: count download number on 1st site of the name
+    # TODO: count download number on 1st site of the name
     taskitem = RSSTask.query.filter(RSSTask.site == dbrssitem.site).first()
 
     imdbstr = ''
@@ -1093,7 +1130,7 @@ def manualDownload(rsslogid):
             dbrssitem.imdbstr = imdbstr
         siteIdStr = genrSiteId(dbrssitem.infoLink, imdbstr)
 
-        if not checkMediaDbNameDupe(dbrssitem.title):    
+        if not checkMediaDbNameDupe(dbrssitem.title):
             r = addTorrent(dbrssitem.downloadLink, siteIdStr, imdbstr)
             if r == 201:
                 dbrssitem.accept = 3
@@ -1106,7 +1143,7 @@ def manualDownload(rsslogid):
 @auth.login_required
 def jsApiDupeDownload():
     if not request.json or 'torname' not in request.json:
-        abort(400)
+        abort(jsonify(message="torname not found"))
 
     if checkMediaDbNameDupe(request.json['torname']):
         return jsonify({'Dupe': 'name'}), 202
@@ -1137,10 +1174,11 @@ def jsApiDupeDownload():
         if r == 201:
             return jsonify({'Download': True}), 201
         else:
-            abort(400)
+            abort(jsonify(message="failed add qbit"))            
     else:
         # print("DRYRUN: " + request.json['torname'])
-        print("DRYRUN: " + request.json['torname'] + "\n" + request.json['downloadlink'])
+        print("DRYRUN: " + request.json['torname'] +
+              "\n" + request.json['downloadlink'])
         return jsonify({'DRYRUN': True}), 205
 
 
@@ -1148,7 +1186,7 @@ def jsApiDupeDownload():
 @auth.login_required
 def jsApiCheckDupe():
     if not request.json or 'torname' not in request.json:
-        abort(400)
+        abort(jsonify(message="torname not found"))
     if checkMediaDbNameDupe(request.json['torname']):
         return jsonify({'Dupe': 'name'}), 202
     imdbstr = ''
@@ -1161,17 +1199,12 @@ def jsApiCheckDupe():
     return jsonify({'No Dupe': True}), 201
 
 
-class PtSearchForm(Form):
-    searchStr = StringField('输入 关键词 或 IMDb 在所配的PT站中进行查找')
-    submit = SubmitField("查找")
-
-
 def requestPtPage(pageUrl, pageCookie):
     cookie = SimpleCookie()
     cookie.load(pageCookie)
     cookies = {k: v.value for k, v in cookie.items()}
     headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9", 
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         'User-Agent':
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78",
         'Content-Type': 'text/html; charset=UTF-8'
@@ -1186,6 +1219,11 @@ def requestPtPage(pageUrl, pageCookie):
         return ''
 
     return r.text
+
+
+class PtSearchForm(Form):
+    searchStr = StringField('输入 关键词 或 IMDb 在所配的PT站中进行查找')
+    submit = SubmitField("查找")
 
 
 class TorrentCache(db.Model):
@@ -1214,9 +1252,9 @@ class TorrentCache(db.Model):
             'id': self.id,
             'addedon': self.addedon,
             'site': self.site,
-            'searchword' : self.searchword,
+            'searchword': self.searchword,
             'tortitle': self.tortitle,
-            'infolink': getfulllink(self.site,self.infolink),
+            'infolink': getfulllink(self.site, self.infolink),
             'subtitle': self.subtitle,
             'downlink': self.downlink,
             'taggy': self.taggy,
@@ -1289,7 +1327,7 @@ def striptag(titlestr):
     return s
 
 
-## xpath method
+# xpath method
 
 def xpathGetElement(row, siteJson, key):
     if not siteJson:
@@ -1318,33 +1356,33 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     if r:
         PT_SITES = r["sites"]
     else:
-        return 401 # site not configured
+        return 401  # site not configured
 
     cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
     if not cursite:
-        return 401 # site not configured
+        return 401  # site not configured
 
     pturl = cursite['searchurl']+seachWord
     hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
     passkey = ''
-    if "passkey" in cursite:
-        ucpJson = cursite["passkey"]
-        if "usercp" in ucpJson and "keypath" in ucpJson:
-            usercpurl = hosturl + ucpJson["usercp"]
-            usercpdoc = requestPtPage(usercpurl, siteCookie)
-            if not usercpdoc:
-                return 404
-            usercplh = lxml.html.fromstring(usercpdoc)
-            passkey = usercplh.xpath(ucpJson["keypath"])
-            passkey = remove_non_ascii(passkey)
-        
+    # if "passkey" in cursite:
+    #     ucpJson = cursite["passkey"]
+    #     if "usercp" in ucpJson and "keypath" in ucpJson:
+    #         usercpurl = hosturl + ucpJson["usercp"]
+    #         usercpdoc = requestPtPage(usercpurl, siteCookie)
+    #         if not usercpdoc:
+    #             return 404
+    #         usercplh = lxml.html.fromstring(usercpdoc)
+    #         passkey = usercplh.xpath(ucpJson["keypath"])
+    #         passkey = remove_non_ascii(passkey)
+
     doc = requestPtPage(pturl, siteCookie)
     if not doc:
-        return 404 # page not fetched 
+        return 404  # page not fetched
 
     htmltree = lxml.html.fromstring(doc)
     torlist = htmltree.xpath(cursite["torlist"])
-    for row in torlist:
+    for row in reversed(torlist):
         title = xpathGetElement(row, cursite, "tortitle")
         if not title:
             continue
@@ -1360,13 +1398,15 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
             # dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
             dbitem.subtitle = striptag(dbitem.subtitle)
 
-        dbitem.tagzz = True if xpathGetElement(row, cursite, "tagzz") else False
-        dbitem.taggy = True if xpathGetElement(row, cursite, "taggy") else False
+        dbitem.tagzz = True if xpathGetElement(
+            row, cursite, "tagzz") else False
+        dbitem.taggy = True if xpathGetElement(
+            row, cursite, "taggy") else False
         dbitem.doubanval = tryFloat(xpathGetElement(row, cursite, "doubanval"))
         dbitem.imdbval = tryFloat(xpathGetElement(row, cursite, "imdbval"))
         dbitem.imdbstr = xpathGetElement(row, cursite, "imdbstr")
         if dbitem.imdbstr and not dbitem.imdbstr.startswith('tt'):
-            dbitem.imdbstr = 'tt'+ dbitem.imdbstr.zfill(7)
+            dbitem.imdbstr = 'tt' + dbitem.imdbstr.zfill(7)
         dbitem.doubanid = xpathGetElement(row, cursite, "doubanid")
         dbitem.seednum = tryint(xpathGetElement(row, cursite, "seednum"))
         dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
@@ -1388,16 +1428,17 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
 @app.route('/ptsearch', methods=['POST', 'GET'])
 def ptSearch():
     form = PtSearchForm(request.form)
+    sitelist = PtSite.query
 
     if request.method == 'POST':
         form = PtSearchForm(request.form)
-        
+
         sitehost = 'pterclub'
         ptcookie = getSiteCookie(sitehost)
 
         xpathSearchPtSites(sitehost, ptcookie, form.searchStr.data)
 
-    return render_template('ptsearch.html', form=form)
+    return render_template('ptsearch.html', form=form, sites=sitelist)
 
 
 @app.route('/api/ptsearch', methods=['POST'])
@@ -1405,11 +1446,11 @@ def apiPtSearch():
     if request.method == 'POST':
         r = request.get_json()
 
-        sitehost = 'audiences'
+        sitehost = r["site"]
         ptcookie = getSiteCookie(sitehost)
         xpathSearchPtSites(sitehost, ptcookie, r["searchword"])
 
-    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
 def getSiteCookie(sitehost):
@@ -1429,15 +1470,15 @@ def getfulllink(sitehost, rellink):
     if r:
         PT_SITES = r["sites"]
     else:
-        return '' # site not configured
+        return ''  # site not configured
 
     cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
     if not cursite:
-        return '' # site not configured
+        return ''  # site not configured
 
-    hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(cursite['searchurl']))
+    hosturl = '{uri.scheme}://{uri.netloc}/'.format(
+        uri=urlparse(cursite['searchurl']))
     return hosturl + rellink
-
 
 
 @app.route('/dlresult/<cacheid>')
@@ -1447,20 +1488,18 @@ def resultDownload(cacheid):
 
     infolink = getfulllink(dbcacheitem.site, dbcacheitem.infolink)
     downlink = getfulllink(dbcacheitem.site, dbcacheitem.downlink)
+    sitecookie = getSiteCookie(dbcacheitem.site)
     if not dbcacheitem.imdbstr:
-        ## TODO: using rsstask cookie
-        taskitem = RSSTask.query.filter(RSSTask.site == dbcacheitem.site).first()
-
         imdbstr = ''
-        if taskitem:
-            doc = fetchInfoPage(infolink, taskitem.cookie)
+        if sitecookie:
+            doc = fetchInfoPage(infolink, sitecookie)
             if doc:
                 imdbstr = parseInfoPageIMDbId(doc)
                 dbcacheitem.imdbstr = imdbstr
     siteIdStr = genrSiteId(infolink, dbcacheitem.imdbstr)
 
-    # if not checkMediaDbNameDupe(dbcacheitem.title):    
-    r = addTorrent(downlink, siteIdStr, dbcacheitem.imdbstr)
+    # if not checkMediaDbNameDupe(dbcacheitem.title):
+    r = addTorrentViaPageDownload(downlink, sitecookie, siteIdStr, dbcacheitem.imdbstr)
     if r == 201:
         dbcacheitem.dlcount += 1
         db.session.commit()
@@ -1470,17 +1509,28 @@ def resultDownload(cacheid):
 class PtSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     addedon = db.Column(db.DateTime, default=datetime.now)
+    last_update = db.Column(
+        db.DateTime, default=datetime.now, onupdate=datetime.now)
     site = db.Column(db.String(32))
     cookie = db.Column(db.String(1024))
-    internlink = db.Column(db.String(256))
+    sitenewlink = db.Column(db.String(256))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'last_update': self.last_update,
+            'site': self.site,
+            'cookie': self.cookie,
+            'sitenewlink': self.sitenewlink,
+        }
 
 
 class PtSiteForm(Form):
-    site = SelectField(u'选择站点', choices=[('pterclub', 'PTerClub'), ('chdbits', 'CHDBits'), ('audiences', 'Audiences')])
+    site = SelectField(u'选择站点', choices=[
+                       ('pterclub', 'PTerClub'), ('chdbits', 'CHDBits'), ('audiences', 'Audiences')])
     cookie = StringField('Cookie')
     internlink = StringField('官种链接')
     submit = SubmitField("添加")
-
 
 
 @app.route('/sites',  methods=['POST', 'GET'])
@@ -1497,32 +1547,91 @@ def sitesConfig():
     return render_template('ptsites.html', form=form)
 
 
-@app.route('/ajax/sitedata',  methods=['GET', 'POST'])
-def ajaxGetSiteData():
+@app.route('/api/sitesetting/',  methods=['GET', 'POST'])
+def apiGetSiteSetting():
     if request.method == 'POST':
         r = request.get_json()
         sitehost = r['site']
-        exists = db.session.query(PtSite.id).filter_by(site=sitehost).first() is not None
+        if '选择站点' in sitehost:
+            abort(jsonify(message="not for this"))
+
+        exists = db.session.query(PtSite.id).filter_by(
+            site=sitehost).first() is not None
         if not exists:
-            dbsite = PtSite(site=r['site'],cookie=r['cookie'])
+            dbsite = PtSite(site=r['site'], cookie=r['cookie'])
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
             dbsite.cookie = r['cookie']
         db.session.add(dbsite)
         db.session.commit()
-        return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+        return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
     if request.method == 'GET':
         sitehost = request.args.get('site')
+        op = request.args.get('op')
         if not sitehost:
-            abort(404)
+            abort(jsonify(message="site not found"))
 
-        dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
+        if sitehost.isdigit():
+            dbsite = PtSite.query.get(sitehost)
+        else:
+            dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
         if not dbsite:
-            return json.dumps({'cookie':''}), 200, {'ContentType':'application/json'} 
-        ptcookie = dbsite.cookie
-        return json.dumps({'cookie':ptcookie}), 200, {'ContentType':'application/json'} 
-    
+            return json.dumps({'cookie': ''}), 200, {'ContentType': 'application/json'}
+
+        if op == 'delete':
+            db.session.delete(dbsite)
+            db.session.commit()
+        
+        return json.dumps({'site': dbsite.site, 'cookie': dbsite.cookie}), 200, {'ContentType': 'application/json'}
+
+
+
+@app.route('/api/sitelistdata')
+@auth.login_required
+def apiSitesData():
+    query = PtSite.query
+
+    # search filter
+    search = request.args.get('search[value]')
+    if search:
+        query = query.filter(db.or_(
+            PtSite.site.like(f'%{search}%'),
+        ))
+    total_filtered = query.count()
+
+    # sorting
+    order = []
+    i = 0
+    while True:
+        col_index = request.args.get(f'order[{i}][column]')
+        if col_index is None:
+            break
+        col_name = request.args.get(f'columns[{col_index}][data]')
+        if col_name not in ['site', 'last_update']:
+            col_name = 'last_update'
+        descending = request.args.get(f'order[{i}][dir]') == 'desc'
+        col = getattr(PtSite, col_name)
+        if descending:
+            col = col.desc()
+        order.append(col)
+        i += 1
+    if order:
+        query = query.order_by(*order)
+
+    # pagination
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    query = query.offset(start).limit(length)
+
+    # response
+    return {
+        'data': [x.to_dict() for x in query],
+        'recordsFiltered': total_filtered,
+        'recordsTotal': PtSite.query.count(),
+        'draw': request.args.get('draw', type=int),
+    }
+
 
 
 def rssJob(id):

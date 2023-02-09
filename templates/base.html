@@ -40,6 +40,9 @@
                         <a class="nav-link " href="{{ url_for('ptSearch') }}">搜索</a>
                     </li>
                     <li class="nav-item ">
+                        <a class="nav-link " href="/sites">站点</a>
+                    </li>
+                    <li class="nav-item ">
                         <a class="nav-link " href="{{ url_for('setting') }}">设置</a>
                     </li>
                     <li class="nav-item ">
@@ -64,6 +67,22 @@
     <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+    DATATABLE_LANG={
+        "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
+        "lengthMenu": "每页显示  _MENU_ 条",
+        "search": "查找: ",
+        "zeroRecords": "现在这里空空的",
+        "infoEmpty": "没什么可说的",
+        "paginate": {
+          // 'page': '直跳页号',
+          'first': '首页',
+          'previous': '前页',
+          'next': '后页',
+          'last': '最末页'
+        }
+      }
+      </script>
     {% block script %}{% endblock script %}
 
 </body>

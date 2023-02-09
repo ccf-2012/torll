@@ -46,14 +46,20 @@
         </div>
         <form method="post">
             <div class="form-group mb-3">
-                {{ form.searchStr.label(class='form-label')}}
-                {{ form.searchStr(class="form-control") }}
+                <div class="input-group rounded">
+                    <input type="search" class="form-control rounded" placeholder="搜索" id="searchStr" name="searchStr" aria-label="Search" aria-describedby="search-addon" />
+                  </div>                
             </div>
-
-            <button id='ptsearch' class="btn btn-primary" type="button">
-                <span id="busy" role="status" aria-hidden="true"></span>
-                搜索
-            </button>
+            <div class="row mb-3">
+                <div class="col-sm-2">
+                    <button id='ptsearch' class="btn btn-primary" type="button">
+                        <span id="busy" role="status" aria-hidden="true"></span>
+                        搜索
+                    </button>
+                </div>
+                <label for="ptsearch" id='sitesearching' class="col-sm-10 col-form-label"></label>
+            </div>
+    
         </form>
     </div>
 
@@ -85,12 +91,10 @@
 
 {% block script %}
 <script>
-    $("#ptsearch").click(function () {
-        var searchword = $('#searchStr').val();
+    function apiPtSearch(site, searchword){
         $("#busy").addClass("spinner-border spinner-border-sm")
         $('#ptsearch').prop('disabled', true);
-        var sites = 'pterclub';
-        var dict = { searchword: searchword, sites: sites };
+        var dict = {site: site, searchword: searchword};
         $.ajax({
             url: '/api/ptsearch',
             method: 'POST',
@@ -100,12 +104,28 @@
                 // var table=('#tableid').Datatable();
                 // table.ajax.reload();
                 $('#data').DataTable().ajax.reload();
+                var s = $('#sitesearching').text();
+                s = s.replace(site, '');
+                $('#sitesearching').text(s);
+                if (!s.trim()){
+                    $('#ptsearch').prop('disabled', false);
+                    $("#busy").removeClass("spinner-border spinner-border-sm");
+                }
             },
             complete: function (xhr, textStatus) {
-                $('#ptsearch').prop('disabled', false);
-                $("#busy").removeClass("spinner-border spinner-border-sm");
             }
         });
+
+    }
+    $("#ptsearch").click(function () {
+        var searchword = $('#searchStr').val();
+        var site = '';
+
+        {% for x in sites%}
+        site  += "{{ x.site }} "
+        apiPtSearch("{{ x.site }}", searchword)
+        {% endfor %}
+        $('#sitesearching').text(site)
     });
 </script>
 
@@ -114,19 +134,7 @@
     $(document).ready(function () {
         // $("#busy").hide();
         $('#data').DataTable({
-            language: {
-                "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
-                "lengthMenu": "每页显示  _MENU_ 条",
-                "search": "查找: ",
-                "zeroRecords": "现在这里空空的",
-                "infoEmpty": "没什么可说的",
-                "paginate": {
-                    'first': '首页',
-                    'previous': '前页',
-                    'next': '后页',
-                    'last': '最末页'
-                }
-            },
+            language: DATATABLE_LANG,
             "pageLength": 25,
             autoWidth: true,
             scrollX: true,

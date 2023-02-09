@@ -14,27 +14,27 @@
 <div class="row mx-2 my-3 justify-content-center">
   <a class=" " href="{{ url_for('rssNew') }}">+ 新建RSS任务</a>
 
-    <table id="data" class="table row-border order-column" style="width:100%">
-      <thead>
-        <tr>
-          <th>最后更新</th>
-          <th>站点</th>
-          <th>间隔(分钟)</th>
-          <th>下载数</th>
-          <th>标题包含</th>
-          <th>标题不含</th>
-          <th>描述包含</th>
-          <th>描述不含</th>
-          <th>IMDb大于</th>
-          <th>操作</th>
-          <th>active</th>
-        </tr>
-      </thead>
-      <tbody>
+  <table id="data" class="table row-border order-column" style="width:100%">
+    <thead>
+      <tr>
+        <th>最后更新</th>
+        <th>站点</th>
+        <th>间隔(分钟)</th>
+        <th>下载数</th>
+        <th>标题包含</th>
+        <th>标题不含</th>
+        <th>描述包含</th>
+        <th>描述不含</th>
+        <th>IMDb大于</th>
+        <th>操作</th>
+        <th>active</th>
+      </tr>
+    </thead>
+    <tbody>
 
-      </tbody>
-    </table>
-    
+    </tbody>
+  </table>
+
 </div>
 {% endblock %}
 
@@ -44,20 +44,7 @@
 
   $(document).ready(function () {
     $('#data').DataTable({
-      language: {
-        "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
-        "lengthMenu": "每页显示  _MENU_ 条",
-        "search": "查找: ",
-        "zeroRecords": "现在这里空空的",
-        "infoEmpty": "没什么可说的",
-        "paginate": {
-          // 'page': '直跳页号',
-          'first': '首页',
-          'previous': '前页',
-          'next': '后页',
-          'last': '最末页'
-        }
-      },
+      language: DATATABLE_LANG,
       "pageLength": 10,
       "dom": "tip",
       autoWidth: false,
@@ -71,8 +58,8 @@
           data: 'last_update',
           "width": "15%",
           "render": function (data) {
-                var date = new Date(data);
-                return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+            var date = new Date(data);
+            return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
           }
         },
         {
@@ -112,24 +99,29 @@
           orderable: false, searchable: false,
           "width": "8%"
         },
-        { data: 'id', searchable: false, 
+        {
+          data: 'id', searchable: false,
           "width": "18%",
           "render": function (data, type, row) {
             var tstr = (row.active == 2) ? '恢复' : '暂停'
             var linkDelete = '<a href="/rssdel/' + row.id + '">删除</a>';
-            var linkToggle = '<a href="/rssactivate/' + row.id + '">'+tstr+'</a>';
-            var linkEdit = '<a href="/rssedit/' + row.id + '">'+'编辑'+'</a>';
-            var linkRunOnce = '<a href="/rssrunonce/' + row.id + '">'+'运行'+'</a>';
-            return linkToggle + " | " + linkRunOnce + " | " + linkEdit + " | " +  linkDelete;
+            var linkToggle = '<a href="/rssactivate/' + row.id + '">' + tstr + '</a>';
+            var linkEdit = '<a href="/rssedit/' + row.id + '">' + '编辑' + '</a>';
+            var linkRunOnce = '<a href="/rssrunonce/' + row.id + '">' + '运行' + '</a>';
+            return linkToggle + " | " + linkRunOnce + " | " + linkEdit + " | " + linkDelete;
           },
         },
-        { data: 'active','visible' : false, searchable: false },
+        { data: 'active', 'visible': false, searchable: false },
       ],
       "createdRow": function (row, data, dataIndex) {
         if (data.active == 2) {
           // $(row).addClass('redClass');
           $('td', row).css('background-color', 'rgb(231 229 228)');
         }
+      },
+      drawCallback: function (settings) {
+        var pagination = $(this).closest('.dataTables_wrapper').find('.dataTables_paginate');
+        pagination.toggle(this.api().page.info().pages > 1);
       }
     });
 
