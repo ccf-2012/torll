@@ -1350,6 +1350,8 @@ def xpathGetElement(row, siteJson, key):
             return ''
         return row.xpath(eleJson)
 
+def matchIMDbid(str):
+    return True if re.match(r'tt\d+', str.strip(), re.I) else False
 
 def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     r = siteconfig.loadSiteConfig()
@@ -1362,7 +1364,11 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     if not cursite:
         return 401  # site not configured
 
-    pturl = cursite['searchurl']+seachWord
+    if matchIMDbid(seachWord):
+        pturl = cursite['searchIMDburl']+seachWord
+    else:    
+        pturl = cursite['searchurl']+seachWord
+
     hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
     passkey = ''
     # if "passkey" in cursite:
@@ -1418,7 +1424,6 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         dbitem.searchword = seachWord
 
         # print(dbitem.__dict__)
-
         db.session.add(dbitem)
         db.session.commit()
 
