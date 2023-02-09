@@ -27,7 +27,7 @@
 
             <button id='mediaedit' class="btn btn-primary" type="button">
                 <span id="busy" role="status" aria-hidden="true"></span>
-                搜索
+                修正
             </button>
 
         </form>
@@ -52,7 +52,7 @@
                 $('#msg span').text(t.msg);
             },
             complete: function (xhr, textStatus) {
-                $('#ptsearch').prop('disabled', false);
+                $('#mediaedit').prop('disabled', false);
                 $("#busy").removeClass("spinner-border spinner-border-sm");
             }
         });
