@@ -120,7 +120,7 @@ class TorcpItemDBObj:
                          torimdb=self.torimdb,
                          torhash=self.torhash,
                          torsize=self.torsize,
-                         tmdbid=int(tmdbIdStr),
+                         tmdbid=tryint(tmdbIdStr),
                          tmdbcat=tmdbCat,
                          location=targetDir)
         
@@ -1165,7 +1165,8 @@ def requestPtPage(pageUrl, pageCookie):
     try:
         r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
         print(r.encoding, r.apparent_encoding)
-        r.encoding = r.apparent_encoding
+        # utf-8 Windows-1254
+        # r.encoding = r.apparent_encoding
     except:
         return ''
 
@@ -1389,7 +1390,7 @@ def aptPtSearch():
     if request.method == 'POST':
         r = request.get_json()
 
-        sitehost = 'pterclub'
+        sitehost = 'audiences'
         ptcookie = getSiteCookie(sitehost)
         xpathSearchPtSites(sitehost, ptcookie, r["searchword"])
 
