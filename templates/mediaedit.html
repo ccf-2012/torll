@@ -49,6 +49,10 @@
             contentType: "application/json",
             success: function (response) {
                 t = JSON.parse(response)
+                if (t.moved) {
+                    $('#msg').removeClass('alert-danger')
+                    $('#msg').addClass('alert-success')
+                }
                 $('#msg span').text(t.msg);
             },
             complete: function (xhr, textStatus) {

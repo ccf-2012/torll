@@ -185,6 +185,38 @@ def parseTMDbStr(tmdbstr):
         return '', ''
 
 
+def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
+    tormedia = TorMediaItem.query.get(mediaid)
+
+    tmdbcat, tmdbidstr = parseTMDbStr(tmdbcatidstr)
+    myconfig.updateMediaRootDir(ARGS.config, mbrootDir)
+    oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
+    if os.path.exists(oldpath):
+        import rcp
+        targetLocation, tmdbTitle = rcp.runTorcpMove(
+                sourceDir=oldpath,
+                targetDir=myconfig.CONFIG.mbRootDir,
+                tmdbcatidstr=tmdbcatidstr)
+
+        if tormedia.location != targetLocation:
+            tormedia.tmdbcat = tmdbcat
+            tormedia.tmdbid = tryint(tmdbidstr)
+            tormedia.location = targetLocation
+            tormedia.title = tmdbTitle
+            db.session.commit()
+            warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+            shutil.rmtree(oldpath)
+            moved = True
+        else:
+            warningstr = '影视内容位置没变：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
+            moved = False
+    else:
+        warningstr = '目录不存在：' + oldpath
+        moved = False
+
+    return moved, warningstr
+
+
 @app.route('/mediaedit/<id>', methods=['POST', 'GET'])
 @auth.login_required
 def torMediaEdit(id):
@@ -202,34 +234,9 @@ def torMediaEdit(id):
 
     if request.method == 'POST':
         form = MediaItemForm(request.form)
-        tmdbcat, tmdbidstr = parseTMDbStr(form.tmdbcatid.data)
-        myconfig.updateMediaRootDir(ARGS.config, form.mbRootDir.data)
-        oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
-        if os.path.exists(oldpath):
-            import rcp
-            targetLocation, tmdbTitle = rcp.runTorcpMove(
-                    sourceDir=oldpath,
-                    targetDir=myconfig.CONFIG.mbRootDir,
-                    tmdbcatidstr=form.tmdbcatid.data)
-
-            if tormedia.location != targetLocation:
-                tormedia.tmdbcat = tmdbcat
-                tormedia.tmdbid = tryint(tmdbidstr)
-                tormedia.location = targetLocation
-                tormedia.title = tmdbTitle
-                db.session.commit()
-                warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
-                shutil.rmtree(oldpath)
-                moved = True
-            else:
-                warningstr = '影视内容位置没变：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
-                moved = False
-        else:
-            warningstr = '目录不存在：' + oldpath
-            moved = False
+        moved, warningstr = torMediaEditFunc(id, form.tmdbcatid.data, form.mbRootDir.data)
 
         return render_template('mediaeditresult.html', msg=warningstr, moved=moved, mid=id)
-        # return redirect("/")
 
     return render_template('mediaedit.html', form=form, msg=warningstr, mid=id)
 
@@ -237,39 +244,9 @@ def torMediaEdit(id):
 @app.route('/api/mediaedit', methods=['POST'])
 @auth.login_required
 def apiTorMediaEdit():
-    if request.method == 'POST':
-        r = request.get_json()
-
-        tormedia = TorMediaItem.query.get(r["id"])
-
-        form = MediaItemForm(request.form)
-        tmdbcat, tmdbidstr = parseTMDbStr(r["tmdbcatid"])
-        myconfig.updateMediaRootDir(ARGS.config, r["mbRootDir"])
-        oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
-        if os.path.exists(oldpath):
-            import rcp
-            targetLocation, tmdbTitle = rcp.runTorcpMove(
-                    sourceDir=oldpath,
-                    targetDir=myconfig.CONFIG.mbRootDir,
-                    tmdbcatidstr=form.tmdbcatid.data)
-
-            if tormedia.location != targetLocation:
-                tormedia.tmdbcat = tmdbcat
-                tormedia.tmdbid = tryint(tmdbidstr)
-                tormedia.location = targetLocation
-                tormedia.title = tmdbTitle
-                db.session.commit()
-                warningstr = '影视内容已经移至：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
-                shutil.rmtree(oldpath)
-                moved = True
-            else:
-                warningstr = '影视内容位置没变：' + os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
-                moved = False
-        else:
-            warningstr = '目录不存在：' + oldpath
-            moved = False
-
-        return json.dumps({'msg':warningstr}), 200, {'ContentType':'application/json'} 
+    r = request.get_json()
+    moved, msg = torMediaEditFunc(r["id"], r["tmdbcatid"], r["mbRootDir"])
+    return json.dumps({'msg':msg, 'moved':moved}), 200, {'ContentType':'application/json'} 
 
 
 @app.route('/mediadel/<id>')
