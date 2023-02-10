@@ -142,7 +142,188 @@
         "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
         "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
         "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
-      }          
+      },
+      {
+        "site": "springsunday",
+        "torlist": "//table[contains(@class,'torrents')]/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "passkey":{
+            "usercp":"usercp.php",
+            "keypath": "string(//table[2]/tr[4]/td[2])"
+        },
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//div[contains(@class,'torrent-smalldescr')]/text()[last()])",
+        "searchurl": "https://springsunday.net/torrents.php?search=",
+        "searchIMDburl": "https://springsunday.net/torrents.php?search_area=4&search=",
+        "tagzz": "",
+        "taggy": "",
+        "doubanval": "string(.//a[contains(@href,'search_area=5')])",
+        "imdbval": "string(.//a[contains(@href,'search_area=4')])",
+        "imdbstr": {
+          "path":"string(.//a[contains(@href,'search_area=4')]/@href)",
+          "method": "ssd_imdb"
+        },
+        "doubanid": {
+          "path":"string(.//a[contains(@href,'search_area=5')]/@href)",
+          "method": "ssd_douban"
+        },
+        "seednum": "string(.//td[contains(@class,'rowfollow')][6])",
+        "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
+        "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
+        "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
+      },
+      {
+        "site": "totheglory",
+        "torlist": "//table[@id='torrent_table']/tr",
+        "tortitle": "string(.//*[contains(@class,'name_left')]//a[contains(@href,'/t/')]/b/text()[1])",
+        "passkey":{
+            "usercp":"usercp.php",
+            "keypath": "string(//table[2]/tr[4]/td[2])"
+        },
+        "infolink": "string(.//*[contains(@class,'name_left')]//a[contains(@href,'/t/')]/@href)",
+        "downlink": "string(.//*[contains(@class,'name_right')]//a[contains(@href,'/dl/')]/@href)",
+        "subtitle": "string(.//*[contains(@class,'name_left')]//a[contains(@href,'/t/')]/b/span)",
+        "searchurl": "https://totheglory.im/browse.php?c=M&search_field=",
+        "searchIMDburl": "https://totheglory.im/browse.php?c=M&search_field=",
+        "tagzz": "",
+        "taggy": "",
+        "doubanval": "",
+        "imdbval": "string(.//span[contains(@class,'imdb_rate')]/a)",
+        "imdbstr": {
+          "path":"string(.//span[contains(@class,'imdb_rate')]/a/@href)",
+          "method": "re_imdb"
+        },
+        "doubanid": "",
+        "seednum": {
+          "path": "string(.//td[9])",
+          "method": "ttg_seednum"
+        },
+        "downnum": {
+          "path": "string(.//td[9])",
+          "method": "ttg_downum"
+        },
+        "torsize": "string(.//td[7])",
+        "tordate" : "concat(.//td[5]/nobr/text()[1], ' ', .//td[5]/nobr/text()[2])"
+      },
+      {
+        "site": "m-team",
+        "torlist": "//table[contains(@class,'torrents')]/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]/tr/td[contains(@class, 'embedded')]/text()[last()])",
+        "searchurl": "https://kp.m-team.cc/torrents.php?search=",
+        "searchIMDburl": "https://kp.m-team.cc/torrents.php?search_area=4&search=",
+        "tagzz": ".//img[contains(@class, 'label_sub')]",
+        "taggy": ".//img[contains(@class, 'label_dub')]",
+        "doubanval": "",
+        "imdbval": "string(.//a[contains(@href,'imdb')])",
+        "imdbstr": {
+          "path": "string(.//a[contains(@href,'imdb')]/@href)",
+          "method": "re_imdb"
+        },
+        "doubanid": "",
+        "seednum": "string(./td[6])",
+        "downnum": "string(./td[7])",
+        "torsize": "string(./td[5])",
+        "tordate" : "string(./td[4]//@title)"
+      },
+      {
+        "site": "eastgame",
+        "torlist": "//table[contains(@class,'torrents')]/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]/tr/td[1]/text()[last()])",
+        "searchurl": "https://pt.eastgame.org/torrents.php?search=",
+        "searchIMDburl": "https://pt.eastgame.org/torrents.php?search_area=4&search=",
+        "tagzz": "",
+        "taggy": "",
+        "doubanval": "string(.//img[contains(@alt,'douban')])",
+        "imdbval": "string(.//img[contains(@alt,'imdb')])",
+        "imdbstr": "",
+        "doubanid": "",
+        "seednum": "string(./td[6])",
+        "downnum": "string(./td[7])",
+        "torsize": "string(./td[5])",
+        "tordate" : "string(./td[4]//@title)"
+      },
+      {
+        "site": "hdhome",
+        "torlist": "//table[contains(@class,'torrents')]/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]/tr/td/span[last()])",
+        "searchurl": "https://hdhome.org/torrents.php?search=",
+        "searchIMDburl": "https://hdhome.org/torrents.php?search_area=4&search=",
+        "tagzz": ".//span[contains(@class, 'tzz')]",
+        "taggy": ".//span[contains(@class, 'tgy')]",
+        "doubanval": "string(.//a[contains(@href,'douban')])",
+        "imdbval": "string(.//a[contains(@href,'imdb')])",
+        "imdbstr": {
+          "path": "string(.//a[contains(@href,'imdb')]/@href)",
+          "method": "re_imdb"
+        },
+        "doubanid": {
+          "path": "string(.//a[contains(@href,'douban')]/@href)",
+          "method": "re_douban"
+        },
+        "seednum": "string(.//td[contains(@class,'rowfollow')][6])",
+        "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
+        "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
+        "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
+      },
+      {
+        "site": "pthome",
+        "torlist": "//table[contains(@class,'torrents')]/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]/tr/td/span[last()])",
+        "searchurl": "https://pthome.net/torrents.php?search=",
+        "searchIMDburl": "https://pthome.net/torrents.php?search_area=4&search=",
+        "tagzz": ".//span[contains(@class, 'tzz')]",
+        "taggy": ".//span[contains(@class, 'tgy')]",
+        "doubanval": "string(.//a[contains(@href,'douban')])",
+        "imdbval": "string(.//a[contains(@href,'imdb')])",
+        "imdbstr": {
+          "path": "string(.//a[contains(@href,'imdb')]/@href)",
+          "method": "re_imdb"
+        },
+        "doubanid": {
+          "path": "string(.//a[contains(@href,'douban')]/@href)",
+          "method": "re_douban"
+        },
+        "seednum": "string(.//td[contains(@class,'rowfollow')][6])",
+        "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
+        "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
+        "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
+      },
+      {
+        "site": "tjupt",
+        "torlist": "//table[contains(@class,'torrents')]/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]//a[contains(@href,'details')]/following-sibling::text())",
+        "searchurl": "https://www.tjupt.org/torrents.php?search=",
+        "searchIMDburl": "https://www.tjupt.org/torrents.php?search_area=4&search=",
+        "tagzz": ".//span[contains(@class, 'tzz')]",
+        "taggy": ".//span[contains(@class, 'tgy')]",
+        "doubanval": "",
+        "imdbval": "string(.//a[contains(@href,'imdb')])",
+        "imdbstr": {
+          "path": "string(.//a[contains(@href,'imdb')]/@href)",
+          "method": "re_imdb"
+        },
+        "doubanid": "",
+        "seednum": "string(.//td[contains(@class,'rowfollow')][6])",
+        "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
+        "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
+        "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
+      }        
     ]
   }
   

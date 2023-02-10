@@ -145,7 +145,7 @@ const API_AUTH_PASS = "password";
 
 
 ## 在 torll 中查找
-* 当前支持 pter 站
+* 当前支持 pter, chd, aud, ob, hds, frds, ssd, ttg, mteam, tlf, hdh, pth, tju 站
 * 建设中...
 
 ---

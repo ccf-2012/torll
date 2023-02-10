@@ -1214,6 +1214,8 @@ def requestPtPage(pageUrl, pageCookie):
         r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
         # print(r.encoding, r.apparent_encoding)
         # utf-8 Windows-1254
+        # 'ISO-8859-1' utf-8
+        r.encoding = 'utf-8'
         # r.encoding = r.apparent_encoding
     except:
         return ''
@@ -1321,12 +1323,14 @@ def remove_non_ascii(string):
 
 
 def striptag(titlestr):
-    s = re.sub(r'\[?(国语|中字|官方|禁转|原创)\]?', '', titlestr)
+    s = titlestr.replace('\n', '').strip()
+    # s = re.sub(r'\[?(国语|中字|官方|禁转|原创)\]?', '', s)
     s = re.sub(r'\[?Checked by \w+\]?', '', s)
     return s
 
 
 # xpath method
+
 
 def xpathGetElement(row, siteJson, key):
     if not siteJson:
@@ -1343,11 +1347,26 @@ def xpathGetElement(row, siteJson, key):
             elif eleJson["method"] == "re_douban":
                 m = re.search(r'subject/(\d+)', elestring, re.I)
                 return m[1] if m else ''
+            elif eleJson["method"] == "ssd_imdb":
+                m = re.search(r'search=(\d+)&search_area=4', elestring, re.I)
+                return m[1] if m else ''
+            elif eleJson["method"] == "ssd_douban":
+                m = re.search(r'search=(\d+)&search_area=5', elestring, re.I)
+                return m[1] if m else ''
+            elif eleJson["method"] == "ttg_seednum":
+                m = re.search(r'(\d+)\s*/\s*\d+', elestring, re.I)
+                return m[1] if m else ''
+            elif eleJson["method"] == "ttg_downum":
+                m = re.search(r'\d+\s*/\s*(\d+)', elestring, re.I)
+                return m[1] if m else ''
+
         return ''
     else:
         if not eleJson.strip():
             return ''
         return row.xpath(eleJson)
+
+
 
 def matchIMDbid(str):
     return True if re.match(r'tt\d+', str.strip(), re.I) else False
