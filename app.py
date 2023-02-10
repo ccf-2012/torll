@@ -893,7 +893,7 @@ def fetchInfoPage(pageUrl, pageCookie):
 
     try:
         r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
-        r.encoding = r.apparent_encoding
+        # r.encoding = r.apparent_encoding
     except:
         return ''
 
@@ -1212,18 +1212,13 @@ def requestPtPage(pageUrl, pageCookie):
 
     try:
         r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
-        print(r.encoding, r.apparent_encoding)
+        # print(r.encoding, r.apparent_encoding)
         # utf-8 Windows-1254
         # r.encoding = r.apparent_encoding
     except:
         return ''
 
     return r.text
-
-
-class PtSearchForm(Form):
-    searchStr = StringField('输入 关键词 或 IMDb 在所配的PT站中进行查找')
-    submit = SubmitField("查找")
 
 
 class TorrentCache(db.Model):
@@ -1282,6 +1277,10 @@ def searchResultData():
             TorrentCache.tortitle.like(f'%{search}%'),
             TorrentCache.subtitle.like(f'%{search}%'),
         ))
+    else:
+        col1search = request.args.get('columns[1][search][value]')
+        if col1search:
+            query = query.filter(TorrentCache.searchword == col1search)
     total_filtered = query.count()
 
     # sorting
@@ -1292,7 +1291,7 @@ def searchResultData():
         if col_index is None:
             break
         col_name = request.args.get(f'columns[{col_index}][data]')
-        if col_name not in ['tortitle', 'torsizestr', 'addedon']:
+        if col_name not in ['tortitle', 'torsizestr', 'seednum', 'addedon']:
             col_name = 'id'
         descending = request.args.get(f'order[{i}][dir]') == 'desc'
         col = getattr(TorrentCache, col_name)
@@ -1430,21 +1429,31 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     return 200
 
 
-@app.route('/ptsearch', methods=['POST', 'GET'])
+@app.route('/ptsearch', methods=['GET'])
 def ptSearch():
-    form = PtSearchForm(request.form)
+    # form = PtSearchForm(request.form)
     sitelist = PtSite.query
 
-    if request.method == 'POST':
-        form = PtSearchForm(request.form)
+    wordlist = []
+    for x in db.session.query(TorrentCache.searchword).distinct():
+        wordlist.append(x.searchword)
 
-        sitehost = 'pterclub'
-        ptcookie = getSiteCookie(sitehost)
+    # if request.method == 'POST':
+    #     form = PtSearchForm(request.form)
 
-        xpathSearchPtSites(sitehost, ptcookie, form.searchStr.data)
+    #     sitehost = 'pterclub'
+    #     ptcookie = getSiteCookie(sitehost)
 
-    return render_template('ptsearch.html', form=form, sites=sitelist)
+    #     xpathSearchPtSites(sitehost, ptcookie, form.searchStr.data)
 
+    return render_template('ptsearch.html', sites=sitelist, wordlist=wordlist)
+
+def clearOldResults(searchword):
+    ds = db.session.query(TorrentCache).filter(TorrentCache.searchword == searchword)
+    ds.delete(synchronize_session=False)
+    db.session.commit()
+    # d = TorrentCache.delete().where(TorrentCache.searchword == searchword)
+    # d.execute()
 
 @app.route('/api/ptsearch', methods=['POST'])
 def apiPtSearch():
@@ -1453,6 +1462,7 @@ def apiPtSearch():
 
         sitehost = r["site"]
         ptcookie = getSiteCookie(sitehost)
+        clearOldResults(r["searchword"])
         xpathSearchPtSites(sitehost, ptcookie, r["searchword"])
 
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}

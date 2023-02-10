@@ -122,7 +122,27 @@
         "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
         "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
         "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
-      }        
+      },
+      {
+        "site": "keepfrds",
+        "torlist": "//table[@class='torrents']/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/following-sibling::text())",
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "searchurl": "https://pt.keepfrds.com/torrents.php?search=",
+        "searchIMDburl": "https://pt.keepfrds.com/torrents.php?search_area=4&search=",
+        "tagzz": "",
+        "taggy": "",
+        "doubanval": "string(.//img[contains(@src,'douban')]/following-sibling::text())",
+        "imdbval": "string(.//img[contains(@src,'imdb')]/following-sibling::text())",
+        "imdbstr": "",
+        "doubanid": "",
+        "seednum": "string(.//td[contains(@class,'rowfollow')][6])",
+        "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
+        "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
+        "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
+      }          
     ]
   }
   

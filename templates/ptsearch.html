@@ -44,23 +44,18 @@
                 <h4>搜索种子</h4>
             </span>
         </div>
-        <form method="post">
-            <div class="form-group mb-3">
-                <div class="input-group rounded">
-                    <input type="search" class="form-control rounded" placeholder="搜索" id="searchStr" name="searchStr" aria-label="Search" aria-describedby="search-addon" />
-                  </div>                
-            </div>
-            <div class="row mb-3">
-                <div class="col-sm-2">
-                    <button id='ptsearch' class="btn btn-primary" type="button">
-                        <span id="busy" role="status" aria-hidden="true"></span>
-                        搜索
-                    </button>
-                </div>
-                <label for="ptsearch" id='sitesearching' class="col-sm-10 col-form-label"></label>
-            </div>
-    
-        </form>
+        <input class="form-control" list="searchword" id="searchStr" placeholder="搜索标题，IMDb...">
+        <datalist id="searchword">
+            {% for x in wordlist %}
+            <option value="{{x}}">
+                {% endfor %}
+        </datalist>
+        <div class="d-flex p-2  my-2 align-items-center">
+            <div id="busy" class="mx-1" role="status" aria-hidden="true"></div>
+            <label id='sitesearching'></label>
+        </div>
+
+
     </div>
 
 </div>
@@ -88,27 +83,39 @@
 {% endblock %}
 
 
-
 {% block script %}
 <script>
-    function apiPtSearch(site, searchword){
-        $("#busy").addClass("spinner-border spinner-border-sm")
-        $('#ptsearch').prop('disabled', true);
-        var dict = {site: site, searchword: searchword};
+    $("#searchStr").on('input', function () {
+        var val = this.value;
+        if ($('#searchword option').filter(function () {
+            return this.value.toUpperCase() === val.toUpperCase();
+        }).length) {
+            //send ajax request
+            $('#data').DataTable().search('');
+            $('#data').DataTable().columns(1).search($(this).val()).draw();
+        }
+    });
+
+    $('#searchStr').on('keypress', function (e) {
+        if (e.keyCode === 13) {
+            searchAllSites()
+        }
+    });
+
+    function apiPtSearch(site, searchword) {
+        var dict = { site: site, searchword: searchword };
         $.ajax({
             url: '/api/ptsearch',
             method: 'POST',
             data: JSON.stringify(dict),
             contentType: "application/json",
             success: function (response) {
-                // var table=('#tableid').Datatable();
-                // table.ajax.reload();
                 $('#data').DataTable().ajax.reload();
                 var s = $('#sitesearching').text();
                 s = s.replace(site, '');
                 $('#sitesearching').text(s);
-                if (!s.trim()){
-                    $('#ptsearch').prop('disabled', false);
+                if (!s.trim()) {
+                    // location.reload();
                     $("#busy").removeClass("spinner-border spinner-border-sm");
                 }
             },
@@ -117,22 +124,32 @@
         });
 
     }
-    $("#ptsearch").click(function () {
+    function searchAllSites() {
         var searchword = $('#searchStr').val();
         var site = '';
+        $("#busy").addClass("spinner-border spinner-border-sm");
+        // $('#ptsearch').prop('disabled', true);
 
-        {% for x in sites%}
-        site  += "{{ x.site }} "
+        {% for x in sites %}
+        site += "{{ x.site }} "
         apiPtSearch("{{ x.site }}", searchword)
         {% endfor %}
-        $('#sitesearching').text(site)
-    });
+        $('#sitesearching').text(site);
+
+        exists = $("#searchword option[value='" + searchword + "']").length > 0;
+        if (!exists) {
+            $('#searchword').append($('<option>', {
+                value: searchword,
+                text: searchword
+            }));
+        }
+        // $('#searchword').val(searchword).change();
+    }
 </script>
 
 <script>
 
     $(document).ready(function () {
-        // $("#busy").hide();
         $('#data').DataTable({
             language: DATATABLE_LANG,
             "pageLength": 25,
