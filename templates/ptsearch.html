@@ -126,17 +126,16 @@
     }
     function searchAllSites() {
         var searchword = $('#searchStr').val();
-        var site = '';
+        var sitelist = '';
         $("#busy").addClass("spinner-border spinner-border-sm");
         // $('#ptsearch').prop('disabled', true);
-        $('#data').DataTable().search('');
-        $('#data').DataTable().columns(1).search($(this).val()).draw();
+        // $('#searchword').val(searchword).change();
 
         {% for x in sites %}
-        site += "{{ x.site }} "
+        sitelist += "{{ x.site }} "
         apiPtSearch("{{ x.site }}", searchword)
         {% endfor %}
-        $('#sitesearching').text(site);
+        $('#sitesearching').text(sitelist);
 
         exists = $("#searchword option[value='" + searchword + "']").length > 0;
         if (!exists) {
@@ -145,7 +144,8 @@
                 text: searchword
             }));
         }
-        // $('#searchword').val(searchword).change();
+        $('#data').DataTable().search('');
+        $('#data').DataTable().columns(1).search($(this).val()).draw();
     }
 </script>
 
