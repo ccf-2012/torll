@@ -129,6 +129,8 @@
         var site = '';
         $("#busy").addClass("spinner-border spinner-border-sm");
         // $('#ptsearch').prop('disabled', true);
+        $('#data').DataTable().search('');
+        $('#data').DataTable().columns(1).search($(this).val()).draw();
 
         {% for x in sites %}
         site += "{{ x.site }} "
