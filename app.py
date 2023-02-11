@@ -1233,8 +1233,16 @@ class TorrentCache(db.Model):
     infolink = db.Column(db.String(256))
     subtitle = db.Column(db.String(256))
     downlink = db.Column(db.String(256))
+    mediatype = db.Column(db.String(16))
+    mediasource = db.Column(db.String(16))
+    tmdbcat = db.Column(db.String(16))
+    tmdbid = db.Column(db.Integer)
+    tagspecial = db.Column(db.String(16))
     taggy = db.Column(db.Boolean)
     tagzz = db.Column(db.Boolean)
+    tagfree = db.Column(db.Boolean)
+    tag2xfree = db.Column(db.Boolean)
+    tag50off = db.Column(db.Boolean)
     imdbstr = db.Column(db.String(16))
     imdbval = db.Column(db.Float, default=0.0)
     doubanval = db.Column(db.Float, default=0.0)
@@ -1257,6 +1265,9 @@ class TorrentCache(db.Model):
             'downlink': self.downlink,
             'taggy': self.taggy,
             'tagzz': self.tagzz,
+            'tagfree': self.tagfree,
+            'tag2xfree': self.tag2xfree,
+            'tag50off': self.tag50off,
             'imdbstr': self.imdbstr,
             'imdbval': self.imdbval,
             'doubanval': self.doubanval,
@@ -1428,6 +1439,12 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
             row, cursite, "tagzz") else False
         dbitem.taggy = True if xpathGetElement(
             row, cursite, "taggy") else False
+        dbitem.tagfree = True if xpathGetElement(
+            row, cursite, "tagfree") else False
+        dbitem.tag2xfree = True if xpathGetElement(
+            row, cursite, "tag2xfree") else False
+        dbitem.tag50off = True if xpathGetElement(
+            row, cursite, "tag50off") else False
         dbitem.doubanval = tryFloat(xpathGetElement(row, cursite, "doubanval"))
         dbitem.imdbval = tryFloat(xpathGetElement(row, cursite, "imdbval"))
         dbitem.imdbstr = xpathGetElement(row, cursite, "imdbstr")
