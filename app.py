@@ -894,6 +894,7 @@ def fetchInfoPage(pageUrl, pageCookie):
     try:
         r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
         # r.encoding = r.apparent_encoding
+        r.encoding = 'utf-8'
     except:
         return ''
 
@@ -1211,7 +1212,7 @@ def requestPtPage(pageUrl, pageCookie):
     }
 
     try:
-        r = pyrequests.get(pageUrl, headers=headers, cookies=cookies)
+        r = pyrequests.get(pageUrl, headers=headers, cookies=cookies, timeout=15)
         # print(r.encoding, r.apparent_encoding)
         # utf-8 Windows-1254
         # 'ISO-8859-1' utf-8
@@ -1293,7 +1294,7 @@ def searchResultData():
         if col_index is None:
             break
         col_name = request.args.get(f'columns[{col_index}][data]')
-        if col_name not in ['tortitle', 'torsizestr', 'seednum', 'addedon']:
+        if col_name not in ['tortitle', 'site', 'seednum', 'tordate']:
             col_name = 'id'
         descending = request.args.get(f'order[{i}][dir]') == 'desc'
         col = getattr(TorrentCache, col_name)
@@ -1376,11 +1377,11 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     if r:
         PT_SITES = r["sites"]
     else:
-        return 401  # site not configured
+        return -1  # site not configured
 
     cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
     if not cursite:
-        return 401  # site not configured
+        return -1  # site not configured
 
     if matchIMDbid(seachWord):
         pturl = cursite['searchIMDburl']+seachWord
@@ -1402,10 +1403,11 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
 
     doc = requestPtPage(pturl, siteCookie)
     if not doc:
-        return 404  # page not fetched
+        return -1  # page not fetched
 
     htmltree = lxml.html.fromstring(doc)
     torlist = htmltree.xpath(cursite["torlist"])
+    count = 0
     for row in reversed(torlist):
         title = xpathGetElement(row, cursite, "tortitle")
         if not title:
@@ -1442,28 +1444,28 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         dbitem.searchword = seachWord
 
         # print(dbitem.__dict__)
+        count += 1
         db.session.add(dbitem)
         db.session.commit()
 
-    return 200
+    return count
 
 
 @app.route('/ptsearch', methods=['GET'])
+@auth.login_required
 def ptSearch():
     # form = PtSearchForm(request.form)
     sitelist = PtSite.query
+    MAX_SEARCH_WORD = 100
 
     wordlist = []
-    for x in db.session.query(TorrentCache.searchword).distinct():
-        wordlist.append(x.searchword)
-
-    # if request.method == 'POST':
-    #     form = PtSearchForm(request.form)
-
-    #     sitehost = 'pterclub'
-    #     ptcookie = getSiteCookie(sitehost)
-
-    #     xpathSearchPtSites(sitehost, ptcookie, form.searchStr.data)
+    for idx, x in enumerate(db.session.query(TorrentCache.searchword).distinct()):
+        if idx < MAX_SEARCH_WORD:
+            wordlist.append(x.searchword)
+        else:
+            clearOldResults(x.searchword)
+            x.delete()
+            db.session.commit()
 
     return render_template('ptsearch.html', sites=sitelist, wordlist=wordlist)
 
@@ -1482,9 +1484,13 @@ def apiPtSearch():
         sitehost = r["site"]
         ptcookie = getSiteCookie(sitehost)
         clearOldResults(r["searchword"])
-        xpathSearchPtSites(sitehost, ptcookie, r["searchword"])
+        resultCount = xpathSearchPtSites(sitehost, ptcookie, r["searchword"])
+        if resultCount > 0:
+            dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
+            dbsite.lastResultCount = resultCount
+            db.session.commit()
 
-    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+    return json.dumps({'site':sitehost, 'resultCount': resultCount}), 200, {'ContentType': 'application/json'}
 
 
 def getSiteCookie(sitehost):
@@ -1547,7 +1553,10 @@ class PtSite(db.Model):
         db.DateTime, default=datetime.now, onupdate=datetime.now)
     site = db.Column(db.String(32))
     cookie = db.Column(db.String(1024))
-    sitenewlink = db.Column(db.String(256))
+    siteNewLink = db.Column(db.String(256))
+    siteNewCheck = db.Column(db.Boolean)
+    lastSearchCheck = db.Column(db.Boolean)
+    lastResultCount = db.Column(db.Integer)
 
     def to_dict(self):
         return {
@@ -1555,7 +1564,7 @@ class PtSite(db.Model):
             'last_update': self.last_update,
             'site': self.site,
             'cookie': self.cookie,
-            'sitenewlink': self.sitenewlink,
+            'lastResultCount': self.lastResultCount,
         }
 
 
@@ -1579,6 +1588,19 @@ def sitesConfig():
     form = PtSiteForm(request.form)
     form.site.choices = [(row["site"], row["site"]) for row in PT_SITES]
     return render_template('ptsites.html', form=form)
+
+
+@app.route('/api/savesearch',  methods=['POST', 'GET'])
+@auth.login_required
+def apiSaveSearch():
+    if request.method == 'POST':
+        r = request.get_json()
+        sitelist = r['sitelist']
+        dbsitelist = PtSite.query
+        for dbsite in dbsitelist:
+            dbsite.lastSearchCheck = dbsite.site in sitelist
+            db.session.commit()
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/api/sitesetting/',  methods=['GET', 'POST'])

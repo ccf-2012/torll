@@ -47,12 +47,8 @@
         <div id="sitelist" class="col my-3" role="group" aria-label="站点选择">
 
             {% for x in sites %}
-            <input type="checkbox" class="btn-check" id="{{ x.site }}"  autocomplete="off">
+            <input type="checkbox" class="btn-check" {% if x.lastSearchCheck %} checked {%endif%} id="{{ x.site }}"  autocomplete="off">
             <label class="btn btn-outline-primary btn-sm" for="{{ x.site }}">{{ x.site }}</label>              
-            <!-- <span class="badge text-bg-secondary id='badge_{{ x.site }}'" >{{ x.site }}</span> -->
-
-            <!-- <input type="checkbox" class="btn-check" id="site_{{ x.site }}" autocomplete="off">
-            <label class="btn btn-outline-primary" for="site_{{ x.site }}">{{ x.site }}</label> -->
             {% endfor %}
           </div>
         <input class="form-control" list="searchword" id="searchStr" placeholder="搜索标题，IMDb...">
@@ -118,17 +114,38 @@
         }
     });
 
-    function apiPtSearch(site, searchword) {
-        var dict = { site: site, searchword: searchword };
+    function apiSaveSearch(sitelist, searchword){
+        var dict = { sitelist: sitelist, searchword: searchword };
+        $.ajax({
+            url: '/api/savesearch',
+            method: 'POST',
+            data: JSON.stringify(dict),
+            contentType: "application/json",
+            success: function (response) {
+                ;     
+            }
+        });
+    }
+
+    function apiPtSearch(siteele, searchword) {
+        sitestr = siteele.attr('id')
+        console.log("searching: "+sitestr)
+        var dict = { site: sitestr, searchword: searchword };
         $.ajax({
             url: '/api/ptsearch',
             method: 'POST',
             data: JSON.stringify(dict),
             contentType: "application/json",
             success: function (response) {
+                t = JSON.parse(response)
+                console.log("get response: "+t.site, t.resultCount)
+                if (t.resultCount > 0){
+                    $('label[for='+  t.site  +']').html(t.site+' <span class="badge bg-secondary">'+t.resultCount+'</span>')
+                }
+
                 $('#data').DataTable().ajax.reload();
                 var s = $('#sitesearching').text();
-                s = s.replace(site, '');
+                s = s.replace(t.site, '');
                 $('#sitesearching').text(s);
                 if (!s.trim()) {
                     // location.reload();
@@ -142,19 +159,21 @@
     }
     function searchTagedSites() {
         var searchword = $('#searchStr').val();
-        var sitelist = '';
+        var siteliststr = '';
 
+        var sitelist = [];
         $('#sitelist').children('input').each(function () {
             if ($(this).is(':checked')) {
-                sitelist += $(this).attr("id") + ' ';
-                apiPtSearch($(this).attr("id"), searchword);
+                sitelist.push($(this).attr("id"))
+                siteliststr += $(this).attr("id") + ' ';
+                apiPtSearch($(this), searchword);
                 if (!$("#busy").hasClass("spinner-border spinner-border-sm")) {
                     $("#busy").addClass("spinner-border spinner-border-sm");
                 }
             }
         });
-        $('#sitesearching').text(sitelist);
-
+        $('#sitesearching').text(siteliststr);
+        apiSaveSearch(sitelist, searchword)
         exists = $("#searchword option[value='" + searchword + "']").length > 0;
         if (!exists) {
             $('#searchword').append($('<option>', {
@@ -171,7 +190,7 @@
     $(document).ready(function () {
         $('#data').DataTable({
             language: DATATABLE_LANG,
-            "pageLength": 25,
+            "pageLength": 50,
             autoWidth: true,
             scrollX: true,
             full_row_select: false,
@@ -185,7 +204,7 @@
                 },
                 {
                     data: 'tortitle',
-                    "width": "60%",
+                    "width": "50%",
                     "render": function (data, type, row, meta) {
                         if (data) {
                             var l1 = '<a class="tortitle" href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
@@ -210,6 +229,7 @@
                 },
                 {
                     data: 'torsizestr',
+                    orderable: false, searchable: false,
                     "width": "6%"
                 },
                 {
@@ -228,8 +248,8 @@
                     }
                 },
                 {
-                    data: 'id', searchable: false,
-                    "width": "10%",
+                    data: 'id', orderable: false, searchable: false,
+                    "width": "8%",
                     "render": function (data, type, row) {
                         var linkDownload = '<a href="/dlresult/' + row.id + '">' + '下载' + '</a>';
                         return linkDownload;
