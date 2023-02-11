@@ -96,9 +96,14 @@
         }
     });
 
-    $('#searchStr').on('keypress', function (e) {
-        if (e.keyCode === 13) {
+    $('#searchStr').on('keyup', function (e) {
+        if (e.key === 'Enter') {
             searchAllSites()
+        }
+        else if (e.key == "Escape") {
+            $('#searchStr').val('')
+            $('#data').DataTable().search('');
+            $('#data').DataTable().columns(1).search($(this).val()).draw();
         }
     });
 
