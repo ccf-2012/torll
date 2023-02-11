@@ -44,6 +44,17 @@
                 <h4>搜索种子</h4>
             </span>
         </div>
+        <div id="sitelist" class="col my-3" role="group" aria-label="站点选择">
+
+            {% for x in sites %}
+            <input type="checkbox" class="btn-check" id="{{ x.site }}"  autocomplete="off">
+            <label class="btn btn-outline-primary btn-sm" for="{{ x.site }}">{{ x.site }}</label>              
+            <!-- <span class="badge text-bg-secondary id='badge_{{ x.site }}'" >{{ x.site }}</span> -->
+
+            <!-- <input type="checkbox" class="btn-check" id="site_{{ x.site }}" autocomplete="off">
+            <label class="btn btn-outline-primary" for="site_{{ x.site }}">{{ x.site }}</label> -->
+            {% endfor %}
+          </div>
         <input class="form-control" list="searchword" id="searchStr" placeholder="搜索标题，IMDb...">
         <datalist id="searchword">
             {% for x in wordlist %}
@@ -98,12 +109,12 @@
 
     $('#searchStr').on('keyup', function (e) {
         if (e.key === 'Enter') {
-            searchAllSites()
+            searchTagedSites()
         }
         else if (e.key == "Escape") {
             $('#searchStr').val('')
-            $('#data').DataTable().search('');
-            $('#data').DataTable().columns(1).search($(this).val()).draw();
+            $('#data').DataTable().search('').draw();
+            // $('#data').DataTable().columns(1).search($(this).val()).draw();
         }
     });
 
@@ -129,17 +140,19 @@
         });
 
     }
-    function searchAllSites() {
+    function searchTagedSites() {
         var searchword = $('#searchStr').val();
         var sitelist = '';
-        $("#busy").addClass("spinner-border spinner-border-sm");
-        // $('#ptsearch').prop('disabled', true);
-        // $('#searchword').val(searchword).change();
 
-        {% for x in sites %}
-        sitelist += "{{ x.site }} "
-        apiPtSearch("{{ x.site }}", searchword)
-        {% endfor %}
+        $('#sitelist').children('input').each(function () {
+            if ($(this).is(':checked')) {
+                sitelist += $(this).attr("id") + ' ';
+                apiPtSearch($(this).attr("id"), searchword);
+                if (!$("#busy").hasClass("spinner-border spinner-border-sm")) {
+                    $("#busy").addClass("spinner-border spinner-border-sm");
+                }
+            }
+        });
         $('#sitesearching').text(sitelist);
 
         exists = $("#searchword option[value='" + searchword + "']").length > 0;
@@ -150,12 +163,11 @@
             }));
         }
         $('#data').DataTable().search('');
-        $('#data').DataTable().columns(1).search($(this).val()).draw();
+        $('#data').DataTable().columns(1).search(searchword).draw();
     }
 </script>
 
 <script>
-
     $(document).ready(function () {
         $('#data').DataTable({
             language: DATATABLE_LANG,
@@ -189,12 +201,12 @@
                 {
                     data: 'imdbstr',
                     "width": "10%",
-                    // "render": function (data, type, row, meta) {
-                    //     if (data) {
-                    //         return '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbval + '</a>';
-                    //     }
-                    //     else return ''
-                    // }
+                    "render": function (data, type, row, meta) {
+                        if (data) {
+                            return '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbstr + '</a>';
+                        }
+                        else return ''
+                    }
                 },
                 {
                     data: 'torsizestr',
