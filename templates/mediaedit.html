@@ -41,7 +41,7 @@
         $("#busy").addClass("spinner-border spinner-border-sm")
         $('#mediaedit').prop('disabled', true);
         var sites = 'pterclub';
-        var dict = { id: "{{mid}}", tmdbcatid: "{{form.tmdbcatid.data}}", mbRootDir: "{{form.mbRootDir.data}}" };
+        var dict = { id: "{{mid}}", tmdbcatid: $("#tmdbcatid").val(), mbRootDir: $("#mbRootDir").val() };
         $.ajax({
             url: '/api/mediaedit',
             method: 'POST',
