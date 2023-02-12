@@ -1400,7 +1400,8 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         return -1  # site not configured
 
     if not siteurl:
-        siteurl = cursite['newtorrent']
+        if 'newtorrent' in cursite:
+            siteurl = cursite['newtorrent']
     if not siteurl:
         return -2
     doc = requestPtPage(siteurl, sitecookie)

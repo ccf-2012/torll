@@ -227,6 +227,7 @@
         "subtitle": "string(.//table[contains(@class,'torrentname')]/tr/td[contains(@class, 'embedded')]/text()[last()])",
         "searchurl": "https://kp.m-team.cc/torrents.php?search=",
         "searchIMDburl": "https://kp.m-team.cc/torrents.php?search_area=4&search=",
+        "newtorrent": "https://kp.m-team.cc/torrents.php",
         "tagzz": ".//img[contains(@class, 'label_sub')]",
         "taggy": ".//img[contains(@class, 'label_dub')]",
         "tagfree": ".//img[contains(@alt, 'Free')]",
