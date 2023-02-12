@@ -1431,7 +1431,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         dbitem.downlink = xpathGetElement(row, cursite, "downlink")
         subtitle = str(xpathGetElement(row, cursite, "subtitle"))
         if subtitle:
-            subtitle = subtitle.removeprefix(dbitem.tortitle)
+            subtitle = subtitle.lstrip(dbitem.tortitle)
             dbitem.subtitle = striptag(subtitle)
 
         dbitem.tagzz = True if xpathGetElement(
@@ -1676,7 +1676,7 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
 
         subtitle = str(xpathGetElement(row, cursite, "subtitle"))
         if subtitle:
-            subtitle = subtitle.removeprefix(dbitem.tortitle)
+            subtitle = subtitle.lstrip(dbitem.tortitle)
             dbitem.subtitle = striptag(subtitle)
 
         dbitem.tagzz = True if xpathGetElement(
