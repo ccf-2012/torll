@@ -7,6 +7,10 @@
 </style>
 {% endblock %}
 {% block content %}
+<nav class="nav nav-tabs justify-content-center">
+	<a class="nav-link " href="/sitesnew">各站新种</a>
+	<a class="nav-link active" href="/sites">站点设置</a>
+</nav>
 
 
 <div class="row my-3 justify-content-center">
@@ -143,7 +147,23 @@
             }
         });
     }
-
+    function apiGetSiteTorrent(siteid) {
+        $.ajax({
+            url: '/api/getsitetorrent',
+            type: 'get',
+            data: { site: siteid },
+            contentType: "application/json",
+            success: function (response) {
+                t = JSON.parse(response);
+            },
+            complete: function (xhr, textStatus) {
+                // console.log(xhr.status);
+                if (xhr.status == 402) {
+                    $("#cookie").val('还没有设置');
+                }
+            }
+        });
+    }
     $(document).ready(function () {
         $('#site').change();
         $("#msg").hide()
@@ -180,7 +200,7 @@
                         // var linkDelete = '<a href="/sitedel/' + row.id + '">删除</a>';
                         var linkDelete = '<a href="#" onclick="deleteClick(\'' + row.site + '\');return false;">' + '删除' + '</a>';
                         var linkEdit = '<a href="#" onclick="editClick(\'' + row.site + '\');return false;">' + '编辑' + '</a>';
-                        var linkRunOnce = '<a href="/sitenews/' + row.id + '">' + '站新' + '</a>';
+                        var linkRunOnce = '<a href="#" onclick="apiGetSiteTorrent(\'' + row.id + '\');return false;">' + '站新' + '</a>';
                         return linkEdit + " | " + linkDelete + " | " + linkRunOnce;
                     },
                 },

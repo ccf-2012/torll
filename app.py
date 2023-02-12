@@ -903,16 +903,16 @@ def fetchInfoPage(pageUrl, pageCookie):
 
 def parseInfoPageIMDbval(doc):
     imdbval = 0
-    m1 = re.search(r'IMDb.*?([0-9.]+)\s*/\s*10', doc, flags=re.A)
+    m1 = re.search(r'IMDb.*?([0-9.]+)\s*/\s*10', doc, flags=re.I)
     if m1:
         imdbval = tryFloat(m1[1])
     doubanval = 0
-    m2 = re.search(r'豆瓣评分.*?([0-9.]+)/10', doc, flags=re.A)
+    m2 = re.search(r'豆瓣评分.*?([0-9.]+)/10', doc, flags=re.I)
     if m2:
         doubanval = tryFloat(m2[1])
     if imdbval < 1 and doubanval < 1:
         ratelist = [x[1] for x in re.finditer(
-            r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.A)]
+            r'Rating:.*?([0-9.]+)\s*/\s*10\s*from', doc, flags=re.I)]
         if len(ratelist) >= 2:
             doubanval = tryFloat(ratelist[0])
             imdbval = tryFloat(ratelist[1])
@@ -1222,6 +1222,246 @@ def requestPtPage(pageUrl, pageCookie):
         return ''
 
     return r.text
+
+
+
+class SiteTorrent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    addedon = db.Column(db.DateTime, default=datetime.now)
+    site = db.Column(db.String(32))
+    tortitle = db.Column(db.String(256))
+    infolink = db.Column(db.String(256))
+    subtitle = db.Column(db.String(256))
+    downlink = db.Column(db.String(256))
+    mediatype = db.Column(db.String(16))
+    mediasource = db.Column(db.String(16))
+    tmdbtitle = db.Column(db.String(256))
+    tmdbcat = db.Column(db.String(16))
+    tmdbid = db.Column(db.Integer)
+    tmdbyear = db.Column(db.Integer)
+    tmdbposter = db.Column(db.String(64))
+    genrestr = db.Column(db.String(128))
+    tmdboverview = db.Column(db.String(256))
+    tagspecial = db.Column(db.String(16))
+    taggy = db.Column(db.Boolean)
+    tagzz = db.Column(db.Boolean)
+    tagfree = db.Column(db.Boolean)
+    tag2xfree = db.Column(db.Boolean)
+    tag50off = db.Column(db.Boolean)
+    imdbstr = db.Column(db.String(16))
+    imdbval = db.Column(db.Float, default=0.0)
+    doubanval = db.Column(db.Float, default=0.0)
+    doubanid = db.Column(db.String(16))
+    seednum = db.Column(db.Integer)
+    downnum = db.Column(db.Integer)
+    torsizestr = db.Column(db.String(16))
+    tordate = db.Column(db.DateTime)
+    dlcount = db.Column(db.Integer, default=0)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'addedon': self.addedon,
+            'site': self.site,
+            'tortitle': self.tortitle,
+            'infolink': getfulllink(self.site, self.infolink),
+            'subtitle': self.subtitle,
+            'downlink': self.downlink,
+            'taggy': self.taggy,
+            'tagzz': self.tagzz,
+            'tagfree': self.tagfree,
+            'tag2xfree': self.tag2xfree,
+            'tag50off': self.tag50off,
+            'imdbstr': self.imdbstr,
+            'imdbval': self.imdbval,
+            'doubanval': self.doubanval,
+            'seednum': self.seednum,
+            'downnum': self.downnum,
+            'torsizestr': self.torsizestr,
+            'tordate': self.tordate,
+            'tmdbtitle': self.tmdbtitle,
+            'tmdbcat': self.tmdbcat,
+            'tmdbid': self.tmdbid,
+            'tmdbyear': self.tmdbyear,
+            'tmdbposter': self.tmdbposter,
+            'genrestr': self.genrestr,
+            'dlcount': self.dlcount,
+        }
+
+
+@app.route('/api/sitetorrent')
+@auth.login_required
+def siteTorrentData():
+    query = SiteTorrent.query
+
+    # search filter
+    search = request.args.get('search[value]')
+    if search:
+        query = query.filter(db.or_(
+            SiteTorrent.tortitle.like(f'%{search}%'),
+            SiteTorrent.subtitle.like(f'%{search}%'),
+            SiteTorrent.tmdbtitle.like(f'%{search}%'),
+        ))
+    total_filtered = query.count()
+
+    # sorting
+    order = []
+    # i = 0
+    # order.append(getattr(SiteTorrent, 'tmdbid'))
+    # while True:
+    #     col_index = request.args.get(f'order[{i}][column]')
+    #     if col_index is None:
+    #         break
+    #     col_name = request.args.get(f'columns[{col_index}][data]')
+    #     if col_name not in ['tortitle','imdbstr', 'site', 'seednum', 'tordate', 'addedon']:
+    #         col_name = 'addedon'
+    #     descending = request.args.get(f'order[{i}][dir]') == 'desc'
+    #     col = getattr(SiteTorrent, col_name)
+    #     if descending:
+    #         col = col.desc()
+    #     order.append(col)
+    #     i += 1
+    # if order:
+    #     query = query.order_by(*order)
+
+    imdbidcol = getattr(SiteTorrent, 'tmdbid')
+    col = getattr(SiteTorrent, 'tmdbyear')
+    order.append(col.desc())    
+    order.append(imdbidcol.desc())    
+    query = query.order_by(*order)
+    # query = query.group_by(imdbidcol)
+
+    # pagination
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    query = query.offset(start).limit(length)
+
+    # response
+    return {
+        'data': [tor.to_dict() for tor in query],
+        'recordsFiltered': total_filtered,
+        'recordsTotal': SiteTorrent.query.count(),
+        'draw': request.args.get('draw', type=int),
+    }
+
+
+@app.route('/sitesnew',  methods=['GET'])
+@auth.login_required
+def sitesNew():
+    sitelist = PtSite.query
+
+    return render_template('sitetorrent.html', sitelist=sitelist)
+
+
+@app.route('/api/getsitetorrent/',  methods=['GET'])
+@auth.login_required
+def apiGetSiteTorrent():
+    sitehost = request.args.get('site')
+    if not sitehost:
+        abort(jsonify(message="site not found"))
+
+    if sitehost.isdigit():
+        dbsite = PtSite.query.get(sitehost)
+    else:
+        dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
+    if not dbsite:
+        return json.dumps({'site':dbsite.site, 'resultCount': 0}), 200, {'ContentType': 'application/json'}
+
+    resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, siteurl=None)
+    # if count < 0:
+    return json.dumps({'site':dbsite.site, 'resultCount': resultCount}), 200, {'ContentType': 'application/json'}
+
+
+GENRE_IDS = {28: '动作', 12: '冒险', 16: '动画', 35: '喜剧', 80: '犯罪', 99: '纪录', 18: '剧情', 10751: '家庭', 
+        14: '奇幻', 36: '历史', 27: '恐怖', 10402: '音乐', 9648: '悬疑', 10749: '爱情', 878: '科幻', 10770: '电视电影', 
+        53: '惊悚', 10752: '战争', 37: '西部'}
+
+def getTMDbInfo(dbtor):
+    p = TMDbNameParser(myconfig.CONFIG.tmdb_api_key, tmdb_lang='zh-CN')
+    tmdbid = searchTMDb(p, dbtor.tortitle, dbtor.imdbstr)
+    genrestr = ''
+    # print(p.genre_ids)
+    if p.genre_ids:
+        for x in p.genre_ids:
+            if x in GENRE_IDS:
+                genrestr += GENRE_IDS[x]+ ' '
+    return p.title, p.tmdbcat, p.tmdbid, p.poster_path, p.year, genrestr
+
+
+def getSiteTorrent(sitename, sitecookie, siteurl=None):
+    r = siteconfig.loadSiteConfig()
+    if r:
+        PT_SITES = r["sites"]
+    else:
+        return -1  # site not configured
+
+    cursite = next((x for x in PT_SITES if x["site"] == sitename), None)
+    if not cursite:
+        return -1  # site not configured
+
+    if not siteurl:
+        siteurl = cursite['newtorrent']
+    if not siteurl:
+        return -2
+    doc = requestPtPage(siteurl, sitecookie)
+    if not doc:
+        return -3  # page not fetched
+
+    htmltree = lxml.html.fromstring(doc)
+    torlist = htmltree.xpath(cursite["torlist"])
+    count = 0
+    for row in reversed(torlist):
+        title = xpathGetElement(row, cursite, "tortitle")
+        if not title:
+            continue
+
+        infolink = xpathGetElement(row, cursite, "infolink")
+        ## TODO: same details id for different site
+        exists = db.session.query(db.exists().where(
+            (db.and_(SiteTorrent.infolink == infolink, SiteTorrent.site == sitename)))).scalar()
+
+        if exists:
+            continue
+
+        dbitem = SiteTorrent()
+        dbitem.tortitle = title
+        dbitem.infolink = infolink
+        # dbitem.infolink = xpathGetElement(row, cursite, "infolink")
+        dbitem.downlink = xpathGetElement(row, cursite, "downlink")
+        dbitem.subtitle = xpathGetElement(row, cursite, "subtitle")
+        if dbitem.subtitle:
+            # dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
+            dbitem.subtitle = striptag(dbitem.subtitle)
+        dbitem.tagzz = True if xpathGetElement(
+            row, cursite, "tagzz") else False
+        dbitem.taggy = True if xpathGetElement(
+            row, cursite, "taggy") else False
+        dbitem.tagfree = True if xpathGetElement(
+            row, cursite, "tagfree") else False
+        dbitem.tag2xfree = True if xpathGetElement(
+            row, cursite, "tag2xfree") else False
+        dbitem.tag50off = True if xpathGetElement(
+            row, cursite, "tag50off") else False
+        dbitem.doubanval = tryFloat(xpathGetElement(row, cursite, "doubanval"))
+        dbitem.imdbval = tryFloat(xpathGetElement(row, cursite, "imdbval"))
+        dbitem.imdbstr = xpathGetElement(row, cursite, "imdbstr")
+        if dbitem.imdbstr and not dbitem.imdbstr.startswith('tt'):
+            dbitem.imdbstr = 'tt' + dbitem.imdbstr.zfill(7)
+        dbitem.doubanid = xpathGetElement(row, cursite, "doubanid")
+        dbitem.seednum = tryint(xpathGetElement(row, cursite, "seednum"))
+        dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
+        dbitem.torsizestr = xpathGetElement(row, cursite, "torsize")
+        tordatestr = xpathGetElement(row, cursite, "tordate")
+        dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
+
+        dbitem.tmdbtitle, dbitem.tmdbcat, dbitem.tmdbid, dbitem.tmdbposter, dbitem.tmdbyear, dbitem.genrestr = getTMDbInfo(dbitem)
+        dbitem.site = sitename
+
+        # print(dbitem.__dict__)
+        count += 1
+        db.session.add(dbitem)
+        db.session.commit()
+    return count    
 
 
 class TorrentCache(db.Model):

@@ -125,8 +125,6 @@ python3 /home/ccf2013/torll/notify_plex.py -I "$1"
 * 任务列表中，可以对单条任务手工发起检查，可以暂停任务
 
 
-
----
 ## 使用 torfilter
 使用 [github 上的代码](https://github.com/ccf-2012/torfilter)，修改 `torfilter.js` 以下2部分：
 1. 在头部的 `@connect` 部分，大约在12行：
@@ -145,8 +143,13 @@ const API_AUTH_PASS = "password";
 
 
 ## 在 torll 中查找
-* 当前支持 pter, chd, aud, ob, hds, frds, ssd, ttg, mteam, tlf, hdh, pth, tju, hh, beitai, hdc, hares 站
+* 当前支持 pter, chd, aud, ob, hds, frds, ssd, ttg, mteam, tlf, hdh, pth, tju, hh, beitai, hdc, hares, hdfans, soulvoice, hdtime, discfan, btschool, ptsbao 站
 * 建设中...
+
+
+## 各站新种
+* 建设中...
+
 
 ---
 # 一些辅助工具

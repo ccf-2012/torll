@@ -1,59 +1,7 @@
 {% extends "base.html" %}
 {% block stylesheet %}
 <style>
-    .tortitle {
-        word-break: break-all;
-        /* color: #000;
-    margin: 2px 1px; */
-        font-size: 14px;
-    }
 
-    .sub-title {
-        word-break: break-all;
-        margin-top: 2px;
-        margin-left: 4px;
-        color: #8c8c8c !important;
-        font-size: 12px;
-    }
-
-    .tag-zz {
-        font-size: 9px;
-        margin: 0 1px 0 1px;
-        border-radius: 2px;
-        padding: 1px 3px;
-        /* background: #3e6aa0; */
-        background: #426ab9;
-        color: #fff;
-    }
-
-    .tag-gy {
-        font-size: 9px;
-        margin: 0 1px 0 1px;
-        padding: 1px 3px;
-        background: #3e93a0;
-        color: #ffffff;
-    }
-    .tag-free {
-        font-size: 9px;
-        margin: 0 1px 0 3px;
-        padding: 1px 3px;
-        background: #2dac4d;
-        color: #ffffff;
-    }    
-    .tag-2xfree {
-        font-size: 9px;
-        margin: 0 1px 0 3px;
-        padding: 1px 3px;
-        background: #4caf50;
-        color: #ffffff;
-    }    
-    .tag-50off {
-        font-size: 9px;
-        margin: 0 1px 0 3px;
-        padding: 1px 3px;
-        background: #ff9800;
-        color: #ffffff;
-    }    
 </style>
 {% endblock %}
 {% block content %}
@@ -68,10 +16,11 @@
         <div id="sitelist" class="col my-3" role="group" aria-label="站点选择">
 
             {% for x in sites %}
-            <input type="checkbox" class="btn-check" {% if x.lastSearchCheck %} checked {%endif%} id="{{ x.site }}"  autocomplete="off">
-            <label class="btn btn-outline-primary btn-sm" for="{{ x.site }}">{{ x.site }}</label>              
+            <input type="checkbox" class="btn-check" {% if x.lastSearchCheck %} checked {%endif%} id="{{ x.site }}"
+                autocomplete="off">
+            <label class="btn btn-outline-primary btn-sm" for="{{ x.site }}">{{ x.site }}</label>
             {% endfor %}
-          </div>
+        </div>
         <input class="form-control" list="searchword" id="searchStr" placeholder="搜索标题，IMDb...">
         <datalist id="searchword">
             {% for x in wordlist %}
@@ -135,7 +84,7 @@
         }
     });
 
-    function apiSaveSearch(sitelist, searchword){
+    function apiSaveSearch(sitelist, searchword) {
         var dict = { sitelist: sitelist, searchword: searchword };
         $.ajax({
             url: '/api/savesearch',
@@ -143,14 +92,14 @@
             data: JSON.stringify(dict),
             contentType: "application/json",
             success: function (response) {
-                ;     
+                ;
             }
         });
     }
 
     function apiPtSearch(siteele, searchword) {
         sitestr = siteele.attr('id')
-        console.log("searching: "+sitestr)
+        console.log("searching: " + sitestr)
         var dict = { site: sitestr, searchword: searchword };
         $.ajax({
             url: '/api/ptsearch',
@@ -159,9 +108,9 @@
             contentType: "application/json",
             success: function (response) {
                 t = JSON.parse(response)
-                console.log("get response: "+t.site, t.resultCount)
-                if (t.resultCount > 0){
-                    $('label[for='+  t.site  +']').html(t.site+' <span class="badge bg-secondary">'+t.resultCount+'</span>')
+                console.log("get response: " + t.site, t.resultCount)
+                if (t.resultCount > 0) {
+                    $('label[for=' + t.site + ']').html(t.site + ' <span class="badge bg-secondary">' + t.resultCount + '</span>')
                 }
 
                 $('#data').DataTable().ajax.reload();
@@ -235,7 +184,7 @@
                             var tagfree = row.tagfree ? '<span class="tag-free ">Free</span>' : '';
                             var tag2xfree = row.tag2xfree ? '<span class="tag-2xfree ">2xFree</span>' : '';
                             var tag50off = row.tag50off ? '<span class="tag-50off ">50%</span>' : '';
-                            return l1 +tagfree +tag2xfree+tag50off+ '<br>' + tagzz + taggy + l2;
+                            return l1 + tagfree + tag2xfree + tag50off + '<br>' + tagzz + taggy + l2;
                         }
                         else return ''
                     }
