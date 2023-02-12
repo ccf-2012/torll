@@ -1977,8 +1977,9 @@ def startApsScheduler():
                 if t.active == 2:
                     job.pause()
 
-    jobSiteNew = scheduler.add_job(rssJob, 'interval',
-                            minutes=60)
+    jobSiteNew = scheduler.add_job(siteNewsJob, 'interval',
+                            minutes=60,
+                            id='jobsitenew')
 
     scheduler.start()
     scheduler.print_jobs()
