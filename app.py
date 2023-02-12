@@ -1429,10 +1429,11 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         dbitem.infolink = infolink
         # dbitem.infolink = xpathGetElement(row, cursite, "infolink")
         dbitem.downlink = xpathGetElement(row, cursite, "downlink")
-        dbitem.subtitle = xpathGetElement(row, cursite, "subtitle")
-        if dbitem.subtitle:
-            dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
-            dbitem.subtitle = striptag(dbitem.subtitle)
+        subtitle = str(xpathGetElement(row, cursite, "subtitle"))
+        if subtitle:
+            subtitle = subtitle.removeprefix(dbitem.tortitle)
+            dbitem.subtitle = striptag(subtitle)
+
         dbitem.tagzz = True if xpathGetElement(
             row, cursite, "tagzz") else False
         dbitem.taggy = True if xpathGetElement(
@@ -1673,10 +1674,10 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         # TODO: add passkey for downlink
         dbitem.downlink = xpathGetElement(row, cursite, "downlink")
 
-        dbitem.subtitle = xpathGetElement(row, cursite, "subtitle")
-        if dbitem.subtitle:
-            dbitem.subtitle = dbitem.subtitle.removeprefix(dbitem.tortitle)
-            dbitem.subtitle = striptag(dbitem.subtitle)
+        subtitle = str(xpathGetElement(row, cursite, "subtitle"))
+        if subtitle:
+            subtitle = subtitle.removeprefix(dbitem.tortitle)
+            dbitem.subtitle = striptag(subtitle)
 
         dbitem.tagzz = True if xpathGetElement(
             row, cursite, "tagzz") else False
