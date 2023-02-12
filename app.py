@@ -1947,6 +1947,13 @@ def apiSitesData():
     }
 
 
+def siteNewsJob():
+    with app.app_context():
+        sitelist = PtSite.query
+        for dbsite in sitelist:
+            resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, siteurl=None)
+            print(dbsite.site, resultCount)
+
 
 def rssJob(id):
     with app.app_context():
@@ -1969,6 +1976,9 @@ def startApsScheduler():
                                         id=str(t.id))
                 if t.active == 2:
                     job.pause()
+
+    jobSiteNew = scheduler.add_job(rssJob, 'interval',
+                            minutes=60)
 
     scheduler.start()
     scheduler.print_jobs()
