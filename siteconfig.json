@@ -406,7 +406,7 @@
         "tortitle": "string(.//*[contains(@class,'tbname')]//a[contains(@href,'details')]/@title)",
         "infolink": "string(.//*[contains(@class,'tbname')]//a[contains(@href,'details')]/@href)",
         "downlink": "string(.//*[contains(@class,'tbname')]//a[contains(@href,'download')]/@href)",
-        "subtitle": "string(.//table[contains(@class,'tbname')]//a[contains(@href,'details')]/parent::*/following-sibling::text())",
+        "subtitle": "string(.//table[contains(@class,'tbname')]//a[contains(@href,'details')]/parent::*/following-sibling::*)",
         "searchurl": "https://hdchina.org/torrents.php?search=",
         "searchIMDburl": "https://hdchina.org/torrents.php?search_area=4&search=",
         "newtorrent": "https://hdchina.org/torrents.php?team15=1&team16=1&team10=1&team11=1&incldead=1&spstate=0&inclbookmarked=0&seeders=&search=&search_area=0&search_mode=0&boardid=0&csrf=a45aeb5be0577ec4c00d834dbd770f7a78baf8c1",
@@ -589,7 +589,37 @@
         "downnum": "string(.//td[contains(@class,'rowfollow')][8])",
         "torsize": "string(.//td[contains(@class,'rowfollow')][6])",
         "tordate" : "string(.//td[contains(@class,'rowfollow')][5]//@title)"
-      }                 
+      },
+      {
+        "site": "lemonhd",
+        "torlist": "//table[contains(@class,'torrents')]/tr",
+        "tortitle": "string(.//div/a[contains(@href,'details')])",
+        "infolink": "string(.//div/a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//td/a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//div/a[contains(@href,'details')]/parent::div/following-sibling::div)",
+        "searchurl": "https://lemonhd.org/torrents.php?search=",
+        "searchIMDburl": "https://lemonhd.org/torrents.php?search_area=4&search=",
+        "newtorrent": "https://lemonhd.org/torrents_new.php",
+        "tagzz": ".//span[contains(@class, 'tag_zz')]",
+        "taggy": ".//span[contains(@class, 'tag_gy')]",
+        "tagfree": ".//div[contains(text(), '免费剩余')]",
+        "tag2xfree": "",
+        "tag50off": "",
+        "doubanval": "string(.//a[contains(@href,'douban')])",
+        "imdbval": "string(.//a[contains(@href,'imdb')])",
+        "imdbstr": {
+          "path": "string(.//a[contains(@href,'imdb')]/@href)",
+          "method": "re_imdb"
+        },
+        "doubanid": {
+          "path": "string(.//a[contains(@href,'douban')]/@href)",
+          "method": "re_douban"
+        },
+        "seednum": "string(.//td[contains(@class,'rowfollow')][7])",
+        "downnum": "string(.//td[contains(@class,'rowfollow')][8])",
+        "torsize": "string(.//td[contains(@class,'rowfollow')][6])",
+        "tordate" : "string(.//td[contains(@class,'rowfollow')][5]//@title)"
+      }
     ]
   }
   

@@ -1462,7 +1462,9 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         count += 1
         db.session.add(dbitem)
         db.session.commit()
-    return count    
+    print('SiteNew %s - added : %d (%s)' %
+          (dbitem.site, count, datetime.now().strftime("%H:%M:%S")))
+    return count
 
 
 class TorrentCache(db.Model):
