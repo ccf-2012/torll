@@ -1348,9 +1348,9 @@ def siteTorrentData():
 
     
     imdbidcol = getattr(SiteTorrent, 'tmdbid')
-    col = getattr(SiteTorrent, 'tmdbyear')
-    # order.append(func.strftime("%Y-%m-%d", col).desc())   
-    order.append(col.desc())
+    col = getattr(SiteTorrent, 'tordate')
+    order.append(func.strftime("%Y-%m-%d", col).desc())   
+    # order.append(col.desc())
     order.append(imdbidcol.desc())
     query = query.order_by(*order)
     # query = query.group_by(imdbidcol)
