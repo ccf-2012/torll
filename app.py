@@ -14,6 +14,8 @@ from wtforms.validators import DataRequired, NumberRange
 from wtforms.widgets import PasswordInput
 import qbfunc
 from apscheduler.schedulers.background import BackgroundScheduler
+import sys
+# sys.path.insert(1, '../torcp/')
 from torcp.tmdbparser import TMDbNameParser
 import feedparser
 import re
@@ -79,6 +81,9 @@ class TorMediaItem(db.Model):
     torsize = db.Column(db.Integer)
     tmdbid = db.Column(db.Integer)
     tmdbcat = db.Column(db.String(20))
+    tmdbposter = db.Column(db.String(120))
+    tmdbyear = db.Column(db.Integer)
+    tmdbgenreids = db.Column(db.String(20))
     location = db.Column(db.String(256))
     plexid = db.Column(db.String(120))
 
@@ -94,6 +99,9 @@ class TorMediaItem(db.Model):
             'torimdb': self.torimdb,
             'tmdbid': str(self.tmdbid),
             'tmdbcat': self.tmdbcat,
+            'tmdbposter': self.tmdbposter,
+            'tmdbgenreids': self.tmdbgenreids,
+            'tmdbyear': self.tmdbyear,
             'location': self.location,
         }
 
@@ -111,7 +119,7 @@ class TorcpItemDBObj:
         self.torhash = torhash
         self.torsize = torsize
 
-    def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle):
+    def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle, tmdbobj=None):
         # print(targetDir, mediaName, tmdbIdStr, tmdbCat)
         t = TorMediaItem(torname=mediaName,
                          torsite=self.torsite,
@@ -123,6 +131,10 @@ class TorcpItemDBObj:
                          tmdbid=tryint(tmdbIdStr),
                          tmdbcat=tmdbCat,
                          location=targetDir)
+        if tmdbobj:
+            t.tmdbposter = tmdbobj.poster_path
+            t.tmdbgenreids = tmdbobj.genre_ids
+            t.tmdbyear = tmdbobj.tmdbyear
 
         with app.app_context():
             db.session.add(t)
@@ -137,7 +149,7 @@ class TorcpItemCallbackObj:
         self.targetDir = ''
         self.tmdbTitle = ''
 
-    def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle):
+    def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle, tmdbobj=None):
         # print(targetDir, mediaName, tmdbIdStr, tmdbCat)
         self.tmdbid = int(tmdbIdStr)
         self.tmdbcat = tmdbCat
@@ -1464,7 +1476,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         db.session.add(dbitem)
         db.session.commit()
     print('SiteNew %s - added : %d (%s)' %
-          (dbitem.site, count, datetime.now().strftime("%H:%M:%S")))
+          (sitename, count, datetime.now().strftime("%H:%M:%S")))
     return count
 
 
@@ -2018,8 +2030,6 @@ def loadArgs():
 def main():
     loadArgs()
     initDatabase()
-    if not ARGS.no_rss:
-        startApsScheduler()
     myconfig.readConfig(ARGS.config)
     if ARGS.init_password:
         myconfig.generatePassword(ARGS.config)
@@ -2027,6 +2037,8 @@ def main():
     if not myconfig.CONFIG.basicAuthUser or not myconfig.CONFIG.basicAuthPass:
         print('set user/pasword in config.ini or use "-G" argument')
         return
+    if not ARGS.no_rss:
+        startApsScheduler()
 # https://stackoverflow.com/questions/14874782/apscheduler-in-flask-executes-twice
     app.run(host='0.0.0.0', port=5006, debug=True, use_reloader=False)
 
