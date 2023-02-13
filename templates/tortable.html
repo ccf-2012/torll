@@ -71,12 +71,12 @@
           {data: 'tmdbid', orderable: false,
             "width": "15%",
             "render": function ( data, type, row, meta ) {
-              if (data){
+              if (row.tmdbid > 0){
                 var s = row.tmdbcat + '/' + row.tmdbid;
                 var s2 = (row.title) ? row.title : s
                 return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+s2+'</a>';
               }
-              else return ''
+              else return row.title
             }
           },
           {data: 'torimdb', orderable: false,

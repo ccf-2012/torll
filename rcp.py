@@ -47,7 +47,7 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
     if sourceDir:
         if not os.path.exists(sourceDir):
             print('File/Dir not exists: ' + sourceDir)
-            return ""
+            return "", '', None
         # torimdb = extractIMDbFromTag(tortag)
         # rootdir, site_id_imdb = getSiteIdDirName(sourceDir, savepath)
 
@@ -80,8 +80,8 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
         eo = TorcpItemCallbackObj()
         o = Torcp()
         o.main(argv, eo)
-        return eo.targetDir, eo.tmdbTitle
-    return '', ''
+        return eo.targetDir, eo.tmdbTitle, eo.tmdbParser
+    return '', '', None
 
 
 def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcatidstr=None):

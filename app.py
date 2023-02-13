@@ -98,7 +98,7 @@ class TorMediaItem(db.Model):
             'torsite': genSiteLink(self.torsite, self.torsiteid),
             'torsitecat': self.torsitecat,
             'torimdb': self.torimdb,
-            'tmdbid': str(self.tmdbid),
+            'tmdbid': self.tmdbid,
             'tmdbcat': self.tmdbcat,
             'tmdbposter': self.tmdbposter,
             'tmdbgenreids': self.tmdbgenreids,
@@ -150,6 +150,7 @@ class TorcpItemCallbackObj:
         self.mediaName = ''
         self.targetDir = ''
         self.tmdbTitle = ''
+        self.tmdbParser = None
 
     def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle, tmdbobj=None):
         # print(targetDir, mediaName, tmdbIdStr, tmdbCat)
@@ -158,6 +159,7 @@ class TorcpItemCallbackObj:
         self.mediaName = mediaName
         self.targetDir = targetDir
         self.tmdbTitle = tmdbTitle
+        self.tmdbParser = tmdbobj
 
 
 def queryByHash(qbhash):
@@ -209,7 +211,7 @@ def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
     oldpath = os.path.join(myconfig.CONFIG.mbRootDir, tormedia.location)
     if os.path.exists(oldpath):
         import rcp
-        targetLocation, tmdbTitle = rcp.runTorcpMove(
+        targetLocation, tmdbTitle, tmdbobj = rcp.runTorcpMove(
             sourceDir=oldpath,
             targetDir=myconfig.CONFIG.mbRootDir,
             tmdbcatidstr=tmdbcatidstr)
@@ -219,6 +221,12 @@ def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
             tormedia.tmdbid = tryint(tmdbidstr)
             tormedia.location = targetLocation
             tormedia.title = tmdbTitle
+            ##TODO update poster, genrestr
+            tormedia.tmdbposter = tmdbobj.poster_path
+            tormedia.tmdbyear = tmdbobj.year
+            if tmdbobj.genre_ids:
+                tormedia.tmdbgenreids = ','.join(str(e) for e in tmdbobj.genre_ids)
+
             db.session.commit()
             warningstr = '影视内容已经移至：' + \
                 os.path.join(myconfig.CONFIG.mbRootDir, targetLocation)
