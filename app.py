@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, redirect
 from flask import request, abort
 import requests as pyrequests
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from datetime import datetime
 import os
 import logging
@@ -134,7 +135,7 @@ class TorcpItemDBObj:
         if tmdbobj:
             t.tmdbposter = tmdbobj.poster_path
             t.tmdbgenreids = tmdbobj.genre_ids
-            t.tmdbyear = tmdbobj.tmdbyear
+            t.tmdbyear = tmdbobj.year
 
         with app.app_context():
             db.session.add(t)
@@ -1336,10 +1337,12 @@ def siteTorrentData():
     # if order:
     #     query = query.order_by(*order)
 
+    
     imdbidcol = getattr(SiteTorrent, 'tmdbid')
     col = getattr(SiteTorrent, 'tmdbyear')
-    order.append(col.desc())    
-    order.append(imdbidcol.desc())    
+    # order.append(func.strftime("%Y-%m-%d", col).desc())   
+    order.append(col.desc())
+    order.append(imdbidcol.desc())
     query = query.order_by(*order)
     # query = query.group_by(imdbidcol)
 
