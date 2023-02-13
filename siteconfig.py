@@ -11,5 +11,13 @@ def loadSiteConfig():
     except:
         return []
     f.close()
-        
-    return site_config
+    
+    return site_config["sites"] if site_config else []
+
+
+PT_SITES = loadSiteConfig()
+
+def getCurSite(sitename):
+    cursite = next((x for x in PT_SITES if x["site"] == sitename), None)
+    return cursite
+

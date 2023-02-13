@@ -996,6 +996,10 @@ def addTorrent(downloadLink, siteIdStr, imdbstr):
 def addTorrentViaPageDownload(downloadLink, sitecookie, siteIdStr, imdbstr):
     if (not myconfig.CONFIG.qbServer):
         return 400
+
+    if 'passkey' in downloadLink:
+        return addTorrent(downloadLink, siteIdStr, imdbstr)
+
     cookie = SimpleCookie()
     cookie.load(sitecookie)
     cookies = {k: v.value for k, v in cookie.items()}
@@ -1246,6 +1250,11 @@ def requestPtPage(pageUrl, pageCookie):
     return r.text
 
 
+def torDbExists(tmdbcat, tmdbid):
+    exists = db.session.query(db.exists().where(
+        (db.and_(TorMediaItem.tmdbcat == tmdbcat, TorMediaItem.tmdbid == tmdbid)))).scalar()
+    return exists
+
 
 class SiteTorrent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1307,7 +1316,7 @@ class SiteTorrent(db.Model):
             'tmdbyear': self.tmdbyear,
             'tmdbposter': self.tmdbposter,
             'genrestr': self.genrestr,
-            'dlcount': self.dlcount,
+            'exists': torDbExists(self.tmdbcat, self.tmdbid)
         }
 
 
@@ -1468,13 +1477,7 @@ def getTMDbInfo(dbtor):
 
 
 def getSiteTorrent(sitename, sitecookie, siteurl=None):
-    r = siteconfig.loadSiteConfig()
-    if r:
-        PT_SITES = r["sites"]
-    else:
-        return -1  # site not configured
-
-    cursite = next((x for x in PT_SITES if x["site"] == sitename), None)
+    cursite = siteconfig.getCurSite(sitename)
     if not cursite:
         return -1  # site not configured
 
@@ -1548,6 +1551,35 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
     print('SiteNew %s - added : %d (%s)' %
           (sitename, count, datetime.now().strftime("%H:%M:%S")))
     return count
+
+
+
+@app.route('/dlsitetor/<torid>')
+@auth.login_required
+def siteTorDownload(torid):
+    dbitem = SiteTorrent.query.get(torid)
+
+    infolink = getfulllink(dbitem.site, dbitem.infolink)
+    downlink = getfulllink(dbitem.site, dbitem.downlink)
+    sitecookie = getSiteCookie(dbitem.site)
+    if not dbitem.imdbstr:
+        imdbstr = ''
+        if sitecookie:
+            doc = fetchInfoPage(infolink, sitecookie)
+            if doc:
+                imdbstr = parseInfoPageIMDbId(doc)
+                dbitem.imdbstr = imdbstr
+    siteIdStr = genrSiteId(infolink, dbitem.imdbstr)
+
+    # if not checkMediaDbNameDupe(dbcacheitem.title):
+    added = False
+    r = addTorrentViaPageDownload(downlink, sitecookie, siteIdStr, dbitem.imdbstr)
+    if r == 201:
+        added = True
+        dbitem.dlcount += 1
+        db.session.commit()
+    msg = f'{siteIdStr}, {dbitem.imdbstr}'
+    return render_template('dlresult.html', added=added, msg=msg)
 
 
 class TorrentCache(db.Model):
@@ -1710,13 +1742,7 @@ def matchIMDbid(str):
     return True if re.match(r'tt\d+', str.strip(), re.I) else False
 
 def xpathSearchPtSites(sitehost, siteCookie, seachWord):
-    r = siteconfig.loadSiteConfig()
-    if r:
-        PT_SITES = r["sites"]
-    else:
-        return -1  # site not configured
-
-    cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
+    cursite = siteconfig.getCurSite(sitehost)
     if not cursite:
         return -1  # site not configured
 
@@ -1849,13 +1875,7 @@ def getfulllink(sitehost, rellink):
     if rellink.startswith('/'):
         rellink = rellink[1:]
 
-    r = siteconfig.loadSiteConfig()
-    if r:
-        PT_SITES = r["sites"]
-    else:
-        return ''  # site not configured
-
-    cursite = next((x for x in PT_SITES if x["site"] == sitehost), None)
+    cursite = siteconfig.getCurSite(sitehost)
     if not cursite:
         return ''  # site not configured
 
@@ -1922,14 +1942,11 @@ class PtSiteForm(Form):
 @app.route('/sites',  methods=['POST', 'GET'])
 @auth.login_required
 def sitesConfig():
-    r = siteconfig.loadSiteConfig()
-    if r:
-        PT_SITES = r["sites"]
-    else:
+    if not siteconfig.PT_SITES:
         abort(403)
 
     form = PtSiteForm(request.form)
-    form.site.choices = [(row["site"], row["site"]) for row in PT_SITES]
+    form.site.choices = [(row["site"], row["site"]) for row in siteconfig.PT_SITES]
     return render_template('ptsites.html', form=form)
 
 
