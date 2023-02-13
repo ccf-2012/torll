@@ -1533,7 +1533,10 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
         dbitem.torsizestr = xpathGetElement(row, cursite, "torsize")
         tordatestr = xpathGetElement(row, cursite, "tordate")
-        dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
+        try:
+            dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
+        except:
+            pass
 
         dbitem.tmdbtitle, dbitem.tmdbcat, dbitem.tmdbid, dbitem.tmdbposter, dbitem.tmdbyear, dbitem.genrestr = getTMDbInfo(dbitem)
         dbitem.site = sitename
