@@ -46,7 +46,15 @@
         order: [[5, 'desc']],
         columns: [
           {data: 'tmdbcat',
-           "width": "5%"
+           "width": "5%",
+           "render": function ( data, type, row, meta ) {
+              if (row.tmdbposter) {
+                var s = row.tmdbcat + '/' + row.tmdbid;
+                return '<a href="https://www.themoviedb.org/'+s +'" target="_blank"><img src="https://image.tmdb.org/t/p/w45'+row.tmdbposter+'"></a>';
+              }
+              else return ''
+            }
+
           },
           {data: 'torname',
           "width": "32%",

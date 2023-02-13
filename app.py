@@ -15,7 +15,7 @@ from wtforms.widgets import PasswordInput
 import qbfunc
 from apscheduler.schedulers.background import BackgroundScheduler
 import sys
-# sys.path.insert(1, '../torcp/')
+sys.path.insert(1, '../torcp/')
 from torcp.tmdbparser import TMDbNameParser
 import feedparser
 import re
