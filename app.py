@@ -134,7 +134,8 @@ class TorcpItemDBObj:
                          location=targetDir)
         if tmdbobj:
             t.tmdbposter = tmdbobj.poster_path
-            t.tmdbgenreids = tmdbobj.genre_ids
+            if tmdbobj.genre_ids:
+                t.tmdbgenreids = ','.join(str(e) for e in tmdbobj.genre_ids)
             t.tmdbyear = tmdbobj.year
 
         with app.app_context():
