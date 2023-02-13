@@ -1369,12 +1369,67 @@ def siteTorrentData():
     }
 
 
-@app.route('/sitesnew',  methods=['GET'])
-@auth.login_required
-def sitesNew():
-    sitelist = PtSite.query
 
+@app.route('/api/sitetorrentlist')
+@auth.login_required
+def siteTorrentDataList():
+    query = SiteTorrent.query
+
+    # search filter
+    search = request.args.get('search[value]')
+    if search:
+        query = query.filter(db.or_(
+            SiteTorrent.tortitle.like(f'%{search}%'),
+            SiteTorrent.subtitle.like(f'%{search}%'),
+            SiteTorrent.site.like(f'%{search}%'),
+        ))
+    total_filtered = query.count()
+
+    # sorting
+    order = []
+    i = 0
+    while True:
+        col_index = request.args.get(f'order[{i}][column]')
+        if col_index is None:
+            break
+        col_name = request.args.get(f'columns[{col_index}][data]')
+        if col_name not in ['tortitle','imdbstr', 'site', 'seednum', 'tordate', 'addedon']:
+            col_name = 'addedon'
+        descending = request.args.get(f'order[{i}][dir]') == 'desc'
+        col = getattr(SiteTorrent, col_name)
+        if descending:
+            col = col.desc()
+        order.append(col)
+        i += 1
+    if order:
+        query = query.order_by(*order)
+
+    # pagination
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    query = query.offset(start).limit(length)
+
+    # response
+    return {
+        'data': [tor.to_dict() for tor in query],
+        'recordsFiltered': total_filtered,
+        'recordsTotal': SiteTorrent.query.count(),
+        'draw': request.args.get('draw', type=int),
+    }
+
+
+@app.route('/sitesnewgroup',  methods=['GET'])
+@auth.login_required
+def sitesNewGroup():
+    sitelist = PtSite.query
     return render_template('sitetorrent.html', sitelist=sitelist)
+
+
+@app.route('/sitesnewlist',  methods=['GET'])
+@auth.login_required
+def sitesNewList():
+    sitelist = PtSite.query
+    return render_template('sitetorrent2.html', sitelist=sitelist)
 
 
 @app.route('/api/getsitetorrent/',  methods=['GET'])

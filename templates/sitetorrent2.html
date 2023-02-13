@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 {% block stylesheet %}
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowgroup/1.3.0/css/rowGroup.bootstrap5.min.css">
 <style>
 </style>
 {% endblock %}
 {% block content %}
 <nav class="nav nav-tabs justify-content-center">
-	<a class="nav-link " href="/sitesnewlist">各站新种</a>
-	<a class="nav-link active" href="/sitesnewgroup">站新分组</a>
-	<a class="nav-link " href="/sites">站点设置</a>
+    <a class="nav-link active" href="/sitesnewlist">各站新种</a>
+    <a class="nav-link" href="/sitesnewgroup">站新分组</a>
+    <a class="nav-link " href="/sites">站点设置</a>
 </nav>
 
 <div class="row my-3 justify-content-center">
@@ -37,58 +36,20 @@
 
 {% block script %}
 
-
 <script>
     $(document).ready(function () {
+
         var groupColumn = 2;
-        $('#data').DataTable({
+        var table = $('#data').DataTable({
             language: DATATABLE_LANG,
             "pageLength": 50,
             autoWidth: true,
             scrollX: true,
             full_row_select: false,
-            ajax: '/api/sitetorrent',
+            stateSave: true,
+            ajax: '/api/sitetorrentlist',
             serverSide: true,
             order: [[7, 'desc']],
-            // drawCallback: function (settings) {
-            //     var api = this.api();
-            //     var rows = api.rows({ page: 'current' }).nodes();
-            //     var last = null;
-                
-            //     var poster='<img src="https://image.tmdb.org/t/p/w500';
-    
-            //     api
-            //         .column(groupColumn, { page: 'current' })
-            //         .data()
-            //         .each(function (group, i) {
-            //             if (last !== group) {
-            //                 $(rows)
-            //                     .eq(i)
-            //                     .before('<tr class="group"><td colspan="5">' + group + '</td></tr>');
-    
-            //                 last = group;
-            //             }
-            //         });
-            // },
-            rowGroup: {
-                endRender: null,
-                startRender: function ( rows, group ) {
-                    if (rows.data()[0].tmdbposter){
-                        var row = rows.data()[0];
-                        var s = row.tmdbcat + '/' + row.tmdbid;
-                        return $('<tr/>')
-                        .append( '<td > <a href="https://www.themoviedb.org/'+s +'" target="_blank"><img src="https://image.tmdb.org/t/p/w45'+row.tmdbposter+'"></a></td>')
-                        .append( '<td colspan="7"> <h6>'+row.tmdbtitle+' ('+row.tmdbyear+')'+'</h6><p>'+row.genrestr+'</td>' )
-                    }
-                    else {
-                        return $('<tr/>')
-                        .append( '<td >'+rows.data()[0].tmdbcat+'</td>')
-                        .append('<td colspan="7">'+rows.data()[0].tmdbtitle+'</td>' );
-
-                    }
-                },
-                dataSrc: 'tmdbtitle'
-            },    
             columns: [
                 {
                     data: 'site',
@@ -171,5 +132,4 @@
     });
 
 </script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/rowgroup/1.3.0/js/dataTables.rowGroup.min.js"></script>
 {% endblock %}
