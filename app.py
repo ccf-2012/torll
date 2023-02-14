@@ -204,7 +204,8 @@ def parseTMDbStr(tmdbstr):
 
 
 def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
-    tormedia = TorMediaItem.query.get(mediaid)
+    # tormedia = TorMediaItem.query.get(mediaid)
+    tormedia = db.session.get(TorMediaItem, mediaid)
 
     tmdbcat, tmdbidstr = parseTMDbStr(tmdbcatidstr)
     myconfig.updateMediaRootDir(ARGS.config, mbrootDir)
@@ -246,7 +247,8 @@ def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
 @app.route('/mediaedit/<id>', methods=['POST', 'GET'])
 @auth.login_required
 def torMediaEdit(id):
-    tormedia = TorMediaItem.query.get(id)
+    # tormedia = TorMediaItem.query.get(id)
+    tormedia = db.session.get(TorMediaItem, id)
     form = MediaItemForm(request.form)
     form.tmdbcatid.data = "%s-%d" % (tormedia.tmdbcat, tormedia.tmdbid)
     if not myconfig.CONFIG.mbRootDir:
@@ -279,7 +281,8 @@ def apiTorMediaEdit():
 @app.route('/mediadel/<id>')
 @auth.login_required
 def torMediaDel(id):
-    tormedia = TorMediaItem.query.get(id)
+    # tormedia = TorMediaItem.query.get(id)
+    tormedia = db.session.get(TorMediaItem, id)
 
     destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
     if os.path.exists(destDir):
@@ -736,7 +739,8 @@ def rssNew():
 @app.route('/rssedit/<id>', methods=['POST', 'GET'])
 @auth.login_required
 def rssEdit(id):
-    task = RSSTask.query.get(id)
+    # task = RSSTask.query.get(id)
+    task = db.session.get(RSSTask, id)
     try:
         scheduler.remove_job(str(task.id))
     except:
@@ -801,7 +805,9 @@ def rssDel(id):
 @app.route('/rssactivate/<id>')
 @auth.login_required
 def rssToggleActive(id):
-    task = RSSTask.query.get(id)
+    # task = RSSTask.query.get(id)
+    task = db.session.get(RSSTask, id)
+
     if task.active == 0:
         task.active = 2
         try:
@@ -1129,7 +1135,6 @@ def prcessRssFeeds(rsstask):
 
         db.session.commit()
 
-    # rtask = RSSTask.query.get(rsstask.id)
     rsstask.accept_count += rssAccept
     db.session.commit()
 
@@ -1140,7 +1145,8 @@ def prcessRssFeeds(rsstask):
 @app.route('/rssmanual/<rsslogid>')
 @auth.login_required
 def manualDownload(rsslogid):
-    dbrssitem = RSSHistory.query.get(rsslogid)
+    # dbrssitem = RSSHistory.query.get(rsslogid)
+    dbrssitem = db.session.get(RSSHistory, rsslogid)
     # TODO: count download number on 1st site of the name
     taskitem = RSSTask.query.filter(RSSTask.id == dbrssitem.tid).first()
 
@@ -1446,7 +1452,8 @@ def apiGetSiteTorrent():
         abort(jsonify(message="site not found"))
 
     if sitehost.isdigit():
-        dbsite = PtSite.query.get(sitehost)
+        # dbsite = PtSite.query.get(sitehost)
+        dbsite = db.session.get(PtSite, sitehost)    
     else:
         dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
     if not dbsite:
@@ -1554,7 +1561,8 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
 @app.route('/dlsitetor/<torid>')
 @auth.login_required
 def siteTorDownload(torid):
-    dbitem = SiteTorrent.query.get(torid)
+    # dbitem = SiteTorrent.query.get(torid)
+    dbitem = db.session.get(SiteTorrent, torid)
 
     infolink = getfulllink(dbitem.site, dbitem.infolink)
     downlink = getfulllink(dbitem.site, dbitem.downlink)
@@ -1586,7 +1594,8 @@ def apiSiteTorDownload():
     torid = request.args.get('torid')
     # r = request.get_json()
     # torid = r["torid"]
-    dbitem = SiteTorrent.query.get(torid)
+    # dbitem = SiteTorrent.query.get(torid)
+    dbitem = db.session.get(SiteTorrent, torid)
 
     infolink = getfulllink(dbitem.site, dbitem.infolink)
     downlink = getfulllink(dbitem.site, dbitem.downlink)
@@ -1918,7 +1927,8 @@ def getfulllink(sitehost, rellink):
 @auth.login_required
 def resultDownload():
     searchid = request.args.get('searchid')
-    dbcacheitem = TorrentCache.query.get(searchid)
+    # dbcacheitem = TorrentCache.query.get(searchid)
+    dbcacheitem = db.session.get(TorrentCache, searchid)
 
     infolink = getfulllink(dbcacheitem.site, dbcacheitem.infolink)
     downlink = getfulllink(dbcacheitem.site, dbcacheitem.downlink)
@@ -2023,7 +2033,8 @@ def apiGetSiteSetting():
             abort(jsonify(message="site not found"))
 
         if sitehost.isdigit():
-            dbsite = PtSite.query.get(sitehost)
+            # dbsite = PtSite.query.get(sitehost)
+            dbsite = db.session.get(PtSite, sitehost)
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
         if not dbsite:
