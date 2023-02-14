@@ -504,8 +504,9 @@ def runTorcpApi():
 
 
 class RSSHistory(db.Model):
-    __tablename__ = 'rss_history_table'
+    __tablename__ = 'rss_history'
     id = db.Column(db.Integer, primary_key=True)
+    tid = db.Column(db.Integer)
     site = db.Column(db.String(64))
     title = db.Column(db.String(255))
     accept = db.Column(db.Integer, default=0)
@@ -595,6 +596,7 @@ class RSSTask(db.Model):
     task_interval = db.Column(db.Integer)
     total_count = db.Column(db.Integer)
     accept_count = db.Column(db.Integer)
+    qbcategory = db.Column(db.String(64))
     last_update = db.Column(
         db.DateTime, default=datetime.now, onupdate=datetime.now)
     active = db.Column(db.SmallInteger, default=0)
@@ -611,6 +613,7 @@ class RSSTask(db.Model):
             'info_regex': self.info_regex,
             'info_not_regex': self.info_not_regex,
             'min_imdb': self.min_imdb,
+            'qbcategory': self.qbcategory,
             'active': self.active,
         }
 
@@ -624,6 +627,7 @@ class RSSTaskForm(Form):
     info_not_regex = StringField('描述不含')
     min_imdb = DecimalField('IMDb 大于', validators=[NumberRange(min=0, max=10)])
     task_interval = IntegerField('执行间隔 (分钟)', validators=[DataRequired()])
+    qbcategory = StringField('加入qBit时带Category')
     submit = SubmitField("保存设置")
 
 
@@ -716,6 +720,7 @@ def rssNew():
         task.info_not_regex = form.info_not_regex.data
         task.min_imdb = form.min_imdb.data
         task.task_interval = form.task_interval.data
+        task.qbcategory = form.qbcategory.data
         task.total_count = 0
         task.accept_count = 0
         db.session.add(task)
@@ -849,18 +854,6 @@ def existsInRssHistory(torname):
     return exists
 
 
-def saveRssHistory(site, item):
-    with app.app_context():
-        t = RSSHistory(site=site, title=item.title)
-        if hasattr(item, 'link'):
-            t.infoLink = item.link
-        if hasattr(item, 'links') and len(item.links) > 1:
-            t.downloadLink = item.links[1]['href']
-        db.session.add(t)
-        db.session.commit()
-        return t
-
-
 def checkMediaDbExistsTMDb(torTMDbid, torTMDbCat):
     with app.app_context():
         exists = db.session.query(TorMediaItem.id).filter_by(
@@ -976,7 +969,7 @@ def checkMediaDbTMDbDupe(torname, imdbstr):
         return 203
 
 
-def addTorrent(downloadLink, siteIdStr, imdbstr):
+def addTorrent(downloadLink, siteIdStr, imdbstr, qbCate=''):
     if (not myconfig.CONFIG.qbServer):
         return 400
 
@@ -985,7 +978,7 @@ def addTorrent(downloadLink, siteIdStr, imdbstr):
 
     if not myconfig.CONFIG.dryrun:
         print("   >> Added: " + siteIdStr)
-        if not qbfunc.addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr):
+        if not qbfunc.addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr, qbCate):
             return 400
     else:
         print("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
@@ -1055,6 +1048,7 @@ def prcessRssFeeds(rsstask):
                                datetime.now().strftime("%H:%M:%S")))
 
         dbrssitem = RSSHistory(site=rsstask.site,
+                               tid=rsstask.id,
                                title=item.title,
                                infoLink=item.link,
                                downloadLink=item.links[1]['href'],
@@ -1124,7 +1118,8 @@ def prcessRssFeeds(rsstask):
             db.session.commit()
             continue
 
-        r = addTorrent(rssDownloadLink, siteIdStr, imdbstr)
+        qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
+        r = addTorrent(rssDownloadLink, siteIdStr, imdbstr, qbcat)
         if r == 201:
             # Downloaded
             dbrssitem.accept = 3
@@ -1147,7 +1142,7 @@ def prcessRssFeeds(rsstask):
 def manualDownload(rsslogid):
     dbrssitem = RSSHistory.query.get(rsslogid)
     # TODO: count download number on 1st site of the name
-    taskitem = RSSTask.query.filter(RSSTask.site == dbrssitem.site).first()
+    taskitem = RSSTask.query.filter(RSSTask.id == dbrssitem.tid).first()
 
     imdbstr = ''
     if taskitem:
@@ -1158,7 +1153,8 @@ def manualDownload(rsslogid):
         siteIdStr = genrSiteId(dbrssitem.infoLink, imdbstr)
 
         if not checkMediaDbNameDupe(dbrssitem.title):
-            r = addTorrent(dbrssitem.downloadLink, siteIdStr, imdbstr)
+            qbcat = taskitem.qbcategory if taskitem.qbcategory else ''
+            r = addTorrent(dbrssitem.downloadLink, siteIdStr, imdbstr, qbcat)
             if r == 201:
                 dbrssitem.accept = 3
                 taskitem.accept_count += 1
@@ -1316,6 +1312,7 @@ class SiteTorrent(db.Model):
             'tmdbyear': self.tmdbyear,
             'tmdbposter': self.tmdbposter,
             'genrestr': self.genrestr,
+            'dlcount': self.dlcount,
             'exists': torDbExists(self.tmdbcat, self.tmdbid)
         }
 

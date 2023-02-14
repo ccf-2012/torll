@@ -74,7 +74,7 @@ def setAutoRunProgram(prog):
     return True
 
 
-def addQbitWithTag(downlink, imdbtag, siteIdStr=None):
+def addQbitWithTag(downlink, imdbtag, siteIdStr=None, qbCate=''):
     qbClient = qbittorrentapi.Client(
         host=myconfig.CONFIG.qbServer, port=myconfig.CONFIG.qbPort, username=myconfig.CONFIG.qbUser, password=myconfig.CONFIG.qbPass)
 
@@ -94,12 +94,13 @@ def addQbitWithTag(downlink, imdbtag, siteIdStr=None):
                 urls=downlink,
                 save_path=siteIdStr,
                 # download_path=download_location,
-                # category=timestamp,
+                category=qbCate,
                 tags=[imdbtag],
                 use_auto_torrent_management=False)
         else:
             result = qbClient.torrents_add(
                 urls=downlink,
+                category=qbCate,
                 tags=[imdbtag],
                 use_auto_torrent_management=False)
         # breakpoint()

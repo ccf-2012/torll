@@ -2,6 +2,7 @@
 {% block stylesheet %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowgroup/1.3.0/css/rowGroup.bootstrap5.min.css">
 <style>
+
 </style>
 {% endblock %}
 {% block content %}
@@ -187,8 +188,8 @@
                     "width": "8%",
                     "render": function (data, type, row) {
                         var linkDownload = '<a href="#" onclick="downloadClick(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
-                        // var linkDownload = '<a href="/dlsitetor/' + row.id + '">' + '下载' + '</a>';
-                        return linkDownload;
+                        var dlcount = (row.dlcount > 0) ? '<sub>'+row.dlcount+'</sub>' : '';
+                        return linkDownload + dlcount;
                     },
                 },
 

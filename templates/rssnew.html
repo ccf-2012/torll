@@ -51,13 +51,20 @@
                 </div>
             </div>
             <div class="row form-row">
-                <div class="form-group col-md-6 mb-0">
+                <div class="form-group col-md-4 mb-0">
                     <div class="form-group mb-3">
                         {{form.min_imdb.label(class='form-label')}} 
                         {{ form.min_imdb(class="form-control") }}
                     </div>
                 </div>
-                <div class="form-group col-md-6 mb-0">
+                <div class="form-group col-md-4 mb-0">
+                    <div class="form-group mb-3">
+                        {{form.qbcategory.label(class='form-label')}} 
+                        {{ form.qbcategory(class="form-control") }}
+                    </div>
+                </div>
+
+                <div class="form-group col-md-4 mb-0">
                     <div class="form-group mb-3">
                         {{form.task_interval.label(class='form-label')}} 
                         {{ form.task_interval(class="form-control") }}

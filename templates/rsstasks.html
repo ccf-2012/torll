@@ -26,6 +26,7 @@
         <th>描述包含</th>
         <th>描述不含</th>
         <th>IMDb大于</th>
+        <th>qBit分类</th>
         <th>操作</th>
         <th>active</th>
       </tr>
@@ -47,8 +48,8 @@
       language: DATATABLE_LANG,
       "pageLength": 10,
       "dom": "tip",
-      autoWidth: false,
-      scrollX: true,
+      autoWidth: true,
+      scrollX: false,
       full_row_select: false,
       ajax: '/api/rsstasksdata',
       serverSide: true,
@@ -56,7 +57,7 @@
       columns: [
         {
           data: 'last_update',
-          "width": "15%",
+          "width": "12%",
           "render": function (data) {
             var date = new Date(data);
             return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
@@ -96,6 +97,11 @@
         },
         {
           data: 'min_imdb',
+          orderable: false, searchable: false,
+          "width": "8%"
+        },
+        {
+          data: 'qbcategory',
           orderable: false, searchable: false,
           "width": "8%"
         },

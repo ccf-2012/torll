@@ -253,8 +253,8 @@
                     "width": "8%",
                     "render": function (data, type, row) {
                         var linkDownload = '<a href="#" onclick="downloadClick(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
-                        // var linkDownload = '<a href="/dlresult/' + row.id + '">' + '下载' + '</a>';
-                        return linkDownload;
+                        var dlcount = (row.dlcount > 0) ? '<sub>'+row.dlcount+'</sub>' : '';
+                        return linkDownload + dlcount;
                     },
                 },
 
