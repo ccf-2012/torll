@@ -1485,7 +1485,12 @@ def apiGetSiteTorrent():
         return json.dumps({'site': dbsite.site, 'resultCount': 0}), 200, {'ContentType': 'application/json'}
 
     resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, siteurl=None)
-    # if count < 0:
+    if resultCount > 0:
+        dbsite.newTorCount += resultCount
+        dbsite.lastNewStatus = 0
+    else:
+        dbsite.lastNewStatus = resultCount
+    db.session.commit()
     return json.dumps({'site': dbsite.site, 'resultCount': resultCount}), 200, {'ContentType': 'application/json'}
 
 
@@ -1518,6 +1523,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         return -2
     doc = requestPtPage(siteurl, sitecookie)
     if not doc:
+        print('Failt to fetch: ' + siteurl)
         return -3  # page not fetched
 
     htmltree = lxml.html.fromstring(doc)
@@ -1992,9 +1998,11 @@ class PtSite(db.Model):
     site = db.Column(db.String(32))
     cookie = db.Column(db.String(1024))
     siteNewLink = db.Column(db.String(256))
-    siteNewCheck = db.Column(db.Boolean)
-    lastSearchCheck = db.Column(db.Boolean)
-    lastResultCount = db.Column(db.Integer)
+    siteNewCheck = db.Column(db.Boolean, default=True)
+    lastSearchCheck = db.Column(db.Boolean, default=False)
+    lastResultCount = db.Column(db.Integer, default=0)
+    newTorCount = db.Column(db.Integer, default=0)
+    lastNewStatus = db.Column(db.Integer, default=0)
 
     def to_dict(self):
         return {
@@ -2003,6 +2011,8 @@ class PtSite(db.Model):
             'site': self.site,
             'cookie': self.cookie,
             'lastResultCount': self.lastResultCount,
+            'newTorCount': self.newTorCount,
+            'lastNewStatus': self.lastNewStatus,
         }
 
 
@@ -2050,11 +2060,12 @@ def apiGetSiteSetting():
         exists = db.session.query(PtSite.id).filter_by(
             site=sitehost).first() is not None
         if not exists:
-            dbsite = PtSite(site=r['site'], cookie=r['cookie'])
+            dbsite = PtSite(site=r['site'], cookie=r['cookie'], siteNewLink=r['newtorlink'])
+            db.session.add(dbsite)
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
             dbsite.cookie = r['cookie']
-        db.session.add(dbsite)
+            dbsite.siteNewLink=r['newtorlink']
         db.session.commit()
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
@@ -2070,13 +2081,13 @@ def apiGetSiteSetting():
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
         if not dbsite:
-            return json.dumps({'cookie': ''}), 200, {'ContentType': 'application/json'}
+            return json.dumps({'site': '', 'cookie':'', 'newtorlink':''}), 202, {'ContentType': 'application/json'}
 
         if op == 'delete':
             db.session.delete(dbsite)
             db.session.commit()
 
-        return json.dumps({'site': dbsite.site, 'cookie': dbsite.cookie}), 200, {'ContentType': 'application/json'}
+        return json.dumps({'site': dbsite.site, 'cookie': dbsite.cookie, 'newtorlink': dbsite.siteNewLink}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/api/sitelistdata')
@@ -2131,6 +2142,12 @@ def siteNewsJob():
         for dbsite in sitelist:
             resultCount = getSiteTorrent(
                 dbsite.site, dbsite.cookie, siteurl=None)
+            if resultCount > 0:
+                dbsite.newTorCount += resultCount
+                dbsite.lastNewStatus = 0
+            else:
+                dbsite.lastNewStatus = resultCount
+            db.session.commit()
             print(dbsite.site, resultCount)
 
 
