@@ -109,7 +109,7 @@
             success: function (response) {
                 t = JSON.parse(response)
                 $("#cookie").val(t.cookie)
-                $("newtorlink").val(t.newtorlink)
+                $("#newtorlink").val(t.newtorlink)
                 $("#msg").hide()
             },
             complete: function (xhr, textStatus) {
@@ -145,6 +145,7 @@
                 else {
                     $("#site").val(t.site);
                     $("#cookie").val(t.cookie);
+                    $('#newtorlink').val(t.newtorlink);
                 }
             },
             complete: function (xhr, textStatus) {
