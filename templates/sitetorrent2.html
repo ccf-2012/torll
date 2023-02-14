@@ -37,14 +37,40 @@
 {% block script %}
 
 <script>
+    function downloadClick(ele, id) {
+        $(ele).parent().css('background-color', 'rgb(254 243 199)');
+        apiDownloadSiteTor(ele, id);
+    }
+    function apiDownloadSiteTor(ele, id) {
+        $.ajax({
+            url: '/api/sitetordl',
+            type: 'get',
+            data: { torid: id },
+            contentType: "application/json",
+            success: function (response) {
+                t = JSON.parse(response);
+                if (t.added) {
+                    $(ele).parent().css('background-color', 'darkseagreen');
+                    // $("#msg").hide();
+                }
+                else{
+                    $(ele).parent().css('background-color', 'lightpink');
+                }
+            },
+            complete: function (xhr, textStatus) {
+                if (xhr.status == 402) {
+                    $("#msg").val('下载好像失败了');
+                }
+            }
+        });
+    }
     $(document).ready(function () {
-
         var groupColumn = 2;
         var table = $('#data').DataTable({
             language: DATATABLE_LANG,
             "pageLength": 50,
             autoWidth: true,
-            scrollX: true,
+            scrollX: false,
             full_row_select: false,
             stateSave: true,
             ajax: '/api/sitetorrentlist',
@@ -121,7 +147,8 @@
                     data: 'id', orderable: false, searchable: false,
                     "width": "8%",
                     "render": function (data, type, row) {
-                        var linkDownload = '<a href="/dlsitetor/' + row.id + '">' + '下载' + '</a>';
+                        var linkDownload = '<a href="#" onclick="downloadClick(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
+                        // var linkDownload = '<a href="/dlsitetor/' + row.id + '">' + '下载' + '</a>';
                         return linkDownload;
                     },
                 },

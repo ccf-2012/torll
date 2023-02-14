@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>{% block title %} {% endblock %} TORCP</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css">
     <style>
         /* https://stackoverflow.com/questions/33454016/change-font-family-in-datatable */
@@ -12,75 +14,81 @@
             font-size: 13px;
             clear: both;
         }
-    
+
         table {
             table-layout: fixed;
         }
-    
+
         td {
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .tortitle {
-        word-break: break-all;
-        /* color: #000;
+            word-break: break-all;
+            /* color: #000;
     margin: 2px 1px; */
-        font-size: 14px;
-    }
+            font-size: 14px;
+        }
 
-    .sub-title {
-        word-break: break-all;
-        margin-top: 2px;
-        margin-left: 4px;
-        color: #8c8c8c !important;
-        font-size: 12px;
-    }
+        .sub-title {
+            word-break: break-all;
+            margin-top: 2px;
+            margin-left: 4px;
+            color: #8c8c8c !important;
+            font-size: 12px;
+        }
 
-    .tag-zz {
-        font-size: 9px;
-        margin: 0 1px 0 1px;
-        border-radius: 2px;
-        padding: 1px 3px;
-        /* background: #3e6aa0; */
-        background: #426ab9;
-        color: #fff;
-    }
+        .tag-zz {
+            font-size: 9px;
+            margin: 0 1px 0 1px;
+            border-radius: 2px;
+            padding: 1px 3px;
+            /* background: #3e6aa0; */
+            background: #426ab9;
+            color: #fff;
+        }
 
-    .tag-gy {
-        font-size: 9px;
-        margin: 0 1px 0 1px;
-        padding: 1px 3px;
-        background: #3e93a0;
-        color: #ffffff;
-    }
-    .tag-free {
-        font-size: 7px;
-        margin: 0 1px 0 5px;
-        padding: 1px 3px;
-        background: #219b3f;
-        color: #ffffff;
-    }    
-    .tag-2xfree {
-        font-size: 7px;
-        margin: 0 1px 0 5px;
-        padding: 1px 3px;
-        background: #4caf50;
-        color: #ffffff;
-    }    
-    .tag-50off {
-        font-size: 7px;
-        margin: 0 1px 0 5px;
-        padding: 1px 3px;
-        background: #ff9800;
-        color: #ffffff;
-    }
-    tr.dtrg-group,
-    tr.dtrg-group:hover {
-        background-color: #ddd !important;
-    }    
+        .tag-gy {
+            font-size: 9px;
+            margin: 0 1px 0 1px;
+            padding: 1px 3px;
+            background: #3e93a0;
+            color: #ffffff;
+        }
+
+        .tag-free {
+            font-size: 7px;
+            margin: 0 1px 0 5px;
+            padding: 1px 3px;
+            background: #219b3f;
+            color: #ffffff;
+        }
+
+        .tag-2xfree {
+            font-size: 7px;
+            margin: 0 1px 0 5px;
+            padding: 1px 3px;
+            background: #4caf50;
+            color: #ffffff;
+        }
+
+        .tag-50off {
+            font-size: 7px;
+            margin: 0 1px 0 5px;
+            padding: 1px 3px;
+            background: #ff9800;
+            color: #ffffff;
+        }
+
+        tr.dtrg-group,
+        tr.dtrg-group:hover {
+            background-color: #ddd !important;
+        }
     </style>
     {% block stylesheet %}{% endblock %}
 </head>
+
 <body>
     <div class="container-fluid">
         <nav class="navbar navbar-expand-sm navbar-light bg-light">
@@ -88,7 +96,7 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item ">
-                      <a class="nav-link " href="{{ url_for('index') }}">影视列表</a>
+                        <a class="nav-link " href="{{ url_for('index') }}">影视列表</a>
                     </li>
                     <li class="nav-item ">
                         <a class="nav-link " href="{{ url_for('rssLog') }}">RSS</a>
@@ -103,15 +111,15 @@
                         <a class="nav-link " href="{{ url_for('setting') }}">设置</a>
                     </li>
                     <li class="nav-item ">
-                        <a class="nav-link " href="#">关于</a> 
+                        <a class="nav-link " href="#">关于</a>
                     </li>
                 </ul>
             </div>
-        </nav>                      
+        </nav>
     </div>
     <div class="content">
         {% for message in get_flashed_messages() %}
-            <div class="alert">{{ message }}</div>
+        <div class="alert">{{ message }}</div>
         {% endfor %}
     </div>
 
@@ -122,25 +130,30 @@
     </div>
 
     <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" charset="utf8"
+        src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" charset="utf8"
+        src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
     <script>
-    DATATABLE_LANG={
-        "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
-        "lengthMenu": "每页显示  _MENU_ 条",
-        "search": "查找: ",
-        "zeroRecords": "现在这里空空的",
-        "infoEmpty": "没什么可说的",
-        "paginate": {
-          // 'page': '直跳页号',
-          'first': '首页',
-          'previous': '前页',
-          'next': '后页',
-          'last': '最末页'
+        DATATABLE_LANG = {
+            "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
+            "lengthMenu": "每页显示  _MENU_ 条",
+            "search": "查找: ",
+            "zeroRecords": "现在这里空空的",
+            "infoEmpty": "没什么可说的",
+            "paginate": {
+                // 'page': '直跳页号',
+                'first': '首页',
+                'previous': '前页',
+                'next': '后页',
+                'last': '最末页'
+            }
         }
-      }
-      </script>
-    {% block script %}{% endblock script %}
+    
+    </script>
+
+{% block script %}{% endblock script %}
 
 </body>
+
 </html>

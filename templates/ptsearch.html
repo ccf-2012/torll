@@ -62,6 +62,7 @@
 
 {% block script %}
 <script>
+
     $("#searchStr").on('input', function () {
         var val = this.value;
         if ($('#searchword option').filter(function () {
@@ -154,6 +155,33 @@
         $('#data').DataTable().search('');
         $('#data').DataTable().columns(1).search(searchword).draw();
     }
+    function downloadClick(ele, id) {
+        $(ele).parent().css('background-color', 'rgb(254 243 199)');
+        apiDownloadTorCache(ele, id);
+    }
+    function apiDownloadTorCache(ele, id) {
+        $.ajax({
+            url: '/api/dlsearchresult',
+            type: 'get',
+            data: { searchid: id },
+            contentType: "application/json",
+            success: function (response) {
+                t = JSON.parse(response);
+                if (t.added) {
+                    $(ele).parent().css('background-color', 'darkseagreen');
+                    // $("#msg").hide();
+                }
+                else{
+                    $(ele).parent().css('background-color', 'lightpink');
+                }
+            },
+            complete: function (xhr, textStatus) {
+                if (xhr.status == 402) {
+                    $("#msg").val('下载好像失败了');
+                }
+            }
+        });
+    }        
 </script>
 
 <script>
@@ -162,7 +190,7 @@
             language: DATATABLE_LANG,
             "pageLength": 50,
             autoWidth: true,
-            scrollX: true,
+            scrollX: false,
             full_row_select: false,
             ajax: '/api/searchresult',
             serverSide: true,
@@ -224,7 +252,8 @@
                     data: 'id', orderable: false, searchable: false,
                     "width": "8%",
                     "render": function (data, type, row) {
-                        var linkDownload = '<a href="/dlresult/' + row.id + '">' + '下载' + '</a>';
+                        var linkDownload = '<a href="#" onclick="downloadClick(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
+                        // var linkDownload = '<a href="/dlresult/' + row.id + '">' + '下载' + '</a>';
                         return linkDownload;
                     },
                 },

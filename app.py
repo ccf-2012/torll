@@ -1582,6 +1582,39 @@ def siteTorDownload(torid):
     return render_template('dlresult.html', added=added, msg=msg)
 
 
+
+@app.route('/api/sitetordl',  methods=['GET'])
+@auth.login_required
+def apiSiteTorDownload():
+    torid = request.args.get('torid')
+    # r = request.get_json()
+    # torid = r["torid"]
+    dbitem = SiteTorrent.query.get(torid)
+
+    infolink = getfulllink(dbitem.site, dbitem.infolink)
+    downlink = getfulllink(dbitem.site, dbitem.downlink)
+    sitecookie = getSiteCookie(dbitem.site)
+    if not dbitem.imdbstr:
+        imdbstr = ''
+        if sitecookie:
+            doc = fetchInfoPage(infolink, sitecookie)
+            if doc:
+                imdbstr = parseInfoPageIMDbId(doc)
+                dbitem.imdbstr = imdbstr
+    siteIdStr = genrSiteId(infolink, dbitem.imdbstr)
+
+    # if not checkMediaDbNameDupe(dbcacheitem.title):
+    added = False
+    r = addTorrentViaPageDownload(downlink, sitecookie, siteIdStr, dbitem.imdbstr)
+    if r == 201:
+        added = True
+        dbitem.dlcount += 1
+        db.session.commit()
+    msg = f'{siteIdStr}, {dbitem.tortitle}'
+    # return render_template('dlresult.html', added=added, msg=msg)
+    return json.dumps({'added': added, 'msg': msg}), 200, {'ContentType': 'application/json'}
+
+
 class TorrentCache(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     addedon = db.Column(db.DateTime, default=datetime.now)
@@ -1884,10 +1917,11 @@ def getfulllink(sitehost, rellink):
     return hosturl + rellink
 
 
-@app.route('/dlresult/<cacheid>')
+@app.route('/api/dlsearchresult')
 @auth.login_required
-def resultDownload(cacheid):
-    dbcacheitem = TorrentCache.query.get(cacheid)
+def resultDownload():
+    searchid = request.args.get('searchid')
+    dbcacheitem = TorrentCache.query.get(searchid)
 
     infolink = getfulllink(dbcacheitem.site, dbcacheitem.infolink)
     downlink = getfulllink(dbcacheitem.site, dbcacheitem.downlink)
@@ -1902,11 +1936,14 @@ def resultDownload(cacheid):
     siteIdStr = genrSiteId(infolink, dbcacheitem.imdbstr)
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
+    added = False
     r = addTorrentViaPageDownload(downlink, sitecookie, siteIdStr, dbcacheitem.imdbstr)
     if r == 201:
+        added = True
         dbcacheitem.dlcount += 1
         db.session.commit()
-    return redirect("/ptsearch")
+    msg = f'{siteIdStr}, {dbcacheitem.tortitle}'
+    return json.dumps({'added': added, 'msg': msg}), 200, {'ContentType': 'application/json'}
 
 
 class PtSite(db.Model):
