@@ -29,84 +29,108 @@
 {% endblock %}
 
 {% block script %}
-  <script>
-
-    $(document).ready(function () {
-      var table = $('#data').DataTable({
-        language: DATATABLE_LANG,
-        ajax: '/api/data',
-        "dom": `<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'f>>
+<script>
+  function deleTorMedia(ele, id) {
+    if (confirm("确认删除？")) {
+      $.ajax({
+        url: '/api/mediadel',
+        type: 'get',
+        data: { torid: id },
+        contentType: "application/json",
+        success: function (response) {
+          t = JSON.parse(response);
+          $('#data').DataTable().ajax.reload();
+          if (!t.deleted) {
+            ; //alert(t.msg)
+          }
+        },
+      });
+    }
+  }
+  $(document).ready(function () {
+    var table = $('#data').DataTable({
+      language: DATATABLE_LANG,
+      ajax: '/api/data',
+      "dom": `<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'f>>
             <'row'<'col-sm-12'tr>>
             <'row'<'col-sm-12 col-md-5'l><'col-sm-12 col-md-7'p>>`,
-        "pageLength": 25,
-        autoWidth: false,
-        scrollX: true,
-        full_row_select: false,
-        serverSide: true,
-        order: [[5, 'desc']],
-        columns: [
-          {data: 'tmdbcat',
-           "width": "5%",
-           "render": function ( data, type, row, meta ) {
-              if (row.tmdbposter) {
-                var s = row.tmdbcat + '/' + row.tmdbid;
-                return '<a href="https://www.themoviedb.org/'+s +'" target="_blank"><img src="https://image.tmdb.org/t/p/w45'+row.tmdbposter+'"></a>';
-              }
-              else return ''
+      "pageLength": 25,
+      autoWidth: false,
+      scrollX: true,
+      full_row_select: false,
+      serverSide: true,
+      order: [[5, 'desc']],
+      columns: [
+        {
+          data: 'tmdbcat',
+          "width": "5%",
+          "render": function (data, type, row, meta) {
+            if (row.tmdbposter) {
+              var s = row.tmdbcat + '/' + row.tmdbid;
+              return '<a href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a>';
             }
-
-          },
-          {data: 'torname',
-          "width": "32%",
-          "render": function ( data, type, row, meta ) {
-              if (data) {
-                return '<a href="'+row.torsite+'" target="_blank">'+row.torname+'</a>';
-              }
-              else return ''
-            }
-          },
-          {data: 'location',
-          "width": "23%"
-          },
-          {data: 'tmdbid', orderable: false,
-            "width": "15%",
-            "render": function ( data, type, row, meta ) {
-              if (row.tmdbid > 0){
-                var s = row.tmdbcat + '/' + row.tmdbid;
-                var s2 = (row.title) ? row.title : s
-                return '<a href="https://www.themoviedb.org/'+s+'" target="_blank">'+s2+'</a>';
-              }
-              else return row.title
-            }
-          },
-          {data: 'torimdb', orderable: false,
-            "width": "8%",
-            "render": function ( data, type, row, meta ) {
-              if (data){
-                return '<a href="https://www.imdb.com/title/'+data+'" target="_blank">'+data+'</a>';
-              }
-              else return ''
-            }
-          },
-          {data: 'addedon',
-            "width": "8%",
-            "render": function (data) {
-                var date = new Date(data);
-                return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
-            }
-          },
-          {"width":"9%",
-            "render": function (data, type, row) {
-              var linkDelete = '<a href="/mediadel/' + row.id + '">删除</a>';
-              var linkEdit = '<a href="/mediaedit/' + row.id + '">'+'修正'+'</a>';
-              return linkEdit + " | " +  linkDelete;
-            },
+            else return ''
           }
 
-        ],
-      });
+        },
+        {
+          data: 'torname',
+          "width": "32%",
+          "render": function (data, type, row, meta) {
+            if (data) {
+              return '<a href="' + row.torsite + '" target="_blank">' + row.torname + '</a>';
+            }
+            else return ''
+          }
+        },
+        {
+          data: 'location',
+          "width": "23%"
+        },
+        {
+          data: 'tmdbid', orderable: false,
+          "width": "15%",
+          "render": function (data, type, row, meta) {
+            if (row.tmdbid > 0) {
+              var s = row.tmdbcat + '/' + row.tmdbid;
+              var s2 = (row.title) ? row.title : s
+              return '<a href="https://www.themoviedb.org/' + s + '" target="_blank">' + s2 + '</a>';
+            }
+            else return row.title
+          }
+        },
+        {
+          data: 'torimdb', orderable: false,
+          "width": "8%",
+          "render": function (data, type, row, meta) {
+            if (data) {
+              return '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + data + '</a>';
+            }
+            else return ''
+          }
+        },
+        {
+          data: 'addedon',
+          "width": "8%",
+          "render": function (data) {
+            var date = new Date(data);
+            return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+          }
+        },
+        {
+          "width": "9%",
+          "render": function (data, type, row) {
+            // var linkDelete = '<a href="/mediadel/' + row.id + '">删除</a>';
+            var linkDelete = '<a href="#" onclick="deleTorMedia(this, \'' + row.id + '\');return false;">' + '删除' + '</a>';
+            var linkEdit = '<a href="/mediaedit/' + row.id + '">' + '修正' + '</a>';
+            return linkEdit + " | " + linkDelete;
+          },
+        }
 
+      ],
     });
 
-  </script>
+  });
+
+</script>
 {% endblock %}

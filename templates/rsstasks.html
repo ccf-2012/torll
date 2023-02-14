@@ -42,7 +42,44 @@
 
 {% block script %}
 <script>
-
+  function rssRunOnceNow(ele, id) {
+      $.ajax({
+        url: '/api/rssrunonce',
+        type: 'get',
+        data: { taskid: id },
+        contentType: "application/json",
+        success: function (response) {
+          // t = JSON.parse(response);
+          ;// $('#data').DataTable().ajax.reload();
+        },
+      });
+  }  
+  function rssTaskToggleActive(ele, id) {
+      $.ajax({
+        url: '/api/rssactivate',
+        type: 'get',
+        data: { taskid: id },
+        contentType: "application/json",
+        success: function (response) {
+          // t = JSON.parse(response);
+          $('#data').DataTable().ajax.reload();
+        },
+      });
+  }  
+  function rssTaskDel(ele, id) {
+    if (confirm("确认删除？")) {
+      $.ajax({
+        url: '/api/rssdel',
+        type: 'get',
+        data: { taskid: id },
+        contentType: "application/json",
+        success: function (response) {
+          // t = JSON.parse(response);
+          $('#data').DataTable().ajax.reload();
+        },
+      });
+    }
+  }
   $(document).ready(function () {
     $('#data').DataTable({
       language: DATATABLE_LANG,
@@ -110,10 +147,13 @@
           "width": "18%",
           "render": function (data, type, row) {
             var tstr = (row.active == 2) ? '恢复' : '暂停'
-            var linkDelete = '<a href="/rssdel/' + row.id + '">删除</a>';
-            var linkToggle = '<a href="/rssactivate/' + row.id + '">' + tstr + '</a>';
+            // var linkDelete = '<a href="/rssdel/' + row.id + '">删除</a>';
+            var linkDelete = '<a href="#" onclick="rssTaskDel(this, \'' + row.id + '\');return false;">删除</a>';
+            // var linkToggle = '<a href="/rssactivate/' + row.id + '">' + tstr + '</a>';
+            var linkToggle = '<a href="#" onclick="rssTaskToggleActive(this, \'' + row.id + '\');return false;">' + tstr + '</a>';
             var linkEdit = '<a href="/rssedit/' + row.id + '">' + '编辑' + '</a>';
-            var linkRunOnce = '<a href="/rssrunonce/' + row.id + '">' + '运行' + '</a>';
+            // var linkRunOnce = '<a href="/rssrunonce/' + row.id + '">' + '运行' + '</a>';
+            var linkRunOnce = '<a href="#" onclick="rssRunOnceNow(this, \'' + row.id + '\');return false;">运行</a>';
             return linkToggle + " | " + linkRunOnce + " | " + linkEdit + " | " + linkDelete;
           },
         },

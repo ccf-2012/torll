@@ -121,7 +121,9 @@
         apiSiteSetting(id, 'edit')
     }
     function deleteClick(id) {
-        apiSiteSetting(id, 'delete')
+        if (confirm("确认删除？")) {
+            apiSiteSetting(id, 'delete');
+        }
     }
     function apiSiteSetting(id, op) {
         $.ajax({

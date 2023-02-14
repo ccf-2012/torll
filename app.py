@@ -1,9 +1,10 @@
+
 from flask import Flask, render_template, jsonify, redirect
 from flask import request, abort
 import requests as pyrequests
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import logging
 from flask_httpauth import HTTPBasicAuth
@@ -15,18 +16,18 @@ from wtforms.validators import DataRequired, NumberRange
 from wtforms.widgets import PasswordInput
 import qbfunc
 from apscheduler.schedulers.background import BackgroundScheduler
-import sys
-sys.path.insert(1, '../torcp/')
-from torcp.tmdbparser import TMDbNameParser
-import feedparser
 import re
-from http.cookies import SimpleCookie
-from humanbytes import HumanBytes
-import shutil
-import lxml.html
-import json
-import siteconfig
+import feedparser
 
+import siteconfig
+import json
+import lxml.html
+import shutil
+from humanbytes import HumanBytes
+from http.cookies import SimpleCookie
+import sys
+# sys.path.insert(1, '../torcp/')
+from torcp.tmdbparser import TMDbNameParser
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
@@ -222,11 +223,12 @@ def torMediaEditFunc(mediaid, tmdbcatidstr, mbrootDir):
             tormedia.tmdbid = tryint(tmdbidstr)
             tormedia.location = targetLocation
             tormedia.title = tmdbTitle
-            ##TODO update poster, genrestr
+            # TODO update poster, genrestr
             tormedia.tmdbposter = tmdbobj.poster_path
             tormedia.tmdbyear = tmdbobj.year
             if tmdbobj.genre_ids:
-                tormedia.tmdbgenreids = ','.join(str(e) for e in tmdbobj.genre_ids)
+                tormedia.tmdbgenreids = ','.join(
+                    str(e) for e in tmdbobj.genre_ids)
 
             db.session.commit()
             warningstr = '影视内容已经移至：' + \
@@ -278,23 +280,30 @@ def apiTorMediaEdit():
     return json.dumps({'msg': msg, 'moved': moved}), 200, {'ContentType': 'application/json'}
 
 
-@app.route('/mediadel/<id>')
+@app.route('/api/mediadel')
 @auth.login_required
-def torMediaDel(id):
+def apiTorMediaDel():
     # tormedia = TorMediaItem.query.get(id)
-    tormedia = db.session.get(TorMediaItem, id)
-
+    torid = request.args.get('torid')
+    tormedia = db.session.get(TorMediaItem, torid)
+    deleted = False
+    msg = 'success'
     destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
     if os.path.exists(destDir):
-        print("Deleting ", destDir)
+        # print("Deleting ", destDir)
         try:
             shutil.rmtree(destDir)
+            deleted = True
         except:
+            msg = '文件删除出错'
             pass
+    else:
+        msg = '记录已删，但文件不存在'
 
     db.session.delete(tormedia)
     db.session.commit()
-    return redirect("/")
+    # return redirect("/")
+    return json.dumps({'deleted': deleted, 'msg': msg}), 200, {'ContentType': 'application/json'}
 
 
 class QBSettingForm(Form):
@@ -779,18 +788,22 @@ def rssEdit(id):
     return render_template('rssnew.html', form=form)
 
 
-@app.route('/rssdel/<id>')
+@app.route('/api/rssdel')
 @auth.login_required
-def rssDel(id):
-    task = RSSTask.query.filter(RSSTask.id == id).first()
+def apiRssDel():
+    tid = request.args.get('taskid')
+    deleted = True
+    task = RSSTask.query.filter(RSSTask.id == tid).first()
     try:
         scheduler.remove_job(str(task.id))
     except:
+        deleted = False
         pass
 
     db.session.delete(task)
     db.session.commit()
-    return redirect("/rsstasks")
+    # return redirect("/rsstasks")
+    return json.dumps({'deleted': deleted}), 200, {'ContentType': 'application/json'}
 
 
 # @app.route('/rsspause/<id>')
@@ -802,11 +815,12 @@ def rssDel(id):
 #     return redirect("/rsstasks")
 
 
-@app.route('/rssactivate/<id>')
+@app.route('/api/rssactivate')
 @auth.login_required
-def rssToggleActive(id):
+def apiRssToggleActive():
+    tid = request.args.get('taskid')
     # task = RSSTask.query.get(id)
-    task = db.session.get(RSSTask, id)
+    task = db.session.get(RSSTask, tid)
 
     if task.active == 0:
         task.active = 2
@@ -821,21 +835,23 @@ def rssToggleActive(id):
         except:
             pass
 
-    scheduler.print_jobs()
+    # scheduler.print_jobs()
     db.session.commit()
-    return redirect("/rsstasks")
+    # return redirect("/rsstasks")
+    return json.dumps({'active': task.active}), 200, {'ContentType': 'application/json'}
 
 
-@app.route('/rssrunonce/<id>')
+@app.route('/api/rssrunonce')
 @auth.login_required
-def rssRunOnce(id):
+def apiRunRssNow():
+    tid = request.args.get('taskid')
     try:
-        job = scheduler.get_job(str(id))
+        job = scheduler.get_job(str(tid))
         if job:
             job.modify(next_run_time=datetime.now())
     except:
         pass
-    return redirect("/rsstasks")
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
 def validDownloadlink(downlink):
@@ -1142,14 +1158,17 @@ def prcessRssFeeds(rsstask):
           (rsstask.site, rssFeedSum, rssAccept, datetime.now().strftime("%H:%M:%S")))
 
 
-@app.route('/rssmanual/<rsslogid>')
+@app.route('/api/rssmanual')
 @auth.login_required
-def manualDownload(rsslogid):
+def apiRssManualDownload():
     # dbrssitem = RSSHistory.query.get(rsslogid)
+    rsslogid = request.args.get('rsslogid')
     dbrssitem = db.session.get(RSSHistory, rsslogid)
     # TODO: count download number on 1st site of the name
     taskitem = RSSTask.query.filter(RSSTask.id == dbrssitem.tid).first()
 
+    added = False
+    msg = ''
     imdbstr = ''
     if taskitem:
         doc = fetchInfoPage(dbrssitem.infoLink, taskitem.cookie)
@@ -1162,10 +1181,17 @@ def manualDownload(rsslogid):
             qbcat = taskitem.qbcategory if taskitem.qbcategory else ''
             r = addTorrent(dbrssitem.downloadLink, siteIdStr, imdbstr, qbcat)
             if r == 201:
+                added = True
                 dbrssitem.accept = 3
                 taskitem.accept_count += 1
                 db.session.commit()
-    return redirect("/rsslog")
+            else:
+                msg = 'Qbit Error'
+        else:
+            msg = 'IMDb Dupe'
+
+    return json.dumps({'added': added, 'msg': msg}), 200, {'ContentType': 'application/json'}
+
 
 
 @app.route('/api/dupedownload', methods=['POST'])
@@ -1203,7 +1229,7 @@ def jsApiDupeDownload():
         if r == 201:
             return jsonify({'Download': True}), 201
         else:
-            abort(jsonify(message="failed add qbit"))            
+            abort(jsonify(message="failed add qbit"))
     else:
         # print("DRYRUN: " + request.json['torname'])
         print("DRYRUN: " + request.json['torname'] +
@@ -1240,7 +1266,8 @@ def requestPtPage(pageUrl, pageCookie):
     }
 
     try:
-        r = pyrequests.get(pageUrl, headers=headers, cookies=cookies, timeout=15)
+        r = pyrequests.get(pageUrl, headers=headers,
+                           cookies=cookies, timeout=15)
         # print(r.encoding, r.apparent_encoding)
         # utf-8 Windows-1254
         # 'ISO-8859-1' utf-8
@@ -1325,7 +1352,7 @@ class SiteTorrent(db.Model):
 
 @app.route('/api/sitetorrent')
 @auth.login_required
-def siteTorrentData():
+def siteTorrentDataGroup():
     query = SiteTorrent.query
 
     # search filter
@@ -1358,10 +1385,9 @@ def siteTorrentData():
     # if order:
     #     query = query.order_by(*order)
 
-    
     imdbidcol = getattr(SiteTorrent, 'tmdbid')
     col = getattr(SiteTorrent, 'tordate')
-    order.append(func.strftime("%Y-%m-%d", col).desc())   
+    order.append(func.strftime("%Y-%m-%d", col).desc())
     # order.append(col.desc())
     order.append(imdbidcol.desc())
     query = query.order_by(*order)
@@ -1379,7 +1405,6 @@ def siteTorrentData():
         'recordsTotal': SiteTorrent.query.count(),
         'draw': request.args.get('draw', type=int),
     }
-
 
 
 @app.route('/api/sitetorrentlist')
@@ -1405,7 +1430,7 @@ def siteTorrentDataList():
         if col_index is None:
             break
         col_name = request.args.get(f'columns[{col_index}][data]')
-        if col_name not in ['tortitle','imdbstr', 'site', 'seednum', 'tordate', 'addedon']:
+        if col_name not in ['tortitle', 'imdbstr', 'site', 'seednum', 'tordate', 'addedon']:
             col_name = 'addedon'
         descending = request.args.get(f'order[{i}][dir]') == 'desc'
         col = getattr(SiteTorrent, col_name)
@@ -1453,20 +1478,21 @@ def apiGetSiteTorrent():
 
     if sitehost.isdigit():
         # dbsite = PtSite.query.get(sitehost)
-        dbsite = db.session.get(PtSite, sitehost)    
+        dbsite = db.session.get(PtSite, sitehost)
     else:
         dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
     if not dbsite:
-        return json.dumps({'site':dbsite.site, 'resultCount': 0}), 200, {'ContentType': 'application/json'}
+        return json.dumps({'site': dbsite.site, 'resultCount': 0}), 200, {'ContentType': 'application/json'}
 
     resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, siteurl=None)
     # if count < 0:
-    return json.dumps({'site':dbsite.site, 'resultCount': resultCount}), 200, {'ContentType': 'application/json'}
+    return json.dumps({'site': dbsite.site, 'resultCount': resultCount}), 200, {'ContentType': 'application/json'}
 
 
-GENRE_IDS = {28: '动作', 12: '冒险', 16: '动画', 35: '喜剧', 80: '犯罪', 99: '纪录', 18: '剧情', 10751: '家庭', 
-        14: '奇幻', 36: '历史', 27: '恐怖', 10402: '音乐', 9648: '悬疑', 10749: '爱情', 878: '科幻', 10770: '电视电影', 
-        53: '惊悚', 10752: '战争', 37: '西部'}
+GENRE_IDS = {28: '动作', 12: '冒险', 16: '动画', 35: '喜剧', 80: '犯罪', 99: '纪录', 18: '剧情', 10751: '家庭',
+             14: '奇幻', 36: '历史', 27: '恐怖', 10402: '音乐', 9648: '悬疑', 10749: '爱情', 878: '科幻', 10770: '电视电影',
+             53: '惊悚', 10752: '战争', 37: '西部'}
+
 
 def getTMDbInfo(dbtor):
     p = TMDbNameParser(myconfig.CONFIG.tmdb_api_key, tmdb_lang='zh-CN')
@@ -1476,7 +1502,7 @@ def getTMDbInfo(dbtor):
     if p.genre_ids:
         for x in p.genre_ids:
             if x in GENRE_IDS:
-                genrestr += GENRE_IDS[x]+ ' '
+                genrestr += GENRE_IDS[x] + ' '
     return p.title, p.tmdbcat, p.tmdbid, p.poster_path, p.year, genrestr
 
 
@@ -1503,7 +1529,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
             continue
 
         infolink = xpathGetElement(row, cursite, "infolink")
-        ## TODO: same details id for different site
+        # TODO: same details id for different site
         exists = db.session.query(db.exists().where(
             (db.and_(SiteTorrent.infolink == infolink, SiteTorrent.site == sitename)))).scalar()
 
@@ -1545,7 +1571,8 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         except:
             pass
 
-        dbitem.tmdbtitle, dbitem.tmdbcat, dbitem.tmdbid, dbitem.tmdbposter, dbitem.tmdbyear, dbitem.genrestr = getTMDbInfo(dbitem)
+        dbitem.tmdbtitle, dbitem.tmdbcat, dbitem.tmdbid, dbitem.tmdbposter, dbitem.tmdbyear, dbitem.genrestr = getTMDbInfo(
+            dbitem)
         dbitem.site = sitename
 
         # print(dbitem.__dict__)
@@ -1555,7 +1582,6 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
     print('SiteNew %s - added : %d (%s)' %
           (sitename, count, datetime.now().strftime("%H:%M:%S")))
     return count
-
 
 
 @app.route('/dlsitetor/<torid>')
@@ -1578,14 +1604,14 @@ def siteTorDownload(torid):
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
-    r = addTorrentViaPageDownload(downlink, sitecookie, siteIdStr, dbitem.imdbstr)
+    r = addTorrentViaPageDownload(
+        downlink, sitecookie, siteIdStr, dbitem.imdbstr)
     if r == 201:
         added = True
         dbitem.dlcount += 1
         db.session.commit()
     msg = f'{siteIdStr}, {dbitem.imdbstr}'
     return render_template('dlresult.html', added=added, msg=msg)
-
 
 
 @app.route('/api/sitetordl',  methods=['GET'])
@@ -1611,7 +1637,8 @@ def apiSiteTorDownload():
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
-    r = addTorrentViaPageDownload(downlink, sitecookie, siteIdStr, dbitem.imdbstr)
+    r = addTorrentViaPageDownload(
+        downlink, sitecookie, siteIdStr, dbitem.imdbstr)
     if r == 201:
         added = True
         dbitem.dlcount += 1
@@ -1776,9 +1803,9 @@ def xpathGetElement(row, siteJson, key):
         return row.xpath(eleJson)
 
 
-
 def matchIMDbid(str):
     return True if re.match(r'tt\d+', str.strip(), re.I) else False
+
 
 def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     cursite = siteconfig.getCurSite(sitehost)
@@ -1787,7 +1814,7 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
 
     if matchIMDbid(seachWord):
         pturl = cursite['searchIMDburl']+seachWord
-    else:    
+    else:
         pturl = cursite['searchurl']+seachWord
 
     hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
@@ -1877,12 +1904,15 @@ def ptSearch():
 
     return render_template('ptsearch.html', sites=sitelist, wordlist=wordlist)
 
+
 def clearOldResults(searchword):
-    ds = db.session.query(TorrentCache).filter(TorrentCache.searchword == searchword)
+    ds = db.session.query(TorrentCache).filter(
+        TorrentCache.searchword == searchword)
     ds.delete(synchronize_session=False)
     db.session.commit()
     # d = TorrentCache.delete().where(TorrentCache.searchword == searchword)
     # d.execute()
+
 
 @app.route('/api/ptsearch', methods=['POST'])
 def apiPtSearch():
@@ -1898,7 +1928,7 @@ def apiPtSearch():
             dbsite.lastResultCount = resultCount
             db.session.commit()
 
-    return json.dumps({'site':sitehost, 'resultCount': resultCount}), 200, {'ContentType': 'application/json'}
+    return json.dumps({'site': sitehost, 'resultCount': resultCount}), 200, {'ContentType': 'application/json'}
 
 
 def getSiteCookie(sitehost):
@@ -1925,7 +1955,7 @@ def getfulllink(sitehost, rellink):
 
 @app.route('/api/dlsearchresult')
 @auth.login_required
-def resultDownload():
+def apiSearchResultDownload():
     searchid = request.args.get('searchid')
     # dbcacheitem = TorrentCache.query.get(searchid)
     dbcacheitem = db.session.get(TorrentCache, searchid)
@@ -1944,7 +1974,8 @@ def resultDownload():
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
-    r = addTorrentViaPageDownload(downlink, sitecookie, siteIdStr, dbcacheitem.imdbstr)
+    r = addTorrentViaPageDownload(
+        downlink, sitecookie, siteIdStr, dbcacheitem.imdbstr)
     if r == 201:
         added = True
         dbcacheitem.dlcount += 1
@@ -1990,7 +2021,8 @@ def sitesConfig():
         abort(403)
 
     form = PtSiteForm(request.form)
-    form.site.choices = [(row["site"], row["site"]) for row in siteconfig.PT_SITES]
+    form.site.choices = [(row["site"], row["site"])
+                         for row in siteconfig.PT_SITES]
     return render_template('ptsites.html', form=form)
 
 
@@ -2043,9 +2075,8 @@ def apiGetSiteSetting():
         if op == 'delete':
             db.session.delete(dbsite)
             db.session.commit()
-        
-        return json.dumps({'site': dbsite.site, 'cookie': dbsite.cookie}), 200, {'ContentType': 'application/json'}
 
+        return json.dumps({'site': dbsite.site, 'cookie': dbsite.cookie}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/api/sitelistdata')
@@ -2098,7 +2129,8 @@ def siteNewsJob():
     with app.app_context():
         sitelist = PtSite.query
         for dbsite in sitelist:
-            resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, siteurl=None)
+            resultCount = getSiteTorrent(
+                dbsite.site, dbsite.cookie, siteurl=None)
             print(dbsite.site, resultCount)
 
 
@@ -2119,14 +2151,14 @@ def startApsScheduler():
                 job = scheduler.add_job(rssJob, 'interval',
                                         args=[t.id],
                                         minutes=t.task_interval,
-                                        next_run_time=datetime.now(),
+                                        next_run_time=datetime.now()+timedelta(minutes=15),
                                         id=str(t.id))
                 if t.active == 2:
                     job.pause()
 
     jobSiteNew = scheduler.add_job(siteNewsJob, 'interval',
-                            minutes=60,
-                            id='jobsitenew')
+                                   minutes=60,
+                                   id='jobsitenew')
 
     scheduler.start()
     scheduler.print_jobs()

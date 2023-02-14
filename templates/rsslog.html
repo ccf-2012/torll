@@ -29,7 +29,30 @@
 
 {% block script %}
 <script>
-
+    function apiDownloadRssTor(ele, id) {
+      $(ele).parent().css('background-color', 'rgb(254 243 199)');
+      $.ajax({
+          url: '/api/rssmanual',
+          type: 'get',
+          data: { rsslogid: id },
+          contentType: "application/json",
+          success: function (response) {
+              t = JSON.parse(response);
+              if (t.added) {
+                  $(ele).parent().css('background-color', 'darkseagreen');
+                  // $("#msg").hide();
+              }
+              else{
+                  $(ele).parent().css('background-color', 'lightpink');
+              }
+          },
+          complete: function (xhr, textStatus) {
+              if (xhr.status == 402) {
+                  $("#msg").val('下载好像失败了');
+              }
+          }
+      });
+    }
   $(document).ready(function () {
     $('#data').DataTable({
       language: DATATABLE_LANG,
@@ -80,7 +103,8 @@
         { data: 'id', searchable: false, 
           "width": "10%",
           "render": function (data, type, row) {
-            var linkStart = ([0,2].includes(row.accept)) ? '<a href="/rssmanual/' + row.id + '">下载</a>' : ''
+            var linkDownload = '<a href="#" onclick="apiDownloadRssTor(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
+            var linkStart = ([0,2].includes(row.accept)) ? linkDownload : ''
             return linkStart;
           },
         },

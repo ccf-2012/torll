@@ -65,6 +65,9 @@
             }
         });
     }
+    function tmdbTitleOnClick(titlestr){
+        $('#data').DataTable().search(titlestr).draw()
+    }
 
     $(document).ready(function () {
         var groupColumn = 2;
@@ -103,6 +106,8 @@
                     if (rows.data()[0].tmdbposter) {
                         var row = rows.data()[0];
                         var s = row.tmdbcat + '/' + row.tmdbid;
+                        // var titleLink = '<a href="#" onclick="tmdbTitleOnClick(\'' + row.tmdbtitle + '\');return false;">' + row.tmdbtitle+ '</a>';
+
                         return $('<tr/>')
                             .append('<td > <a href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
                             .append('<td colspan="7"> <h6>' + row.tmdbtitle + ' (' + row.tmdbyear + ')' + '</h6><p>' + row.genrestr + '</td>')
