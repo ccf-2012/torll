@@ -1514,12 +1514,14 @@ def getTMDbInfo(dbtor):
 def getSiteTorrent(sitename, sitecookie, siteurl=None):
     cursite = siteconfig.getCurSite(sitename)
     if not cursite:
+        print(f'site {sitename} not configured')
         return -1  # site not configured
 
     if not siteurl:
         if 'newtorrent' in cursite:
             siteurl = cursite['newtorrent']
     if not siteurl:
+        print("no newtorlink configured.")
         return -2
     doc = requestPtPage(siteurl, sitecookie)
     if not doc:
@@ -2141,7 +2143,7 @@ def siteNewsJob():
         sitelist = PtSite.query
         for dbsite in sitelist:
             resultCount = getSiteTorrent(
-                dbsite.site, dbsite.cookie, siteurl=None)
+                dbsite.site, dbsite.cookie, siteurl=dbsite.siteNewLink)
             if resultCount > 0:
                 dbsite.newTorCount += resultCount
                 dbsite.lastNewStatus = 0
