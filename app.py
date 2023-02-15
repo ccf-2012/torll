@@ -1428,8 +1428,8 @@ def siteTorrentDataList():
                 query = query.filter(SiteTorrent.site == col0search)
         col1search = request.args.get('columns[1][search][value]')
         if col1search:
-            if '选择' not in col1search:
-                query = query.filter(SiteTorrent.mediasource == col1search)
+            srclist = [x.strip() for x in col1search.split(' ') if x.strip()]
+            query = query.filter(SiteTorrent.mediasource.in_(srclist))
 
     total_filtered = query.count()
 
@@ -1477,7 +1477,7 @@ def sitesNewGroup():
 @auth.login_required
 def sitesNewList():
     sitelist = PtSite.query
-    mediasource = ['bluray', 'encode', 'webdl', 'dvd', 'other']
+    mediasource = ['bluray', 'remux', 'encode', 'webdl', 'dvd', 'other']
     return render_template('sitetorrent2.html', sitelist=sitelist, mediasource=mediasource)
 
 

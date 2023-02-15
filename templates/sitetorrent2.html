@@ -20,15 +20,13 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2">
-                <select id="mediasrclist" class="form-select form-select-sm">
-                    <option selected>选择Source...</option>
-                    {% for m in mediasource %}
-                    <option>{{ m }}</option>
-                    {% endfor %}
-                </select>
+            <div id="mediasrclist" class="btn-group btn-group-sm col-md-4" role="group" aria-label="Basic checkbox toggle button group">
+                {% for m in mediasource %}
+                <input type="checkbox" class="btn-check" id="{{m}}" autocomplete="off">
+                <label class="btn btn-outline-primary" for="{{m}}">{{m}}</label>
+                {% endfor %}
+              </div>
 
-            </div>
 
 </div>
 
@@ -65,20 +63,20 @@ $('#siteselect').on('change', function() {
     $('#data').DataTable().columns(0).search(this.value).draw();
 });
 
-$('#mediasrclist').on('change', function() {
-    $('#data').DataTable().search('');
-    $('#data').DataTable().columns(1).search(this.value).draw();
-});
-
-// $('#mediasrclist input').on("click", function() {
-//     setMediaSourceFilter(this)
+// $('#mediasrclist').on('change', function() {
+//     $('#data').DataTable().search('');
+//     $('#data').DataTable().columns(1).search(this.value).draw();
 // });
+
+$('#mediasrclist input').on("click", function() {
+    setMediaSourceFilter(this)
+});
 function setMediaSourceFilter(ele) {
-    var medialist = '';
+    let medialist = '';
     $('#mediasrclist').children('input').each(function () {
-    if ($(ele).is(':checked')) {
-                medialist += $(ele).attr("id") + ' ';
-            }
+        if ($(this).is(':checked')) {
+                medialist += $(this).attr("id") + ' ';
+        }
     });
     $('#data').DataTable().search('');
     $('#data').DataTable().columns(1).search(medialist).draw();
@@ -119,7 +117,7 @@ function setMediaSourceFilter(ele) {
             autoWidth: true,
             scrollX: false,
             full_row_select: false,
-            stateSave: true,
+            stateSave: false,
             ajax: '/api/sitetorrentlist',
             serverSide: true,
             order: [[7, 'desc']],
@@ -212,7 +210,7 @@ function setMediaSourceFilter(ele) {
             }
 
         });
-
+        // table.search('').columns().search('').draw();
     });
 
 </script>
