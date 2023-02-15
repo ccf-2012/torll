@@ -50,6 +50,7 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
         'chdbits': 'https://chdbits.co/details.php?id=',
         'lhd': 'https://lemonhd.org/',
         'hds': 'https://hdsky.me/details.php?id=',
+        'hdsky': "https://hdsky.me/details.php?id=",
         'ob': 'https://ourbits.club/details.php?id=',
         'ssd': 'https://springsunday.net/details.php?id=',
         'frds': 'https://pt.keepfrds.com/details.php?id=',
@@ -67,6 +68,9 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
                     'details_tv.php?id=' + str(siteid)
         else:
             detailUrl = SITE_URL_PREFIX[siteAbbrev] + str(siteid)
+    else:
+        site = siteconfig.getSiteConfig(siteAbbrev)
+        detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
     return detailUrl if detailUrl else ''
 
 
@@ -1542,7 +1546,7 @@ def parseMediaSource(tortitle):
 
 
 def getSiteTorrent(sitename, sitecookie, siteurl=None):
-    cursite = siteconfig.getCurSite(sitename)
+    cursite = siteconfig.getSiteConfig(sitename)
     if not cursite:
         print(f'site {sitename} not configured')
         return -1  # site not configured
@@ -1848,7 +1852,7 @@ def matchIMDbid(str):
 
 
 def xpathSearchPtSites(sitehost, siteCookie, seachWord):
-    cursite = siteconfig.getCurSite(sitehost)
+    cursite = siteconfig.getSiteConfig(sitehost)
     if not cursite:
         return -1  # site not configured
 
@@ -1987,7 +1991,7 @@ def getfulllink(sitehost, rellink):
     if rellink.startswith('/'):
         rellink = rellink[1:]
 
-    cursite = siteconfig.getCurSite(sitehost)
+    cursite = siteconfig.getSiteConfig(sitehost)
     if not cursite:
         return ''  # site not configured
 

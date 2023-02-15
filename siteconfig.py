@@ -17,7 +17,7 @@ def loadSiteConfig():
 
 PT_SITES = loadSiteConfig()
 
-def getCurSite(sitename):
+def getSiteConfig(sitename):
     cursite = next((x for x in PT_SITES if x["site"] == sitename), None)
     return cursite
 
