@@ -160,7 +160,7 @@
                     "render": function (data, type, row, meta) {
                         if (data) {
                             s1 = '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbstr + '</a>';
-                            s2 = '<br>' + row.genrestr;
+                            s2 = '<br><label class="sub-title">' + row.genrestr+'</label>';
                             return s1 + s2
                         }
                         else return ''
