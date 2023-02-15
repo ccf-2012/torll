@@ -1532,8 +1532,10 @@ def parseMediaSource(tortitle):
         return 'encode'
     if re.search(r'blu-?ray|uhd|hevc', tortitle, re.I):
         return 'bluray'
-    if re.search(r'dvdr|dvdrip', tortitle, re.I):
+    if re.search(r'dvdr|dvdrip|NTSC', tortitle, re.I):
         return 'dvd'
+    if re.search(r'AVC.*DTS', tortitle, re.I):
+        return 'bluray'
     print('unknow type: '+tortitle)
     return 'other'
 
