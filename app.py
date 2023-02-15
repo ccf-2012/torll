@@ -1549,7 +1549,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
 
     if not siteurl:
         if 'newtorrent' in cursite:
-            siteurl = cursite['newtorrent']
+            siteurl = cursite['baseurl'] + cursite['newtorrent']
     if not siteurl:
         print("no newtorlink configured.")
         return -2
@@ -1800,6 +1800,7 @@ def remove_non_ascii(string):
 def striptag(titlestr):
     s = titlestr.replace('\n', '').strip()
     # s = re.sub(r'\[?(国语|中字|官方|禁转|原创)\]?', '', s)
+    s = re.sub(r'剩余时间.*?\d分钟', '', s)
     s = re.sub(r'\[?Checked by \w+\]?', '', s)
     return s
 
@@ -1852,9 +1853,9 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         return -1  # site not configured
 
     if matchIMDbid(seachWord):
-        pturl = cursite['searchIMDburl']+seachWord
+        pturl = cursite['baseurl'] + cursite['searchIMDburl']+seachWord
     else:
-        pturl = cursite['searchurl']+seachWord
+        pturl = cursite['baseurl'] + cursite['searchurl']+seachWord
 
     hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
     passkey = ''
@@ -1990,9 +1991,9 @@ def getfulllink(sitehost, rellink):
     if not cursite:
         return ''  # site not configured
 
-    hosturl = '{uri.scheme}://{uri.netloc}/'.format(
-        uri=urlparse(cursite['searchurl']))
-    return hosturl + rellink
+    # hosturl = '{uri.scheme}://{uri.netloc}/'.format(
+    #     uri=urlparse(cursite['baseurl']))
+    return cursite['baseurl'] + rellink
 
 
 @app.route('/api/dlsearchresult')
