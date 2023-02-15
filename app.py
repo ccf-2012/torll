@@ -70,7 +70,10 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
             detailUrl = SITE_URL_PREFIX[siteAbbrev] + str(siteid)
     else:
         site = siteconfig.getSiteConfig(siteAbbrev)
-        detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
+        if site:
+            detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
+        else:
+            print(f'No site config: {siteAbbrev}')
     return detailUrl if detailUrl else ''
 
 
