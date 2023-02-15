@@ -4,8 +4,11 @@
 <style>
     tr.dtrg-group,
     tr.dtrg-group:hover {
-        background-color: #ddd !important;
+        background-color: rgb(219 223 229) !important;
     }
+    .dataTables_filter {
+   float: left !important;
+}  
 </style>
 {% endblock %}
 {% block content %}
@@ -14,9 +17,8 @@
     <a class="nav-link active" href="/sitesnewgroup">站新分组</a>
     <a class="nav-link " href="/sites">站点设置</a>
 </nav>
-
 <div class="row my-3 justify-content-center">
-    <table id="data" class="table row-border order-column" style="width:100%">
+    <table id="data"  style="width:100%">
         <thead>
             <tr>
                 <th>站点</th>
@@ -80,6 +82,7 @@
         $('#data').DataTable({
             language: DATATABLE_LANG,
             "pageLength": 50,
+            "dom":'<"row"<"col-sm-6"f><"col-sm-6"p>>tr<"bottom"<"row"<"col-sm-6"i><"col-sm-6"p>>><"clear">',
             autoWidth: true,
             scrollX: false,
             full_row_select: false,

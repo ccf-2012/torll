@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block stylesheet %}
+<!-- https://datatables.net/forums/discussion/32210/can-i-move-the-search-box-to-the-left -->
 <style>
+.dataTables_filter {
+   float: left !important;
+}
+
 </style>
 {% endblock %}
 {% block content %}
@@ -20,19 +25,18 @@
             {% endfor %}
         </select>
     </div>
-    <div id="mediasrclist" class="btn-group btn-group-sm col-md-4" role="group"
-        aria-label="Basic checkbox toggle button group">
-        {% for m in mediasource %}
-        <input type="checkbox" class="btn-check" id="{{m}}" autocomplete="off">
-        <label class="btn btn-outline-primary" for="{{m}}">{{m}}</label>
-        {% endfor %}
+    <div class="col-md-4">
+        <div id="mediasrclist" class="btn-group btn-group-sm " role="group"
+            aria-label="Basic checkbox toggle button group">
+            {% for m in mediasource %}
+            <input type="checkbox" class="btn-check" id="{{m}}" autocomplete="off">
+            <label class="btn btn-outline-primary" for="{{m}}">{{m}}</label>
+            {% endfor %}
+        </div>
     </div>
-
-
 </div>
-
 <div class="row my-3 justify-content-center">
-    <table id="data" class="table row-border order-column" style="width:100%">
+    <table id="data" class="display  order-column" style="width:100%">
         <thead>
             <tr>
                 <th>站点</th>
@@ -120,6 +124,9 @@
             full_row_select: false,
             stateSave: false,
             ajax: '/api/sitetorrentlist',
+            // https://stackoverflow.com/questions/60421414/datatables-dom-positioning-bootstrap
+            // https://datatables.net/forums/discussion/32210/can-i-move-the-search-box-to-the-left
+            "dom":'<"row"<"col-sm-6"f><"col-sm-6"p>>tr<"bottom"<"row"<"col-sm-6"i><"col-sm-6"p>>><"clear">',
             serverSide: true,
             order: [[7, 'desc']],
             columns: [
@@ -160,7 +167,7 @@
                     "render": function (data, type, row, meta) {
                         if (data) {
                             s1 = '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbstr + '</a>';
-                            s2 = '<br><label class="sub-title">' + row.genrestr+'</label>';
+                            s2 = '<br><label class="sub-title">' + row.genrestr + '</label>';
                             return s1 + s2
                         }
                         else return ''
@@ -208,7 +215,7 @@
             ],
             "createdRow": function (row, data, dataIndex) {
                 if (data.exists) {
-                    $('td', row).css('background-color', 'rgb(228 228 231)');
+                    $('td', row).css('background-color', 'rgb(231 231 231)');
                 }
             }
 

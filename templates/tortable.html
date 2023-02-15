@@ -2,13 +2,21 @@
 {% block stylesheet %}
 <style>
 
+        table {
+            table-layout: fixed;
+        }
+
+        td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="table-responsive my-2 mx-1">
 
-  <table id="data" class="table table-striped row-border order-column" style="width:100%">
+  <table id="data" class="display table-striped order-column" style="width:100%">
     <thead>
       <tr>
         <th></th>
@@ -51,12 +59,14 @@
     var table = $('#data').DataTable({
       language: DATATABLE_LANG,
       ajax: '/api/data',
-      "dom": `<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'f>>
-            <'row'<'col-sm-12'tr>>
-            <'row'<'col-sm-12 col-md-5'l><'col-sm-12 col-md-7'p>>`,
-      "pageLength": 25,
+      // "dom": `<'row'<'col-md-6'i><'col-md-6'f>>
+      //       <'row'<'col-sm-12'tr>>
+      //       <'row'<'col-md-5'l><'col-sm-12 col-md-7'p>>`,
+      "dom":'<"row"<"col-sm-6"i><"col-sm-6"f>>tr<"bottom"<"row"<"col-sm-6"i><"col-sm-6"p>>><"clear">',
+
+      "pageLength": 50,
       autoWidth: false,
-      scrollX: true,
+      scrollX: false,
       full_row_select: false,
       serverSide: true,
       order: [[5, 'desc']],
@@ -75,7 +85,7 @@
         },
         {
           data: 'torname',
-          "width": "32%",
+          "width": "35%",
           "render": function (data, type, row, meta) {
             if (data) {
               return '<a href="' + row.torsite + '" target="_blank">' + row.torname + '</a>';
