@@ -56,6 +56,7 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
         'frds': 'https://pt.keepfrds.com/details.php?id=',
         'hh': 'https://hhanclub.top/details.php?id=',
         'ttg': 'https://totheglory.im/t/',
+        'team': 'https://kp.m-team.cc/details.php?id=',
     }
     detailUrl = ''
     if siteAbbrev in SITE_URL_PREFIX:
