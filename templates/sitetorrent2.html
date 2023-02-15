@@ -4,6 +4,7 @@
 </style>
 {% endblock %}
 {% block content %}
+
 <nav class="nav nav-tabs justify-content-center">
     <a class="nav-link active" href="/sitesnewlist">各站新种</a>
     <a class="nav-link" href="/sitesnewgroup">站新分组</a>
@@ -11,10 +12,32 @@
 </nav>
 
 <div class="row my-3 justify-content-center">
+            <div class="col-md-2">
+                <select id="siteselect" class="form-select form-select-sm">
+                    <option selected>选择站点...</option>
+                    {% for x in sitelist %}
+                    <option>{{ x.site }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="mediasrclist" class="form-select form-select-sm">
+                    <option selected>选择Source...</option>
+                    {% for m in mediasource %}
+                    <option>{{ m }}</option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+</div>
+
+<div class="row my-3 justify-content-center">
     <table id="data" class="table row-border order-column" style="width:100%">
         <thead>
             <tr>
                 <th>站点</th>
+                <th>来源</th>
                 <th>标题</th>
                 <th>TMDb标题</th>
                 <th>IMDb</th>
@@ -37,6 +60,30 @@
 {% block script %}
 
 <script>
+$('#siteselect').on('change', function() {
+    $('#data').DataTable().search('');
+    $('#data').DataTable().columns(0).search(this.value).draw();
+});
+
+$('#mediasrclist').on('change', function() {
+    $('#data').DataTable().search('');
+    $('#data').DataTable().columns(1).search(this.value).draw();
+});
+
+// $('#mediasrclist input').on("click", function() {
+//     setMediaSourceFilter(this)
+// });
+function setMediaSourceFilter(ele) {
+    var medialist = '';
+    $('#mediasrclist').children('input').each(function () {
+    if ($(ele).is(':checked')) {
+                medialist += $(ele).attr("id") + ' ';
+            }
+    });
+    $('#data').DataTable().search('');
+    $('#data').DataTable().columns(1).search(medialist).draw();
+}
+
     function downloadClick(ele, id) {
         $(ele).parent().css('background-color', 'rgb(254 243 199)');
         apiDownloadSiteTor(ele, id);
@@ -53,7 +100,7 @@
                     $(ele).parent().css('background-color', 'darkseagreen');
                     // $("#msg").hide();
                 }
-                else{
+                else {
                     $(ele).parent().css('background-color', 'lightpink');
                 }
             },
@@ -80,6 +127,10 @@
                 {
                     data: 'site',
                     "width": "7%",
+                },
+                {
+                    data: 'mediasource',
+                    visible: false,
                 },
                 {
                     data: 'tortitle',
@@ -148,7 +199,7 @@
                     "width": "8%",
                     "render": function (data, type, row) {
                         var linkDownload = '<a href="#" onclick="downloadClick(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
-                        var dlcount = (row.dlcount > 0) ? '<sub>'+row.dlcount+'</sub>' : '';
+                        var dlcount = (row.dlcount > 0) ? '<sub>' + row.dlcount + '</sub>' : '';
                         return linkDownload + dlcount;
                     },
                 },

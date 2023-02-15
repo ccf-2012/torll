@@ -100,7 +100,7 @@
 
     function apiPtSearch(siteele, searchword) {
         sitestr = siteele.attr('id')
-        console.log("searching: " + sitestr)
+        // console.log("searching: " + sitestr)
         var dict = { site: sitestr, searchword: searchword };
         $.ajax({
             url: '/api/ptsearch',

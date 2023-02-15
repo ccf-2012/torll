@@ -26,7 +26,7 @@ import shutil
 from humanbytes import HumanBytes
 from http.cookies import SimpleCookie
 import sys
-# sys.path.insert(1, '../torcp/')
+sys.path.insert(1, '../torcp/')
 from torcp.tmdbparser import TMDbNameParser
 
 app = Flask(__name__)
@@ -1346,7 +1346,8 @@ class SiteTorrent(db.Model):
             'tmdbposter': self.tmdbposter,
             'genrestr': self.genrestr,
             'dlcount': self.dlcount,
-            'exists': torDbExists(self.tmdbcat, self.tmdbid)
+            'exists': torDbExists(self.tmdbcat, self.tmdbid),
+            'mediasource': self.mediasource
         }
 
 
@@ -1420,6 +1421,16 @@ def siteTorrentDataList():
             SiteTorrent.subtitle.like(f'%{search}%'),
             SiteTorrent.site.like(f'%{search}%'),
         ))
+    else:
+        col0search = request.args.get('columns[0][search][value]')
+        if col0search:
+            if '选择' not in col0search:
+                query = query.filter(SiteTorrent.site == col0search)
+        col1search = request.args.get('columns[1][search][value]')
+        if col1search:
+            if '选择' not in col1search:
+                query = query.filter(SiteTorrent.mediasource == col1search)
+
     total_filtered = query.count()
 
     # sorting
@@ -1466,7 +1477,8 @@ def sitesNewGroup():
 @auth.login_required
 def sitesNewList():
     sitelist = PtSite.query
-    return render_template('sitetorrent2.html', sitelist=sitelist)
+    mediasource = ['bluray', 'encode', 'webdl', 'dvd', 'other']
+    return render_template('sitetorrent2.html', sitelist=sitelist, mediasource=mediasource)
 
 
 @app.route('/api/getsitetorrent/',  methods=['GET'])
@@ -1511,6 +1523,21 @@ def getTMDbInfo(dbtor):
     return p.title, p.tmdbcat, p.tmdbid, p.poster_path, p.year, genrestr
 
 
+def parseMediaSource(tortitle):
+    if re.search(r'remux', tortitle, re.I):
+        return 'remux'
+    if re.search(r'web-?dl|web-?rip|hdtv', tortitle, re.I):
+        return 'webdl'
+    if re.search(r'encode|x265|x264', tortitle, re.I):
+        return 'encode'
+    if re.search(r'blu-?ray|uhd|hevc', tortitle, re.I):
+        return 'bluray'
+    if re.search(r'dvdr|dvdrip', tortitle, re.I):
+        return 'dvd'
+    print('unknow type: '+tortitle)
+    return 'other'
+
+
 def getSiteTorrent(sitename, sitecookie, siteurl=None):
     cursite = siteconfig.getCurSite(sitename)
     if not cursite:
@@ -1546,6 +1573,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
 
         dbitem = SiteTorrent()
         dbitem.tortitle = title
+        dbitem.mediasource = parseMediaSource(title)
         dbitem.infolink = infolink
         # dbitem.infolink = xpathGetElement(row, cursite, "infolink")
         dbitem.downlink = xpathGetElement(row, cursite, "downlink")
@@ -1851,6 +1879,7 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
             continue
         dbitem = TorrentCache()
         dbitem.tortitle = title
+        dbitem.mediasource = parseMediaSource(title)
         dbitem.infolink = xpathGetElement(row, cursite, "infolink")
 
         # TODO: add passkey for downlink
@@ -1923,6 +1952,7 @@ def clearOldResults(searchword):
 
 
 @app.route('/api/ptsearch', methods=['POST'])
+@auth.login_required
 def apiPtSearch():
     if request.method == 'POST':
         r = request.get_json()
@@ -1992,6 +2022,14 @@ def apiSearchResultDownload():
     return json.dumps({'added': added, 'msg': msg}), 200, {'ContentType': 'application/json'}
 
 
+def siteCount(sitename):
+    # result = db.select([db.func.count()]).select_from(actor_table).scalar()
+    return SiteTorrent.query.filter_by(site=sitename).count()
+
+def siteCountToday(sitename):
+    # result = db.select([db.func.count()]).select_from(actor_table).scalar()
+    return SiteTorrent.query.filter_by(site=sitename).filter(SiteTorrent.addedon > datetime.today()).count()
+
 class PtSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     addedon = db.Column(db.DateTime, default=datetime.now)
@@ -2013,7 +2051,7 @@ class PtSite(db.Model):
             'site': self.site,
             'cookie': self.cookie,
             'lastResultCount': self.lastResultCount,
-            'newTorCount': self.newTorCount,
+            'newTorCount': siteCount(self.site),
             'lastNewStatus': self.lastNewStatus,
         }
 
@@ -2052,6 +2090,7 @@ def apiSaveSearch():
 
 
 @app.route('/api/sitesetting/',  methods=['GET', 'POST'])
+@auth.login_required
 def apiGetSiteSetting():
     if request.method == 'POST':
         r = request.get_json()
@@ -2067,7 +2106,7 @@ def apiGetSiteSetting():
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
             dbsite.cookie = r['cookie']
-            dbsite.siteNewLink=r['newtorlink']
+            dbsite.siteNewLink = r['newtorlink']
         db.session.commit()
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
