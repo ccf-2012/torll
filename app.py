@@ -1530,11 +1530,11 @@ def parseMediaSource(tortitle):
         return 'webdl'
     if re.search(r'encode|x265|x264', tortitle, re.I):
         return 'encode'
-    if re.search(r'blu-?ray|uhd|hevc', tortitle, re.I):
+    if re.search(r'\b(blu-?ray|uhd|bdmv|BDRip)\b', tortitle, re.I):
         return 'bluray'
-    if re.search(r'dvdr|dvdrip|NTSC', tortitle, re.I):
+    if re.search(r'\b(dvdr|dvdrip|NTSC|DVD)\b', tortitle, re.I):
         return 'dvd'
-    if re.search(r'AVC.*DTS', tortitle, re.I):
+    if re.search(r'AVC.*DTS|MPEG.*AVC', tortitle, re.I):
         return 'bluray'
     print('unknow type: '+tortitle)
     return 'other'

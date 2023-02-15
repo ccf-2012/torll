@@ -2,7 +2,10 @@
 {% block stylesheet %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowgroup/1.3.0/css/rowGroup.bootstrap5.min.css">
 <style>
-
+    tr.dtrg-group,
+    tr.dtrg-group:hover {
+        background-color: #ddd !important;
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -38,6 +41,9 @@
 
 {% block script %}
 <script>
+    // function imdbTitleClick(imdbtitle){
+    //     $('#data').DataTable().search(imdbtitle).draw()
+    // };
     function downloadClick(ele, id) {
         $(ele).parent().css('background-color', 'rgb(254 243 199)');
         apiDownloadSiteTor(ele, id);
@@ -54,7 +60,7 @@
                     $(ele).parent().css('background-color', 'darkseagreen');
                     // $("#msg").hide();
                 }
-                else{
+                else {
                     $(ele).parent().css('background-color', 'lightpink');
                 }
             },
@@ -65,7 +71,7 @@
             }
         });
     }
-    function tmdbTitleOnClick(titlestr){
+    function tmdbTitleOnClick(titlestr) {
         $('#data').DataTable().search(titlestr).draw()
     }
 
@@ -193,7 +199,7 @@
                     "width": "8%",
                     "render": function (data, type, row) {
                         var linkDownload = '<a href="#" onclick="downloadClick(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
-                        var dlcount = (row.dlcount > 0) ? '<sub>'+row.dlcount+'</sub>' : '';
+                        var dlcount = (row.dlcount > 0) ? '<sub>' + row.dlcount + '</sub>' : '';
                         return linkDownload + dlcount;
                     },
                 },

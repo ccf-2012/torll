@@ -12,20 +12,21 @@
 </nav>
 
 <div class="row my-3 justify-content-center">
-            <div class="col-md-2">
-                <select id="siteselect" class="form-select form-select-sm">
-                    <option selected>选择站点...</option>
-                    {% for x in sitelist %}
-                    <option>{{ x.site }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div id="mediasrclist" class="btn-group btn-group-sm col-md-4" role="group" aria-label="Basic checkbox toggle button group">
-                {% for m in mediasource %}
-                <input type="checkbox" class="btn-check" id="{{m}}" autocomplete="off">
-                <label class="btn btn-outline-primary" for="{{m}}">{{m}}</label>
-                {% endfor %}
-              </div>
+    <div class="col-md-2">
+        <select id="siteselect" class="form-select form-select-sm">
+            <option selected>选择站点...</option>
+            {% for x in sitelist %}
+            <option>{{ x.site }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div id="mediasrclist" class="btn-group btn-group-sm col-md-4" role="group"
+        aria-label="Basic checkbox toggle button group">
+        {% for m in mediasource %}
+        <input type="checkbox" class="btn-check" id="{{m}}" autocomplete="off">
+        <label class="btn btn-outline-primary" for="{{m}}">{{m}}</label>
+        {% endfor %}
+    </div>
 
 
 </div>
@@ -58,29 +59,29 @@
 {% block script %}
 
 <script>
-$('#siteselect').on('change', function() {
-    $('#data').DataTable().search('');
-    $('#data').DataTable().columns(0).search(this.value).draw();
-});
-
-// $('#mediasrclist').on('change', function() {
-//     $('#data').DataTable().search('');
-//     $('#data').DataTable().columns(1).search(this.value).draw();
-// });
-
-$('#mediasrclist input').on("click", function() {
-    setMediaSourceFilter(this)
-});
-function setMediaSourceFilter(ele) {
-    let medialist = '';
-    $('#mediasrclist').children('input').each(function () {
-        if ($(this).is(':checked')) {
-                medialist += $(this).attr("id") + ' ';
-        }
+    $('#siteselect').on('change', function () {
+        $('#data').DataTable().search('');
+        $('#data').DataTable().columns(0).search(this.value).draw();
     });
-    $('#data').DataTable().search('');
-    $('#data').DataTable().columns(1).search(medialist).draw();
-}
+
+    // $('#mediasrclist').on('change', function() {
+    //     $('#data').DataTable().search('');
+    //     $('#data').DataTable().columns(1).search(this.value).draw();
+    // });
+
+    $('#mediasrclist input').on("click", function () {
+        setMediaSourceFilter(this)
+    });
+    function setMediaSourceFilter(ele) {
+        let medialist = '';
+        $('#mediasrclist').children('input').each(function () {
+            if ($(this).is(':checked')) {
+                medialist += $(this).attr("id") + ' ';
+            }
+        });
+        $('#data').DataTable().search('');
+        $('#data').DataTable().columns(1).search(medialist).draw();
+    }
 
     function downloadClick(ele, id) {
         $(ele).parent().css('background-color', 'rgb(254 243 199)');
@@ -158,7 +159,9 @@ function setMediaSourceFilter(ele) {
                     "width": "8%",
                     "render": function (data, type, row, meta) {
                         if (data) {
-                            return '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbstr + '</a>';
+                            s1 = '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbstr + '</a>';
+                            s2 = '<br>' + row.genrestr;
+                            return s1 + s2
                         }
                         else return ''
                     }
