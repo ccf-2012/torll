@@ -1571,10 +1571,10 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
     count = 0
     for row in reversed(torlist):
         title = xpathGetElement(row, cursite, "tortitle")
-        if not title:
+        infolink = xpathGetElement(row, cursite, "infolink")
+        if not infolink:
             continue
 
-        infolink = xpathGetElement(row, cursite, "infolink")
         # TODO: same details id for different site
         exists = db.session.query(db.exists().where(
             (db.and_(SiteTorrent.infolink == infolink, SiteTorrent.site == sitename)))).scalar()
