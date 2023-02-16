@@ -152,7 +152,7 @@
                     data: 'tortitle',
                     "width": "45%",
                     "render": function (data, type, row, meta) {
-                        if (data) {
+                        if (row.subtitle || row.title) {
                             var l1 = '<a class="tortitle" href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
                             var l2 = '<span class="sub-title">' + row.subtitle + '</span>';
                             var tagzz = row.tagzz ? '<span class="tag-zz ">中字</span>' : '';

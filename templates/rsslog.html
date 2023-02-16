@@ -8,7 +8,7 @@
 
 <div class="row mx-2 my-3 justify-content-center">
 
-  <table id="data" class="display order-column" style="width:100%">
+  <table id="data" class=" order-column" style="width:100%">
 		<thead>
 		  <tr>
 			<th>时间</th>
@@ -112,9 +112,10 @@
       ],
       "createdRow": function (row, data, dataIndex) {
         if (data.accept == 0) {
-          $('td', row).css('background-color', 'rgb(245 245 245)');
+          $('td', row).css('background-color', 'rgb(231 231 231)');
         }
-        else if  (data.accept == 2) {
+        else 
+        if  (data.accept == 2) {
           $('td', row).css('background-color', 'rgb(231 231 231)');
         }
       }

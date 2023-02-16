@@ -57,6 +57,7 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
         'hh': 'https://hhanclub.top/details.php?id=',
         'ttg': 'https://totheglory.im/t/',
         'team': 'https://kp.m-team.cc/details.php?id=',
+        'mt': 'https://kp.m-team.cc/details.php?id=',
     }
     detailUrl = ''
     if siteAbbrev in SITE_URL_PREFIX:
@@ -64,7 +65,7 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
             if sitecat == 'movie':
                 detailUrl = SITE_URL_PREFIX[siteAbbrev] + \
                     'details_movie.php?id=' + str(siteid)
-            elif sitecat == 'tvseries':
+            elif sitecat == 'tv':
                 detailUrl = SITE_URL_PREFIX[siteAbbrev] + \
                     'details_tv.php?id=' + str(siteid)
         else:
@@ -104,7 +105,7 @@ class TorMediaItem(db.Model):
             'title': self.title,
             'addedon': self.addedon,
             'torabbrev': self.torsite,
-            'torsite': genSiteLink(self.torsite, self.torsiteid),
+            'torsite': genSiteLink(self.torsite, self.torsiteid, self.tmdbcat),
             'torsitecat': self.torsitecat,
             'torimdb': self.torimdb,
             'tmdbid': self.tmdbid,
@@ -666,7 +667,7 @@ def getAbbrevSiteName(url):
     sitename = getSiteName(url)
     SITE_ABBRES = [('chdbits', 'chd'), ('pterclub', 'pter'), ('audiences', 'aud'),
                    ('lemonhd', 'lhd'), ('keepfrds', 'frds'), ('ourbits', 'ob'),
-                   ('springsunday', 'ssd')]
+                   ('springsunday', 'ssd'), ('totheglory', 'ttg'), ('m-team', 'mt')]
     # result = next((i for i, v in enumerate(SITE_ABBRES) if v[0] == sitename), "")
     abbrev = [x for x in SITE_ABBRES if x[0] == sitename]
     return abbrev[0][1] if abbrev else sitename
@@ -900,7 +901,7 @@ def checkMediaDbNameDupe(torname):
 
 def genrSiteId(detailLink, imdbstr):
     siteAbbrev = getAbbrevSiteName(detailLink)
-    if (siteAbbrev == "ttg"):
+    if (siteAbbrev == "ttg" or siteAbbrev == "totheglory"):
         m = re.search(r"t\/(\d+)", detailLink, flags=re.A)
     else:
         m = re.search(r"id=(\d+)", detailLink, flags=re.A)
@@ -1549,6 +1550,15 @@ def parseMediaSource(tortitle):
     return 'other'
 
 
+def subsubtitle(title, subtitle):
+    title = re.sub(r' +', ' ', title).strip()
+    subtitle = re.sub(r' +', ' ', subtitle).strip()
+    if len(title) > len(subtitle):
+        return title.replace(subtitle, ''), subtitle
+    else:
+        return title, subtitle.replace(title, '')
+
+
 def getSiteTorrent(sitename, sitecookie, siteurl=None):
     cursite = siteconfig.getSiteConfig(sitename)
     if not cursite:
@@ -1583,7 +1593,6 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
             continue
 
         dbitem = SiteTorrent()
-        dbitem.tortitle = title
         dbitem.mediasource = parseMediaSource(title)
         dbitem.infolink = infolink
         # dbitem.infolink = xpathGetElement(row, cursite, "infolink")
@@ -1591,7 +1600,9 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         subtitle = str(xpathGetElement(row, cursite, "subtitle"))
         if subtitle:
             subtitle = subtitle.replace(dbitem.tortitle, '')
+            title, subtitle = subsubtitle(title, subtitle)
             dbitem.subtitle = striptag(subtitle)
+        dbitem.tortitle = title
 
         dbitem.tagzz = True if xpathGetElement(
             row, cursite, "tagzz") else False
@@ -1810,6 +1821,7 @@ def striptag(titlestr):
     # s = re.sub(r'\[?(国语|中字|官方|禁转|原创)\]?', '', s)
     s = re.sub(r'剩余时间.*?\d分钟', '', s)
     s = re.sub(r'\[?Checked by \w+\]?', '', s)
+    s = re.sub(r'\[\W*\]$', '', s)  # frds
     return s
 
 

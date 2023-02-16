@@ -139,7 +139,7 @@
       {
         "site": "keepfrds",
         "torlist": "//table[@class='torrents']/tr",
-        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/following-sibling::text())",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/parent::*)",
         "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
         "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
         "subtitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
