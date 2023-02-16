@@ -1595,14 +1595,12 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         dbitem = SiteTorrent()
         dbitem.mediasource = parseMediaSource(title)
         dbitem.infolink = infolink
-        # dbitem.infolink = xpathGetElement(row, cursite, "infolink")
         dbitem.downlink = xpathGetElement(row, cursite, "downlink")
         subtitle = str(xpathGetElement(row, cursite, "subtitle"))
         if subtitle:
-            subtitle = subtitle.replace(dbitem.tortitle, '')
             title, subtitle = subsubtitle(title, subtitle)
             dbitem.subtitle = striptag(subtitle)
-        dbitem.tortitle = title
+        dbitem.tortitle = striptitle(title)
 
         dbitem.tagzz = True if xpathGetElement(
             row, cursite, "tagzz") else False
@@ -1815,6 +1813,10 @@ def searchResultData():
 def remove_non_ascii(string):
     return ''.join(char for char in string if ord(char) < 128)
 
+def striptitle(titlestr):
+    s = re.sub(r'\[?限时禁转\]?', '', titlestr)
+    s = re.sub(r'\[\W*\]$', '', s) 
+    return s
 
 def striptag(titlestr):
     s = titlestr.replace('\n', '').strip()
@@ -1899,21 +1901,19 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     count = 0
     for row in reversed(torlist):
         title = xpathGetElement(row, cursite, "tortitle")
-        if not title:
+        infolink = xpathGetElement(row, cursite, "infolink")
+        if not infolink:
             continue
+
         dbitem = TorrentCache()
-        dbitem.tortitle = title
         dbitem.mediasource = parseMediaSource(title)
-        dbitem.infolink = xpathGetElement(row, cursite, "infolink")
-
-        # TODO: add passkey for downlink
+        dbitem.infolink = infolink
         dbitem.downlink = xpathGetElement(row, cursite, "downlink")
-
         subtitle = str(xpathGetElement(row, cursite, "subtitle"))
         if subtitle:
-            subtitle = subtitle.replace(dbitem.tortitle, '')
-            # subtitle = subtitle.lstrip(dbitem.tortitle)
+            title, subtitle = subsubtitle(title, subtitle)
             dbitem.subtitle = striptag(subtitle)
+        dbitem.tortitle = striptitle(title)
 
         dbitem.tagzz = True if xpathGetElement(
             row, cursite, "tagzz") else False
