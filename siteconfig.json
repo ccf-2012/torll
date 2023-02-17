@@ -195,7 +195,7 @@
       {
         "site": "totheglory",
         "torlist": "//table[@id='torrent_table']/tr",
-        "tortitle": "string(.//*[contains(@class,'name_left')]//a[contains(@href,'/t/')]/b/text()[1])",
+        "tortitle": "string(.//*[contains(@class,'name_left')]//a[contains(@href,'/t/')])",
         "infolink": "string(.//*[contains(@class,'name_left')]//a[contains(@href,'/t/')]/@href)",
         "downlink": "string(.//*[contains(@class,'name_right')]//a[contains(@href,'/dl/')]/@href)",
         "subtitle": "string(.//*[contains(@class,'name_left')]//a[contains(@href,'/t/')])",

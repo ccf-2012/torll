@@ -1286,7 +1286,9 @@ def requestPtPage(pageUrl, pageCookie):
     except:
         return ''
 
-    return r.text
+    # doc = r.content.decode('utf-8', 'replace')
+
+    return r.content
 
 
 def torDbExists(tmdbcat, tmdbid):
@@ -1506,7 +1508,7 @@ def apiGetSiteTorrent():
     if not dbsite:
         return json.dumps({'site': dbsite.site, 'resultCount': 0}), 200, {'ContentType': 'application/json'}
 
-    resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, siteurl=None)
+    resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, dbsite.siteNewLink)
     if resultCount > 0:
         dbsite.newTorCount += resultCount
         dbsite.lastNewStatus = 0
@@ -1550,15 +1552,6 @@ def parseMediaSource(tortitle):
     return 'other'
 
 
-def subsubtitle(title, subtitle):
-    title = re.sub(r' +', ' ', title).strip()
-    subtitle = re.sub(r' +', ' ', subtitle).strip()
-    if len(title) > len(subtitle):
-        return title.replace(subtitle, ''), subtitle
-    else:
-        return title, subtitle.replace(title, '')
-
-
 def getSiteTorrent(sitename, sitecookie, siteurl=None):
     cursite = siteconfig.getSiteConfig(sitename)
     if not cursite:
@@ -1575,8 +1568,8 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
     if not doc:
         print('Failt to fetch: ' + siteurl)
         return -3  # page not fetched
-
-    htmltree = lxml.html.fromstring(doc)
+    parser = lxml.html.HTMLParser(recover=True, encoding='utf-8')
+    htmltree = lxml.html.fromstring(doc, parser=parser)
     torlist = htmltree.xpath(cursite["torlist"])
     count = 0
     for row in reversed(torlist):
@@ -1813,6 +1806,21 @@ def searchResultData():
 def remove_non_ascii(string):
     return ''.join(char for char in string if ord(char) < 128)
 
+def subsubtitle(title, subtitle):
+    title = re.sub(r' +', ' ', title).strip()
+    subtitle = re.sub(r' +', ' ', subtitle).strip()
+    if len(title) > len(subtitle):
+        return title.replace(subtitle, ''), subtitle
+    elif title == subtitle:
+        s = re.sub(r'^[ -~‘’×]+', '', subtitle).strip()
+        if len(s) > 1 and len(s) < len(title):
+            return title.replace(s, ''), s
+        else:
+            return title, subtitle
+    else:
+        return title, subtitle.replace(title, '')
+
+
 def striptitle(titlestr):
     s = re.sub(r'\[?限时禁转\]?', '', titlestr)
     s = re.sub(r'\[\W*\]$', '', s) 
@@ -1879,24 +1887,12 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
     else:
         pturl = cursite['baseurl'] + cursite['searchurl']+seachWord
 
-    hosturl = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(pturl))
-    passkey = ''
-    # if "passkey" in cursite:
-    #     ucpJson = cursite["passkey"]
-    #     if "usercp" in ucpJson and "keypath" in ucpJson:
-    #         usercpurl = hosturl + ucpJson["usercp"]
-    #         usercpdoc = requestPtPage(usercpurl, siteCookie)
-    #         if not usercpdoc:
-    #             return 404
-    #         usercplh = lxml.html.fromstring(usercpdoc)
-    #         passkey = usercplh.xpath(ucpJson["keypath"])
-    #         passkey = remove_non_ascii(passkey)
 
     doc = requestPtPage(pturl, siteCookie)
     if not doc:
         return -1  # page not fetched
-
-    htmltree = lxml.html.fromstring(doc)
+    parser = lxml.html.HTMLParser(recover=True, encoding='utf-8')
+    htmltree = lxml.html.fromstring(doc, parser=parser)
     torlist = htmltree.xpath(cursite["torlist"])
     count = 0
     for row in reversed(torlist):
