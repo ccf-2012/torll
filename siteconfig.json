@@ -347,7 +347,7 @@
         "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
         "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
         "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
-        "subtitle": "string(.//table[contains(@class,'torrentname')]//a[contains(@href,'details')]/following-sibling::text())",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]//a[contains(@href,'details')]/parent::*)",
         "baseurl": "https://www.tjupt.org/",
         "searchurl": "torrents.php?search=",
         "searchIMDburl": "torrents.php?search_area=4&search=",

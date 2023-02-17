@@ -1544,7 +1544,7 @@ def parseMediaSource(tortitle):
         return 'encode'
     if re.search(r'\b(blu-?ray|uhd|bdmv|BDRip)\b', tortitle, re.I):
         return 'bluray'
-    if re.search(r'\b(dvdr|dvdrip|NTSC|DVD)\b', tortitle, re.I):
+    if re.search(r'\b(dvdr|dvdrip|NTSC|DVD|DVDISO)\b', tortitle, re.I):
         return 'dvd'
     if re.search(r'AVC.*DTS|MPEG.*AVC', tortitle, re.I):
         return 'bluray'
@@ -1810,10 +1810,13 @@ def subsubtitle(title, subtitle):
     title = re.sub(r' +', ' ', title).strip()
     subtitle = re.sub(r' +', ' ', subtitle).strip()
     if len(title) > len(subtitle):
-        return title.replace(subtitle, ''), subtitle
+        if title.startswith(subtitle):
+            return title.replace(subtitle, ''), subtitle
+        else:
+            return title, subtitle
     elif title == subtitle:
         s = re.sub(r'^[ -~‘’×]+', '', subtitle).strip()
-        if len(s) > 1 and len(s) < len(title):
+        if (len(title) - len(s) > 3):
             return title.replace(s, ''), s
         else:
             return title, subtitle
