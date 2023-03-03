@@ -296,22 +296,23 @@ def apiTorMediaDel():
     torid = request.args.get('torid')
     tormedia = db.session.get(TorMediaItem, torid)
     deleted = False
-    msg = 'success'
-    destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
-    if os.path.exists(destDir):
-        # print("Deleting ", destDir)
-        try:
-            shutil.rmtree(destDir)
-            deleted = True
-        except:
-            msg = '文件删除出错'
-            pass
-    else:
-        msg = '记录已删，但文件不存在'
+    if tormedia:
+        msg = 'success'
+        destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
+        if os.path.exists(destDir):
+            # print("Deleting ", destDir)
+            try:
+                shutil.rmtree(destDir)
+                deleted = True
+            except:
+                msg = '文件删除出错'
+                pass
+        else:
+            msg = '记录已删，但文件不存在'
 
-    db.session.delete(tormedia)
-    db.session.commit()
-    # return redirect("/")
+        db.session.delete(tormedia)
+        db.session.commit()
+
     return json.dumps({'deleted': deleted, 'msg': msg}), 200, {'ContentType': 'application/json'}
 
 
@@ -830,23 +831,23 @@ def apiRssToggleActive():
     tid = request.args.get('taskid')
     # task = RSSTask.query.get(id)
     task = db.session.get(RSSTask, tid)
+    if task:
+        if task.active == 0:
+            task.active = 2
+            try:
+                scheduler.pause_job(str(task.id))
+            except:
+                pass
+        else:
+            task.active = 0
+            try:
+                scheduler.resume_job(str(task.id))
+            except:
+                pass
 
-    if task.active == 0:
-        task.active = 2
-        try:
-            scheduler.pause_job(str(task.id))
-        except:
-            pass
-    else:
-        task.active = 0
-        try:
-            scheduler.resume_job(str(task.id))
-        except:
-            pass
+        # scheduler.print_jobs()
+        db.session.commit()
 
-    # scheduler.print_jobs()
-    db.session.commit()
-    # return redirect("/rsstasks")
     return json.dumps({'active': task.active}), 200, {'ContentType': 'application/json'}
 
 
@@ -1638,28 +1639,29 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
 def siteTorDownload(torid):
     # dbitem = SiteTorrent.query.get(torid)
     dbitem = db.session.get(SiteTorrent, torid)
-
-    infolink = getfulllink(dbitem.site, dbitem.infolink)
-    downlink = getfulllink(dbitem.site, dbitem.downlink)
-    sitecookie = getSiteCookie(dbitem.site)
-    if not dbitem.imdbstr:
-        imdbstr = ''
-        if sitecookie:
-            doc = fetchInfoPage(infolink, sitecookie)
-            if doc:
-                imdbstr = parseInfoPageIMDbId(doc)
-                dbitem.imdbstr = imdbstr
-    siteIdStr = genrSiteId(infolink, dbitem.imdbstr)
-
-    # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
-    r = addTorrentViaPageDownload(
-        downlink, sitecookie, siteIdStr, dbitem.imdbstr)
-    if r == 201:
-        added = True
-        dbitem.dlcount += 1
-        db.session.commit()
-    msg = f'{siteIdStr}, {dbitem.imdbstr}'
+    msg = ''
+    if dbitem:
+        infolink = getfulllink(dbitem.site, dbitem.infolink)
+        downlink = getfulllink(dbitem.site, dbitem.downlink)
+        sitecookie = getSiteCookie(dbitem.site)
+        if not dbitem.imdbstr:
+            imdbstr = ''
+            if sitecookie:
+                doc = fetchInfoPage(infolink, sitecookie)
+                if doc:
+                    imdbstr = parseInfoPageIMDbId(doc)
+                    dbitem.imdbstr = imdbstr
+        siteIdStr = genrSiteId(infolink, dbitem.imdbstr)
+
+        # if not checkMediaDbNameDupe(dbcacheitem.title):
+        r = addTorrentViaPageDownload(
+            downlink, sitecookie, siteIdStr, dbitem.imdbstr)
+        if r == 201:
+            added = True
+            dbitem.dlcount += 1
+            db.session.commit()
+        msg = f'{siteIdStr}, {dbitem.imdbstr}'
     return render_template('dlresult.html', added=added, msg=msg)
 
 
