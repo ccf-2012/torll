@@ -33,7 +33,7 @@ tr.dtrg-group,
     <a class="nav-link " href="/sites">站点设置</a>
 </nav>
 
-<div class="row my-3 justify-content-center">
+<div class="row my-2 justify-content-center">
     <div class="col-sm-2">
         <select id="siteselect" class="form-select form-select-sm">
             <option selected>选择站点...</option>
@@ -42,7 +42,7 @@ tr.dtrg-group,
             {% endfor %}
         </select>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-6">
         <div id="mediasrclist" class="btn-group btn-group-sm " role="group"
             aria-label="Basic checkbox toggle button group">
             {% for m in mediasource %}
@@ -51,8 +51,9 @@ tr.dtrg-group,
             {% endfor %}
         </div>
     </div>
-    <div class="col-sm-6">
-        <div id="mediatag" class="btn-group btn-group-sm " role="group"
+</div>
+<div class="row my-2 justify-content-center">
+        <div id="mediatag" class="btn-group btn-group-sm col-sm-10" role="group"
             aria-label="Basic checkbox toggle button group">
             <input type="checkbox" class="btn-check" id="movie" autocomplete="off">
             <label class="btn btn-outline-primary" for="movie">电影</label>
@@ -68,8 +69,18 @@ tr.dtrg-group,
             <label class="btn btn-outline-primary" for="anime">动画</label>
             <input type="checkbox" class="btn-check" id="docu" autocomplete="off">
             <label class="btn btn-outline-primary" for="docu">纪录</label>
+            <input type="checkbox" class="btn-check" id="comedy" autocomplete="off">
+            <label class="btn btn-outline-primary" for="comedy">喜剧</label>
+            <input type="checkbox" class="btn-check" id="music" autocomplete="off">
+            <label class="btn btn-outline-primary" for="music">音乐</label>
+            <input type="checkbox" class="btn-check" id="scifi" autocomplete="off">
+            <label class="btn btn-outline-primary" for="scifi">科幻</label>
+            <input type="checkbox" class="btn-check" id="fantasy" autocomplete="off">
+            <label class="btn btn-outline-primary" for="fantasy">奇幻</label>
+            <input type="checkbox" class="btn-check" id="history" autocomplete="off">
+            <label class="btn btn-outline-primary" for="history">历史</label>
         </div>
-    </div>
+
 </div>
 <div class="row my-3 justify-content-center">
     <table id="data" class="  order-column" style="width:100%">

@@ -1462,6 +1462,16 @@ def siteTorrentDataList():
                 query = query.filter(SiteTorrent.genrestr.like('%动画%'))
             if 'docu' in taglist:
                 query = query.filter(SiteTorrent.genrestr.like('%纪录%'))
+            if 'comedy' in taglist:
+                query = query.filter(SiteTorrent.genrestr.like('%喜剧%'))
+            if 'music' in taglist:
+                query = query.filter(SiteTorrent.genrestr.like('%音乐%'))
+            if 'scifi' in taglist:
+                query = query.filter(SiteTorrent.genrestr.like('%科幻%'))
+            if 'fantasy' in taglist:
+                query = query.filter(SiteTorrent.genrestr.like('%奇幻%'))
+            if 'history' in taglist:
+                query = query.filter(SiteTorrent.genrestr.like('%历史%'))
 
     total_filtered = query.count()
 
