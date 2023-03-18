@@ -34,7 +34,7 @@ tr.dtrg-group,
 </nav>
 
 <div class="row my-3 justify-content-center">
-    <div class="col-md-2">
+    <div class="col-sm-2">
         <select id="siteselect" class="form-select form-select-sm">
             <option selected>选择站点...</option>
             {% for x in sitelist %}
@@ -42,13 +42,32 @@ tr.dtrg-group,
             {% endfor %}
         </select>
     </div>
-    <div class="col-md-4">
+    <div class="col-sm-3">
         <div id="mediasrclist" class="btn-group btn-group-sm " role="group"
             aria-label="Basic checkbox toggle button group">
             {% for m in mediasource %}
             <input type="checkbox" class="btn-check" id="{{m}}" autocomplete="off">
             <label class="btn btn-outline-primary" for="{{m}}">{{m}}</label>
             {% endfor %}
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div id="mediatag" class="btn-group btn-group-sm " role="group"
+            aria-label="Basic checkbox toggle button group">
+            <input type="checkbox" class="btn-check" id="movie" autocomplete="off">
+            <label class="btn btn-outline-primary" for="movie">电影</label>
+            <input type="checkbox" class="btn-check" id="tvshow" autocomplete="off">
+            <label class="btn btn-outline-primary" for="tvshow">剧集</label>
+            <input type="checkbox" class="btn-check" id="tagzz" autocomplete="off">
+            <label class="btn btn-outline-primary" for="tagzz">有中字</label>
+            <input type="checkbox" class="btn-check" id="taggy" autocomplete="off">
+            <label class="btn btn-outline-primary" for="taggy">无国语</label>
+            <input type="checkbox" class="btn-check" id="tvset" autocomplete="off">
+            <label class="btn btn-outline-primary" for="tvset">仅合集</label>
+            <input type="checkbox" class="btn-check" id="anime" autocomplete="off">
+            <label class="btn btn-outline-primary" for="anime">动画</label>
+            <input type="checkbox" class="btn-check" id="docu" autocomplete="off">
+            <label class="btn btn-outline-primary" for="docu">纪录</label>
         </div>
     </div>
 </div>
@@ -89,10 +108,14 @@ tr.dtrg-group,
     //     $('#data').DataTable().search('');
     //     $('#data').DataTable().columns(1).search(this.value).draw();
     // });
+    $('#mediatag input').on("click", function () {
+        setMediaTagFilter(this)
+    });
 
     $('#mediasrclist input').on("click", function () {
         setMediaSourceFilter(this)
     });
+
     function setMediaSourceFilter(ele) {
         let medialist = '';
         $('#mediasrclist').children('input').each(function () {
@@ -102,6 +125,17 @@ tr.dtrg-group,
         });
         $('#data').DataTable().search('');
         $('#data').DataTable().columns(1).search(medialist).draw();
+    }
+
+    function setMediaTagFilter(ele) {
+        let taglist = '';
+        $('#mediatag').children('input').each(function () {
+            if ($(this).is(':checked')) {
+                taglist += $(this).attr("id") + ' ';
+            }
+        });
+        $('#data').DataTable().search('');
+        $('#data').DataTable().columns(2).search(taglist).draw();
     }
 
     function downloadClick(ele, id) {

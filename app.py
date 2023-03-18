@@ -1318,6 +1318,7 @@ class SiteTorrent(db.Model):
     tagspecial = db.Column(db.String(16))
     taggy = db.Column(db.Boolean)
     tagzz = db.Column(db.Boolean)
+    # tagtvset = db.Column(db.Boolean)
     tagfree = db.Column(db.Boolean)
     tag2xfree = db.Column(db.Boolean)
     tag50off = db.Column(db.Boolean)
@@ -1360,7 +1361,8 @@ class SiteTorrent(db.Model):
             'genrestr': self.genrestr,
             'dlcount': self.dlcount,
             'exists': torDbExists(self.tmdbcat, self.tmdbid),
-            'mediasource': self.mediasource
+            'mediasource': self.mediasource,
+            # 'tagtvset': self.tagtvset
         }
 
 
@@ -1443,6 +1445,23 @@ def siteTorrentDataList():
         if col1search:
             srclist = [x.strip() for x in col1search.split(' ') if x.strip()]
             query = query.filter(SiteTorrent.mediasource.in_(srclist))
+        col2search = request.args.get('columns[2][search][value]')
+        if col2search:
+            taglist = [x.strip() for x in col2search.split(' ') if x.strip()]
+            if 'movie' in taglist:
+                query = query.filter(SiteTorrent.tmdbcat == 'movie')
+            if 'tvshow' in taglist:
+                query = query.filter(SiteTorrent.tmdbcat == 'tv')
+            if 'tagzz' in taglist:
+                query = query.filter(SiteTorrent.tagzz == True)
+            if 'taggy' in taglist:
+                query = query.filter(SiteTorrent.taggy == False)
+            if 'tvset' in taglist:
+                query = query.filter(db.not_(SiteTorrent.subtitle.regexp_match(r'第\d+')))
+            if 'anime' in taglist:
+                query = query.filter(SiteTorrent.genrestr.like('%动画%'))
+            if 'docu' in taglist:
+                query = query.filter(SiteTorrent.genrestr.like('%纪录%'))
 
     total_filtered = query.count()
 
