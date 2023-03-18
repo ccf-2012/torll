@@ -85,6 +85,13 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
 
 
 def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcatidstr=None):
+    if (CONFIG.dockerFrom != CONFIG.dockerTo):
+        if torpath.startswith(CONFIG.dockerFrom) and savepath.startswith(CONFIG.dockerFrom):
+            torpath = torpath.replace(
+                CONFIG.dockerFrom, CONFIG.dockerTo, 1)
+            savepath = savepath.replace(
+                CONFIG.dockerFrom, CONFIG.dockerTo, 1)
+
     if torpath and torhash:
         if not os.path.exists(torpath):
             print('File/Dir not exists: ' + torpath)

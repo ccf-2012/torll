@@ -2249,12 +2249,12 @@ def startApsScheduler():
 
 
 def runRcp(torpath, torhash, torsize, tortag, savepath, tmdbcatid):
-    if (myconfig.CONFIG.apiRunProgram == 'True') and (myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo):
-        if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
-            torpath = torpath.replace(
-                myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
-            savepath = savepath.replace(
-                myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
+    # if (myconfig.CONFIG.apiRunProgram == 'True') and (myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo):
+    #     if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
+    #         torpath = torpath.replace(
+    #             myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
+    #         savepath = savepath.replace(
+    #             myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
 
     import rcp
     return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir=False, tmdbcatidstr=tmdbcatid)
