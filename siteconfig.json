@@ -364,7 +364,7 @@
         "seednum": "string(.//td[contains(@class,'rowfollow')][6])",
         "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
         "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
-        "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
+        "tordate" : "string(concat(.//td[contains(@class,'rowfollow')][4]/text()[1], ' ', .//td[contains(@class,'rowfollow')][4]/text()[2]))"
       },
       {
         "site": "hhanclub",
