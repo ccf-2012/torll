@@ -86,6 +86,8 @@ rm -rf "/home/ccf2013/emby/$1/"
 ----
 ## 影视库
 * 当积累了较多种子，toll 可以方便在查找种子标题，存储路径，可以点击链接到源站查看信息，也可以方便地查看TMDb, IMDb
+![影视库](https://ptpimg.me/6538cc.png)
+
 ### 修正
 
 * 如果发现匹配错误的条目，可以点击 `修正` ，以新输入的 TMDb 分类和 id 作 torcp `--move-run` 
@@ -94,7 +96,7 @@ rm -rf "/home/ccf2013/emby/$1/"
 ![修正匹配](https://ptpimg.me/218uav.png)
 
 ### 删除
-* 当前的删除，是删掉数据库记录，如果是链接目录存在，则同时删除链接目录 
+* 当前的删除，是先删掉数据库记录，如果是链接目录存在，则同时删除链接目录 
 
 ## 在添加种子时，生成 site_id 形式的保存目录
 * torll 在处理 qBit 中的种子，对 `site_id_imdb` 形式目录保存的种子，如 'pter_87424_tt0075329'，将会识别其中的源站信息和IMDb。这样的目录，有利于追溯查阅信息和保种续种(Credit to @boomPa)。
@@ -130,11 +132,10 @@ const API_AUTH_PASS = "password";
 
 ## 在 torll 中查找
 * 当前支持 pter, chd, aud, ob, hds, frds, ssd, ttg, mteam, tlf, hdh, pth, tju, hh, beitai, hdc, hares, hdfans, soulvoice, hdtime, discfan, btschool, ptsbao, lhd 站
-* 建设中...
 
 
 ## 各站新种
-* 建设中...
+![站新](https://ptpimg.me/4q6430.png)
 
 
 ---
