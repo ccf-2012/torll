@@ -43,6 +43,13 @@ def getSiteIdDirName(pathStr, savepath):
     torRootFolder = os.path.join(savepath, l[0]) if len(l) > 0 else npath
     return torRootFolder, siteIdFolder
 
+
+def callNotifyPlex(hash):
+    if CONFIG.plexServer and CONFIG.plexToken:
+        import notify_plex
+        notify_plex.notifyPlex(hash)
+
+
 def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
     if sourceDir:
         if not os.path.exists(sourceDir):
@@ -132,6 +139,10 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcat
                             torhash.strip(), tryint(torsize.strip()))
         o = Torcp()
         o.main(argv, eo)
+
+        if CONFIG.notifyPlex:
+            callNotifyPlex(torhash)
+
         return 200
     return 401
 

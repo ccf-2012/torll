@@ -29,6 +29,7 @@ class configData():
     basicAuthPass = ''
     rcpshfile = ''
     symbolink = ''
+    notifyPlex = False
 
 
 CONFIG = configData()
@@ -82,6 +83,7 @@ def readConfig(cfgFile):
         CONFIG.lang = config['TORCP'].get('lang', 'cn,ja,ko')
         CONFIG.genre = config['TORCP'].get('genre', '')
         CONFIG.symbolink = config['TORCP'].get('symbolink', '')
+        CONFIG.notifyPlex = config['TORCP'].getboolean('notifyPlex', False)
 
     if 'QBIT' in config:
         CONFIG.qbServer = config['QBIT'].get('server_ip', '')
@@ -140,6 +142,7 @@ def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, genre, tmdb_
     config.set('TORCP', 'lang', lang)
     config.set('TORCP', 'genre', genre)
     config.set('TORCP', 'symbolink', symbolink)
+    # config.set('TORCP', 'notifyPlex', notfiyPlex)
     if not config.has_section('TMDB'):
         config.add_section('TMDB')
     config.set('TMDB', 'api_key', tmdb_api_key)
@@ -153,6 +156,7 @@ def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, genre, tmdb_
     CONFIG.genre = config['TORCP'].get('genre', '')
     CONFIG.tmdb_api_key = config['TMDB'].get('api_key', '')
     CONFIG.symbolink = config['TORCP'].get('symbolink', '')
+    CONFIG.notifyPlex = config['TORCP'].getboolean('notifyPlex', False)
 
 
 def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun, dockerFrom, dockerTo):

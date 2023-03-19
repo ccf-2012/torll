@@ -10,23 +10,9 @@ MAX_RETRY = 5
 
 # sectionMatchList = [('TV/cn', '中文剧集'), ('TV/ja', '日韩剧集'), ('TV/ko', '日韩剧集'), ('TV/other', '剧集'), ('Movie/cn', '中文电影'), ('Movie', '电影')]
 
-
-def loadArgs():
-    parser = argparse.ArgumentParser(description='Notify plex server to add a file/folder.')
-    parser.add_argument('-I', '--info-hash', type=str, required=True, help='info hash of the torrent.')
-    parser.add_argument('-C', '--config', help='config file.')
-
-    global ARGS
-    ARGS = parser.parse_args()
-    if not ARGS.config:
-        ARGS.config = os.path.join(os.path.dirname(__file__), 'config.ini')
-
-
-def main():
-    loadArgs()
-    readConfig(ARGS.config)
+def notifyPlex(hash):
     plexSrv = PlexServer(CONFIG.plexServer, CONFIG.plexToken)
-    mediaItem = queryByHash(ARGS.info_hash)
+    mediaItem = queryByHash(hash)
 
     if mediaItem and plexSrv:
         mediaPath = mediaItem.location.strip()
@@ -55,7 +41,24 @@ def main():
         else:
             print("Can't find the library section: " + ARGS.library)
     else:
-        print("Info hash not found/Plex server not connected. ")
+        print("Info hash not found/Plex server not connected. ")    
+
+
+def loadArgs():
+    parser = argparse.ArgumentParser(description='Notify plex server to add a file/folder.')
+    parser.add_argument('-I', '--info-hash', type=str, required=True, help='info hash of the torrent.')
+    parser.add_argument('-C', '--config', help='config file.')
+
+    global ARGS
+    ARGS = parser.parse_args()
+    if not ARGS.config:
+        ARGS.config = os.path.join(os.path.dirname(__file__), 'config.ini')
+
+
+def main():
+    loadArgs()
+    readConfig(ARGS.config)
+    notifyPlex(ARGS.info_hash)
 
 
 if __name__ == '__main__':
