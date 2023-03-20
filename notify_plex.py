@@ -4,6 +4,9 @@ from myconfig import CONFIG, readConfig
 import argparse
 import os
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 MAX_RETRY = 5
@@ -20,28 +23,28 @@ def notifyPlex(hash):
         if libtup:
             lib = plexSrv.library.section(libtup[0])
         else:
-            print("Can't match any library: " + mediaPath)
+            logger.info("Can't match any library: " + mediaPath)
             return 
 
         if lib:
             for n in range(MAX_RETRY):
                 try:
-                    print(mediaPath)
+                    logger.info(mediaPath)
                     lib.update(path=os.path.join(CONFIG.plexRootDir, mediaPath))
                     break
                 except Exception as e:
                     if n < MAX_RETRY:
-                        print('Fail: lib.update' + str(e))
-                        print('retry %d time.' % (n+1))
+                        logger.info('Fail: lib.update' + str(e))
+                        logger.info('retry %d time.' % (n+1))
                         time.sleep(30)
                     else:
-                        print('Error: MAX_RETRY(%d) times' % (MAX_RETRY))
+                        logger.info('Error: MAX_RETRY(%d) times' % (MAX_RETRY))
                         os._exit(1)
                 
         else:
-            print("Can't find the library section: " + ARGS.library)
+            logger.info("Can't find the library section: " + ARGS.library)
     else:
-        print("Info hash not found/Plex server not connected. ")    
+        logger.info("Info hash not found/Plex server not connected. ")    
 
 
 def loadArgs():
@@ -62,4 +65,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,  format='%(asctime)s %(levelname)s %(funcName)s %(message)s')
     main()

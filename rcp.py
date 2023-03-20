@@ -5,6 +5,9 @@ from myconfig import readConfig, CONFIG
 import argparse
 import re
 import qbfunc
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def extractIMDbFromTag(tagstr):
@@ -53,7 +56,7 @@ def callNotifyPlex(hash):
 def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
     if sourceDir:
         if not os.path.exists(sourceDir):
-            print('File/Dir not exists: ' + sourceDir)
+            logger.warning('File/Dir not exists: ' + sourceDir)
             return "", '', None
         # torimdb = extractIMDbFromTag(tortag)
         # rootdir, site_id_imdb = getSiteIdDirName(sourceDir, savepath)
@@ -101,9 +104,9 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcat
 
     if torpath and torhash:
         if not os.path.exists(torpath):
-            print('File/Dir not exists: ' + torpath)
+            logger.warning('File/Dir not exists: ' + torpath)
             return 402
-        print("torpath: %s, torhash: %s, torsize: %s, tortag: %s, savepath: %s" %
+        logger.info("torpath: %s, torhash: %s, torsize: %s, tortag: %s, savepath: %s" %
             (torpath, torhash, torsize, tortag, savepath))
         torimdb = extractIMDbFromTag(tortag)
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
@@ -141,6 +144,7 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcat
         o.main(argv, eo)
 
         if CONFIG.notifyPlex:
+            logger.info('callNotifyPlex')
             callNotifyPlex(torhash)
 
         return 200
@@ -189,4 +193,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,  format='%(asctime)s %(levelname)s %(funcName)s %(message)s')
     main()

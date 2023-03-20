@@ -26,6 +26,8 @@ import shutil
 from humanbytes import HumanBytes
 from http.cookies import SimpleCookie
 import sys
+import logging
+
 sys.path.insert(1, '../torcp/')
 from torcp.tmdbparser import TMDbNameParser
 
@@ -38,7 +40,7 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 auth = HTTPBasicAuth()
 scheduler = BackgroundScheduler(job_defaults={'max_instances': 2})
-
+logger = logging.getLogger(__name__)
 
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
     SITE_URL_PREFIX = {
@@ -75,7 +77,7 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
         if site:
             detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
         else:
-            print(f'No site config: {siteAbbrev}')
+            logger.info(f'No site config: {siteAbbrev}')
     return detailUrl if detailUrl else ''
 
 
@@ -131,7 +133,7 @@ class TorcpItemDBObj:
         self.torsize = torsize
 
     def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle, tmdbobj=None):
-        # print(targetDir, mediaName, tmdbIdStr, tmdbCat)
+        # logger.info("%s %s %s %s " % (targetDir, mediaName, tmdbIdStr, tmdbCat))
         t = TorMediaItem(torname=mediaName,
                          torsite=self.torsite,
                          title=tmdbTitle,
@@ -163,7 +165,7 @@ class TorcpItemCallbackObj:
         self.tmdbParser = None
 
     def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle, tmdbobj=None):
-        # print(targetDir, mediaName, tmdbIdStr, tmdbCat)
+        # logger.info("%s %s %s %s " % (targetDir, mediaName, tmdbIdStr, tmdbCat))
         self.tmdbid = int(tmdbIdStr)
         self.tmdbcat = tmdbCat
         self.mediaName = mediaName
@@ -300,7 +302,7 @@ def apiTorMediaDel():
         msg = 'success'
         destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
         if os.path.exists(destDir):
-            # print("Deleting ", destDir)
+            logger.info("Deleting: " + destDir)
             try:
                 shutil.rmtree(destDir)
                 deleted = True
@@ -499,7 +501,7 @@ def data():
 def runTorcpByHash():
     if 'torhash' in request.form:
         torhash = request.form['torhash'].strip()
-        print(torhash)
+        logger.info(torhash)
         torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(
             torhash)
         r = runRcp(torpath, torhash2, torsize, tortag, savepath, None)
@@ -1010,11 +1012,11 @@ def addTorrent(downloadLink, siteIdStr, imdbstr, qbCate=''):
         return 402
 
     if not myconfig.CONFIG.dryrun:
-        print("   >> Added: " + siteIdStr)
+        logger.info("   >> Added: " + siteIdStr)
         if not qbfunc.addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr, qbCate):
             return 400
     else:
-        print("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
+        logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
 
     return 201
 
@@ -1040,11 +1042,11 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, siteIdStr, imdbstr):
         return 402
 
     if not myconfig.CONFIG.dryrun:
-        print("   >> Added: " + siteIdStr)
+        logger.info("   >> Added: " + siteIdStr)
         if not qbfunc.addQbitFileWithTag(response.content, imdbstr, siteIdStr):
             return 400
     else:
-        print("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
+        logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
 
     return 201
 
@@ -1058,26 +1060,26 @@ def prcessRssFeeds(rsstask):
     for item in feed.entries:
         rssFeedSum += 1
         if not hasattr(item, 'id'):
-            print('RSS item: No id')
+            logger.info('RSS item: No id')
             continue
         if not hasattr(item, 'title'):
-            print('RSS item:  No title')
+            logger.info('RSS item:  No title')
             continue
         if not hasattr(item, 'link'):
-            print('RSS item:  No info link')
+            logger.info('RSS item:  No info link')
             continue
         if not hasattr(item, 'links'):
-            print('RSS item:  No download link')
+            logger.info('RSS item:  No download link')
             continue
         if len(item.links) <= 1:
-            print('RSS item:  No download link')
+            logger.info('RSS item:  No download link')
             continue
 
         if existsInRssHistory(item.title):
             # print("   >> exists in rss history, skip")
             continue
 
-        print("%d: %s (%s)" % (rssFeedSum, item.title,
+        logger.info("%d: %s (%s)" % (rssFeedSum, item.title,
                                datetime.now().strftime("%H:%M:%S")))
 
         dbrssitem = RSSHistory(site=rsstask.site,
@@ -1137,7 +1139,7 @@ def prcessRssFeeds(rsstask):
 
         rssDownloadLink = item.links[1]['href']
         dbrssitem.accept = 2
-        print('   %s (%s), %s' %
+        logger.info('   %s (%s), %s' %
               (imdbstr, HumanBytes.format(int(dbrssitem.size)), rssDownloadLink))
 
         if checkMediaDbNameDupe(item.title):
@@ -1165,7 +1167,7 @@ def prcessRssFeeds(rsstask):
     rsstask.accept_count += rssAccept
     db.session.commit()
 
-    print('RSS %s - Total: %d, Accepted: %d (%s)' %
+    logger.info('RSS %s - Total: %d, Accepted: %d (%s)' %
           (rsstask.site, rssFeedSum, rssAccept, datetime.now().strftime("%H:%M:%S")))
 
 
@@ -1235,15 +1237,14 @@ def jsApiDupeDownload():
             return jsonify({'TMDb Dupe': False}), r
 
     if not myconfig.CONFIG.dryrun:
-        print("Added: " + request.json['torname'])
+        logger.info("Added: " + request.json['torname'])
         r = addTorrent(downloadlink, siteIdStr, imdbstr)
         if r == 201:
             return jsonify({'Download': True}), 201
         else:
             abort(jsonify(message="failed add qbit"))
     else:
-        # print("DRYRUN: " + request.json['torname'])
-        print("DRYRUN: " + request.json['torname'] +
+        logger.info("DRYRUN: " + request.json['torname'] +
               "\n" + request.json['downloadlink'])
         return jsonify({'DRYRUN': True}), 205
 
@@ -1557,7 +1558,6 @@ def getTMDbInfo(dbtor):
     p = TMDbNameParser(myconfig.CONFIG.tmdb_api_key, tmdb_lang='zh-CN')
     tmdbid = searchTMDb(p, dbtor.tortitle, dbtor.imdbstr)
     genrestr = ''
-    # print(p.genre_ids)
     if p.genre_ids:
         for x in p.genre_ids:
             if x in GENRE_IDS:
@@ -1578,25 +1578,25 @@ def parseMediaSource(tortitle):
         return 'dvd'
     if re.search(r'AVC.*DTS|MPEG.*AVC', tortitle, re.I):
         return 'bluray'
-    print('unknow type: '+tortitle)
+    logger.info('unknow type: '+tortitle)
     return 'other'
 
 
 def getSiteTorrent(sitename, sitecookie, siteurl=None):
     cursite = siteconfig.getSiteConfig(sitename)
     if not cursite:
-        print(f'site {sitename} not configured')
+        logger.info(f'site {sitename} not configured')
         return -1  # site not configured
 
     if not siteurl:
         if 'newtorrent' in cursite:
             siteurl = cursite['baseurl'] + cursite['newtorrent']
     if not siteurl:
-        print("no newtorlink configured.")
+        logger.info("no newtorlink configured.")
         return -2
     doc = requestPtPage(siteurl, sitecookie)
     if not doc:
-        print('Failt to fetch: ' + siteurl)
+        logger.warning('Fail to fetch: ' + siteurl)
         return -3  # page not fetched
     parser = lxml.html.HTMLParser(recover=True, encoding='utf-8')
     htmltree = lxml.html.fromstring(doc, parser=parser)
@@ -1654,11 +1654,10 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
             dbitem)
         dbitem.site = sitename
 
-        # print(dbitem.__dict__)
         count += 1
         db.session.add(dbitem)
         db.session.commit()
-    print('SiteNew %s - added : %d (%s)' %
+    logger.info('SiteNew %s - added : %d (%s)' %
           (sitename, count, datetime.now().strftime("%H:%M:%S")))
     return count
 
@@ -1970,7 +1969,6 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         dbitem.site = sitehost
         dbitem.searchword = seachWord
 
-        # print(dbitem.__dict__)
         count += 1
         db.session.add(dbitem)
         db.session.commit()
@@ -2244,7 +2242,7 @@ def siteNewsJob():
             else:
                 dbsite.lastNewStatus = resultCount
             db.session.commit()
-            print(dbsite.site, resultCount)
+            logger.info(dbsite.site, resultCount)
 
 
 def rssJob(id):
@@ -2260,7 +2258,7 @@ def startApsScheduler():
         tasks = RSSTask.query
         for t in tasks:
             if not scheduler.get_job(str(t.id)):
-                print(t.rsslink)
+                logger.info(t.rsslink)
                 job = scheduler.add_job(rssJob, 'interval',
                                         args=[t.id],
                                         minutes=t.task_interval,
@@ -2321,4 +2319,10 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        filename=os.path.join(os.getcwd(), "torll.log"),
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+    )
     main()
