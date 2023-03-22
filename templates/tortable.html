@@ -78,7 +78,7 @@
             console.log(row.tmdbposter);
             if (row.tmdbposter) {
               var s = row.tmdbcat + '/' + row.tmdbid;
-              return '<a class="preview" title='+row.tmdbtitle+' href="https://image.tmdb.org/t/p/w200' + row.tmdbposter + '"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a>';
+              return '<a class="preview" title='+row.tmdbtitle+' href="https://image.tmdb.org/t/p/w200' + row.tmdbposter + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a>';
             }
             else return ''
           }
