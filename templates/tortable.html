@@ -58,7 +58,7 @@
   $(document).ready(function () {
     var table = $('#data').DataTable({
       language: DATATABLE_LANG,
-      ajax: '/api/data',
+      ajax: '/api/mediadblist',
       // "dom": `<'row'<'col-md-6'i><'col-md-6'f>>
       //       <'row'<'col-sm-12'tr>>
       //       <'row'<'col-md-5'l><'col-sm-12 col-md-7'p>>`,
@@ -75,9 +75,10 @@
           data: 'tmdbcat',
           "width": "5%",
           "render": function (data, type, row, meta) {
+            console.log(row.tmdbposter);
             if (row.tmdbposter) {
               var s = row.tmdbcat + '/' + row.tmdbid;
-              return '<a href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a>';
+              return '<a class="preview" title='+row.tmdbtitle+' href="https://image.tmdb.org/t/p/w200' + row.tmdbposter + '"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a>';
             }
             else return ''
           }
@@ -141,6 +142,19 @@
     });
 
   });
+  var xOffset = 10;
+    var yOffset = 30;
 
+    $("body").on("mouseover", ".preview", function (e) {
+        var c = ""; // this.title;
+        $("body").append("<p id='preview'><img src='" + this.href + "' alt='Image preview' />" + c + "</p>");
+        $("#preview")
+            .css("top", (e.pageY - xOffset) + "px")
+            .css("left", (e.pageX + yOffset) + "px")
+            .fadeIn("fast");
+    });
+    $("body").on("mouseout", ".preview", function () {
+        $('#preview').remove();
+    });
 </script>
 {% endblock %}

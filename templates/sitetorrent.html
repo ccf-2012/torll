@@ -118,7 +118,7 @@
                         // var titleLink = '<a href="#" onclick="tmdbTitleOnClick(\'' + row.tmdbtitle + '\');return false;">' + row.tmdbtitle+ '</a>';
 
                         return $('<tr/>')
-                            .append('<td > <a href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
+                            .append('<td > <a class="preview" title='+row.tmdbtitle+' href="https://image.tmdb.org/t/p/w200' + row.tmdbposter + '"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
                             .append('<td colspan="7"> <h6>' + row.tmdbtitle + ' (' + row.tmdbyear + ')' + '</h6><p>' + row.genrestr + '</td>')
                     }
                     else {
@@ -218,9 +218,22 @@
             }
 
         });
-
     });
+    var xOffset = 10;
+    var yOffset = 30;
 
+    $("body").on("mouseover", ".preview", function (e) {
+        var c = ""; // this.title;
+        $("body").append("<p id='preview'><img src='" + this.href + "' alt='Image preview' />" + c + "</p>");
+        $("#preview")
+            .css("top", (e.pageY - xOffset) + "px")
+            .css("left", (e.pageX + yOffset) + "px")
+            .fadeIn("fast");
+    });
+    $("body").on("mouseout", ".preview", function () {
+        $('#preview').remove();
+    });
+    
 </script>
 <script type="text/javascript" charset="utf8"
     src="https://cdn.datatables.net/rowgroup/1.3.0/js/dataTables.rowGroup.min.js"></script>

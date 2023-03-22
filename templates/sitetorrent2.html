@@ -2,18 +2,21 @@
 {% block stylesheet %}
 <!-- https://datatables.net/forums/discussion/32210/can-i-move-the-search-box-to-the-left -->
 <style>
-.dataTables_filter {
-   float: left !important;
-}
-tr.dtrg-group,
+    .dataTables_filter {
+        float: left !important;
+    }
+
+    tr.dtrg-group,
     tr.dtrg-group:hover {
         background-color: rgb(219 223 229) !important;
     }
+
     .dataTables_filter {
-   float: left !important;
-}  
-/* https://stackoverflow.com/questions/61514711/trying-to-remove-cell-border-on-a-data-table-but-the-tag-cell-border-is-not-w */
-/* #data {
+        float: left !important;
+    }
+
+    /* https://stackoverflow.com/questions/61514711/trying-to-remove-cell-border-on-a-data-table-but-the-tag-cell-border-is-not-w */
+    /* #data {
   border: none;
 }
 #data th {
@@ -53,33 +56,33 @@ tr.dtrg-group,
     </div>
 </div>
 <div class="row my-2 justify-content-center">
-        <div id="mediatag" class="btn-group btn-group-sm col-sm-10" role="group"
-            aria-label="Basic checkbox toggle button group">
-            <input type="checkbox" class="btn-check" id="movie" autocomplete="off">
-            <label class="btn btn-outline-primary" for="movie">电影</label>
-            <input type="checkbox" class="btn-check" id="tvshow" autocomplete="off">
-            <label class="btn btn-outline-primary" for="tvshow">剧集</label>
-            <input type="checkbox" class="btn-check" id="tagzz" autocomplete="off">
-            <label class="btn btn-outline-primary" for="tagzz">有中字</label>
-            <input type="checkbox" class="btn-check" id="taggy" autocomplete="off">
-            <label class="btn btn-outline-primary" for="taggy">无国语</label>
-            <input type="checkbox" class="btn-check" id="tvset" autocomplete="off">
-            <label class="btn btn-outline-primary" for="tvset">仅合集</label>
-            <input type="checkbox" class="btn-check" id="anime" autocomplete="off">
-            <label class="btn btn-outline-primary" for="anime">动画</label>
-            <input type="checkbox" class="btn-check" id="docu" autocomplete="off">
-            <label class="btn btn-outline-primary" for="docu">纪录</label>
-            <input type="checkbox" class="btn-check" id="comedy" autocomplete="off">
-            <label class="btn btn-outline-primary" for="comedy">喜剧</label>
-            <input type="checkbox" class="btn-check" id="music" autocomplete="off">
-            <label class="btn btn-outline-primary" for="music">音乐</label>
-            <input type="checkbox" class="btn-check" id="scifi" autocomplete="off">
-            <label class="btn btn-outline-primary" for="scifi">科幻</label>
-            <input type="checkbox" class="btn-check" id="fantasy" autocomplete="off">
-            <label class="btn btn-outline-primary" for="fantasy">奇幻</label>
-            <input type="checkbox" class="btn-check" id="history" autocomplete="off">
-            <label class="btn btn-outline-primary" for="history">历史</label>
-        </div>
+    <div id="mediatag" class="btn-group btn-group-sm col-sm-10" role="group"
+        aria-label="Basic checkbox toggle button group">
+        <input type="checkbox" class="btn-check" id="movie" autocomplete="off">
+        <label class="btn btn-outline-primary" for="movie">电影</label>
+        <input type="checkbox" class="btn-check" id="tvshow" autocomplete="off">
+        <label class="btn btn-outline-primary" for="tvshow">剧集</label>
+        <input type="checkbox" class="btn-check" id="tagzz" autocomplete="off">
+        <label class="btn btn-outline-primary" for="tagzz">有中字</label>
+        <input type="checkbox" class="btn-check" id="taggy" autocomplete="off">
+        <label class="btn btn-outline-primary" for="taggy">无国语</label>
+        <input type="checkbox" class="btn-check" id="tvset" autocomplete="off">
+        <label class="btn btn-outline-primary" for="tvset">仅合集</label>
+        <input type="checkbox" class="btn-check" id="anime" autocomplete="off">
+        <label class="btn btn-outline-primary" for="anime">动画</label>
+        <input type="checkbox" class="btn-check" id="docu" autocomplete="off">
+        <label class="btn btn-outline-primary" for="docu">纪录</label>
+        <input type="checkbox" class="btn-check" id="comedy" autocomplete="off">
+        <label class="btn btn-outline-primary" for="comedy">喜剧</label>
+        <input type="checkbox" class="btn-check" id="music" autocomplete="off">
+        <label class="btn btn-outline-primary" for="music">音乐</label>
+        <input type="checkbox" class="btn-check" id="scifi" autocomplete="off">
+        <label class="btn btn-outline-primary" for="scifi">科幻</label>
+        <input type="checkbox" class="btn-check" id="fantasy" autocomplete="off">
+        <label class="btn btn-outline-primary" for="fantasy">奇幻</label>
+        <input type="checkbox" class="btn-check" id="history" autocomplete="off">
+        <label class="btn btn-outline-primary" for="history">历史</label>
+    </div>
 
 </div>
 <div class="row my-3 justify-content-center">
@@ -176,6 +179,8 @@ tr.dtrg-group,
             }
         });
     }
+
+
     $(document).ready(function () {
         var groupColumn = 2;
         var table = $('#data').DataTable({
@@ -188,7 +193,7 @@ tr.dtrg-group,
             ajax: '/api/sitetorrentlist',
             // https://stackoverflow.com/questions/60421414/datatables-dom-positioning-bootstrap
             // https://datatables.net/forums/discussion/32210/can-i-move-the-search-box-to-the-left
-            "dom":'<"row"<"col-sm-6"f><"col-sm-6"p>>tr<"bottom"<"row"<"col-sm-6"i><"col-sm-6"p>>><"clear">',
+            "dom": '<"row"<"col-sm-6"f><"col-sm-6"p>>tr<"bottom"<"row"<"col-sm-6"i><"col-sm-6"p>>><"clear">',
             serverSide: true,
             order: [[7, 'desc']],
             rowGroup: {
@@ -200,7 +205,8 @@ tr.dtrg-group,
                         // var titleLink = '<a href="#" onclick="tmdbTitleOnClick(\'' + row.tmdbtitle + '\');return false;">' + row.tmdbtitle+ '</a>';
 
                         return $('<tr/>')
-                            .append('<td > <a href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
+                            .append('<td > <a class="preview" title='+row.tmdbtitle+' href="https://image.tmdb.org/t/p/w200' + row.tmdbposter + '" ><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
+                            // .append('<td > <a  href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
                             .append('<td colspan="7"> <h6>' + row.tmdbtitle + ' (' + row.tmdbyear + ')' + '</h6><p>' + row.genrestr + '</td>')
                     }
                     else {
@@ -301,11 +307,23 @@ tr.dtrg-group,
                     $('td', row).css('background-color', 'rgb(228 228 231)');
                 }
             }
-
         });
         // table.search('').columns().search('').draw();
     });
+    var xOffset = 10;
+    var yOffset = 30;
 
+    $("body").on("mouseover", ".preview", function (e) {
+        var c = ""; // this.title;
+        $("body").append("<p id='preview'><img src='" + this.href + "' alt='Image preview' />" + c + "</p>");
+        $("#preview")
+            .css("top", (e.pageY - xOffset) + "px")
+            .css("left", (e.pageX + yOffset) + "px")
+            .fadeIn("fast");
+    });
+    $("body").on("mouseout", ".preview", function () {
+        $('#preview').remove();
+    });
 </script>
 <script type="text/javascript" charset="utf8"
     src="https://cdn.datatables.net/rowgroup/1.3.0/js/dataTables.rowGroup.min.js"></script>

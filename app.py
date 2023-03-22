@@ -39,8 +39,9 @@ db = SQLAlchemy(app)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 auth = HTTPBasicAuth()
-scheduler = BackgroundScheduler(job_defaults={'max_instances': 2})
+scheduler = BackgroundScheduler(job_defaults={'max_instances': 3})
 logger = logging.getLogger(__name__)
+
 
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
     SITE_URL_PREFIX = {
@@ -117,6 +118,54 @@ class TorMediaItem(db.Model):
             'tmdbyear': self.tmdbyear,
             'location': self.location,
         }
+
+
+@app.route('/api/mediadblist')
+@auth.login_required
+def apiMediaDbList():
+    query = TorMediaItem.query
+
+    # search filter
+    search = request.args.get('search[value]')
+    if search:
+        query = query.filter(db.or_(
+            TorMediaItem.torname.like(f'%{search}%'),
+            TorMediaItem.location.like(f'%{search}%'),
+            TorMediaItem.title.like(f'%{search}%'),
+        ))
+    total_filtered = query.count()
+
+    # sorting
+    order = []
+    i = 0
+    while True:
+        col_index = request.args.get(f'order[{i}][column]')
+        if col_index is None:
+            break
+        col_name = request.args.get(f'columns[{col_index}][data]')
+        if col_name not in ['torname', 'torsite', 'addedon']:
+            col_name = 'addedon'
+        descending = request.args.get(f'order[{i}][dir]') == 'desc'
+        col = getattr(TorMediaItem, col_name)
+        if descending:
+            col = col.desc()
+        order.append(col)
+        i += 1
+    if order:
+        query = query.order_by(*order)
+
+    # pagination
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    query = query.offset(start).limit(length)
+
+    # response
+    return {
+        'data': [mediaitem.to_dict() for mediaitem in query],
+        'recordsFiltered': total_filtered,
+        'recordsTotal': TorMediaItem.query.count(),
+        'draw': request.args.get('draw', type=int),
+    }
 
 
 def initDatabase():
@@ -447,53 +496,6 @@ def editrcp():
 
     return render_template('editrcp.html', config_file=rcpsh_txt, msg=msg)
 
-
-@app.route('/api/data')
-@auth.login_required
-def data():
-    query = TorMediaItem.query
-
-    # search filter
-    search = request.args.get('search[value]')
-    if search:
-        query = query.filter(db.or_(
-            TorMediaItem.torname.like(f'%{search}%'),
-            TorMediaItem.location.like(f'%{search}%'),
-            TorMediaItem.title.like(f'%{search}%'),
-        ))
-    total_filtered = query.count()
-
-    # sorting
-    order = []
-    i = 0
-    while True:
-        col_index = request.args.get(f'order[{i}][column]')
-        if col_index is None:
-            break
-        col_name = request.args.get(f'columns[{col_index}][data]')
-        if col_name not in ['torname', 'torsite', 'addedon']:
-            col_name = 'addedon'
-        descending = request.args.get(f'order[{i}][dir]') == 'desc'
-        col = getattr(TorMediaItem, col_name)
-        if descending:
-            col = col.desc()
-        order.append(col)
-        i += 1
-    if order:
-        query = query.order_by(*order)
-
-    # pagination
-    start = request.args.get('start', type=int)
-    length = request.args.get('length', type=int)
-    query = query.offset(start).limit(length)
-
-    # response
-    return {
-        'data': [user.to_dict() for user in query],
-        'recordsFiltered': total_filtered,
-        'recordsTotal': TorMediaItem.query.count(),
-        'draw': request.args.get('draw', type=int),
-    }
 
 
 @app.route('/api/torcp2', methods=['POST'])
