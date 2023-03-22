@@ -2244,7 +2244,7 @@ def siteNewsJob():
             else:
                 dbsite.lastNewStatus = resultCount
             db.session.commit()
-            logger.info(dbsite.site, resultCount)
+            logger.info("%s : %s" % (dbsite.site, resultCount))
 
 
 def rssJob(id):
