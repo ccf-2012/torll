@@ -2078,12 +2078,10 @@ def apiSearchResultDownload():
 
 
 def siteCount(sitename):
-    # result = db.select([db.func.count()]).select_from(actor_table).scalar()
     return SiteTorrent.query.filter_by(site=sitename).count()
 
 def siteCountToday(sitename):
-    # result = db.select([db.func.count()]).select_from(actor_table).scalar()
-    return SiteTorrent.query.filter_by(site=sitename).filter(SiteTorrent.addedon > datetime.today()).count()
+    return SiteTorrent.query.filter_by(site=sitename).filter(SiteTorrent.addedon > datetime.now().date()).count()
 
 class PtSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -2107,7 +2105,7 @@ class PtSite(db.Model):
             'cookie': self.cookie,
             'lastResultCount': self.lastResultCount,
             'newTorCount': siteCount(self.site),
-            'lastNewStatus': self.lastNewStatus,
+            'lastNewStatus': siteCountToday(self.site),
         }
 
 
@@ -2238,11 +2236,9 @@ def siteNewsJob():
         for dbsite in sitelist:
             resultCount = getSiteTorrent(
                 dbsite.site, dbsite.cookie, siteurl=dbsite.siteNewLink)
+            dbsite.lastNewStatus = resultCount
             if resultCount > 0:
                 dbsite.newTorCount += resultCount
-                dbsite.lastNewStatus = 0
-            else:
-                dbsite.lastNewStatus = resultCount
             db.session.commit()
             logger.info("%s : %s" % (dbsite.site, resultCount))
 
