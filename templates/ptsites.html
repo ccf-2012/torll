@@ -198,7 +198,10 @@
                 },
                 {
                     data: 'site',
-                    "width": "20%"
+                    "width": "20%",
+                    "render": function (data, type, row) {
+                        return '<a href="' + row.siteNewLink + '" target="_blank">' + row.site + '</a>';
+                    }
                 },
                 {
                     data: 'newTorCount',
