@@ -1053,7 +1053,7 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, siteIdStr, imdbstr):
     return 201
 
 
-def prcessRssFeeds(rsstask):
+def processRssFeeds(rsstask):
     feed = feedparser.parse(rsstask.rsslink)
     rssFeedSum = 0
     rssAccept = 0
@@ -2289,7 +2289,7 @@ def rssJob(id):
         task = RSSTask.query.filter(RSSTask.id == id).first()
         if task:
             # print('Runing task: ' + task.rsslink)
-            prcessRssFeeds(task)
+            processRssFeeds(task)
 
 
 def startApsScheduler():
@@ -2361,7 +2361,8 @@ if __name__ == '__main__':
     logging.basicConfig(
         filename=os.path.join(os.getcwd(), "torll.log"),
         level=logging.INFO,
-        format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
+        # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
+        format='%(asctime)s : %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
     main()

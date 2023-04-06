@@ -25,6 +25,7 @@ class configData():
     bracket = ''
     tmdbLang = 'en'
     lang = 'cn,ja,ko'
+    genre = ''
     basicAuthUser = ''
     basicAuthPass = ''
     rcpshfile = ''
