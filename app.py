@@ -347,6 +347,7 @@ def apiTorMediaDel():
     torid = request.args.get('torid')
     tormedia = db.session.get(TorMediaItem, torid)
     deleted = False
+    msg = ''
     if tormedia:
         msg = 'success'
         destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
