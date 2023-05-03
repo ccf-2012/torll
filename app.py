@@ -61,6 +61,7 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
         'ttg': 'https://totheglory.im/t/',
         'team': 'https://kp.m-team.cc/details.php?id=',
         'mt': 'https://kp.m-team.cc/details.php?id=',
+        'piggo': 'https://piggo.me/details.php?id=',
     }
     detailUrl = ''
     if siteAbbrev in SITE_URL_PREFIX:
@@ -1967,7 +1968,10 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
         dbitem.torsizestr = xpathGetElement(row, cursite, "torsize")
         tordatestr = xpathGetElement(row, cursite, "tordate")
-        dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
+        try:
+            dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
+        except:
+            dbitem.tordate = 0
 
         dbitem.site = sitehost
         dbitem.searchword = seachWord
