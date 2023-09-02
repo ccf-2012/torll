@@ -5,7 +5,7 @@ torcp>=0.60
 plexapi
 flask
 qbittorrent-api
-tmdbv3api>=1.7.7
+tmdbv3api==1.7.7
 requests
 urllib3
 feedparser

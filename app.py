@@ -1966,7 +1966,7 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         dbitem.doubanid = xpathGetElement(row, cursite, "doubanid")
         dbitem.seednum = tryint(xpathGetElement(row, cursite, "seednum"))
         dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
-        dbitem.torsizestr = xpathGetElement(row, cursite, "torsize")
+        dbitem.torsizestr = str(xpathGetElement(row, cursite, "torsize")).strip()
         tordatestr = xpathGetElement(row, cursite, "tordate")
         try:
             dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
