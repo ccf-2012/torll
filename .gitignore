@@ -12,6 +12,8 @@ config.ini
 rcp.sh
 *.sh
 
+icon_cache/
+*.ico
 myTMDbParser*
 tt.py
 tt*.py

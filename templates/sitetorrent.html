@@ -134,6 +134,12 @@
                 {
                     data: 'site',
                     "width": "7%",
+                    "render": function (data, type, row, meta) {
+                        if (data) {
+                            var l1 = '<img style="float:right" alt="'+row.site+'" src="/static/icon_cache/'+row.site+'.ico" width="18" height="18">'
+                            return l1
+                        }
+                    }
                 },
                 {
                     data: 'tortitle',

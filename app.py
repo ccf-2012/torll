@@ -2094,6 +2094,7 @@ class PtSite(db.Model):
     last_update = db.Column(
         db.DateTime, default=datetime.now, onupdate=datetime.now)
     site = db.Column(db.String(32))
+    icopath = db.Column(db.String(256))
     cookie = db.Column(db.String(1024))
     siteNewLink = db.Column(db.String(256))
     siteNewCheck = db.Column(db.Boolean, default=True)
@@ -2107,6 +2108,7 @@ class PtSite(db.Model):
             'id': self.id,
             'last_update': self.last_update,
             'site': self.site,
+            'icopath': self.icopath,
             'cookie': self.cookie,
             'siteNewLink': self.siteNewLink,
             'lastResultCount': self.lastResultCount,
@@ -2160,7 +2162,11 @@ def apiGetSiteSetting():
         exists = db.session.query(PtSite.id).filter_by(
             site=sitehost).first() is not None
         if not exists:
-            dbsite = PtSite(site=r['site'], cookie=r['cookie'], siteNewLink=r['newtorlink'])
+            dbsite = PtSite(
+                site=r['site'], 
+                icopath=siteconfig.getSiteIcoPath(r['site']),
+                cookie=r['cookie'], 
+                siteNewLink=r['newtorlink'])
             db.session.add(dbsite)
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()

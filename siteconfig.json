@@ -662,37 +662,6 @@
         "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
         "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
         "tordate" : "string(concat(.//td[contains(@class,'rowfollow')][4]/text()[1], ' ', .//td[contains(@class,'rowfollow')][4]/text()[2]))"
-      },
-      {
-        "site": "lemonhd",
-        "torlist": "//table[contains(@class,'torrents')]/tr",
-        "tortitle": "string(.//div/a[contains(@href,'details')])",
-        "infolink": "string(.//div/a[contains(@href,'details')]/@href)",
-        "downlink": "string(.//td/a[contains(@href,'download')]/@href)",
-        "subtitle": "string(.//div/a[contains(@href,'details')]/parent::div/following-sibling::div)",
-        "baseurl": "https://lemonhd.org/",
-        "searchurl": "torrents.php?search=",
-        "searchIMDburl": "torrents.php?search_area=4&search=",
-        "newtorrent": "torrents_new.php",
-        "tagzz": ".//span[contains(@class, 'tag_zz')]",
-        "taggy": ".//span[contains(@class, 'tag_gy')]",
-        "tagfree": ".//div[contains(text(), '免费剩余')]",
-        "tag2xfree": "",
-        "tag50off": "",
-        "doubanval": "string(.//a[contains(@href,'douban')])",
-        "imdbval": "string(.//a[contains(@href,'imdb')])",
-        "imdbstr": {
-          "path": "string(.//a[contains(@href,'imdb')]/@href)",
-          "method": "re_imdb"
-        },
-        "doubanid": {
-          "path": "string(.//a[contains(@href,'douban')]/@href)",
-          "method": "re_douban"
-        },
-        "seednum": "string(.//td[contains(@class,'rowfollow')][7])",
-        "downnum": "string(.//td[contains(@class,'rowfollow')][8])",
-        "torsize": "string(.//td[contains(@class,'rowfollow')][6])",
-        "tordate" : "string(.//td[contains(@class,'rowfollow')][5]//@title)"
       }
     ]
   }
