@@ -22,7 +22,7 @@
             </span>
         </div>
         <form class="row form-horizontal" method="post">
-            <div class="input-group mb-1">
+            <div class="input-group mb-12">
                 <div class="col-sm-2">
                     <label class="visually-hidden" for="site">选择站点</label>
                     <select class="form-select" id="site">
@@ -44,14 +44,26 @@
                 <div class="form-check form-switch col-sm-2">
                     <input id="autoupdate"  class="form-check-input" style="margin: 12px 3px;" type="checkbox" role="switch" checked>
                     <label class="form-check-label " style="margin: 8px 3px;" for="autoupdate">自动刷新</label>
-                  </div>
-                <div class="col-sm-1">
-                    <button id='savecookie' class="btn btn-primary" type="button">
+                </div>
+                <div class="col-sm-2">
+                    <button id='savecookie' class="btn btn-outline-primary " type="button">
                         <span id="busy" role="status" aria-hidden="true"></span>
-                        保存
+                        添加站点
                     </button>
                 </div>
-
+            </div>
+            
+            <div class="input-group mb-1">
+                <div class="col-sm-12">
+                    <button id='searchallsites' class="btn btn-outline-primary btn-sm" type="button">
+                        <span id="busy2" role="status" aria-hidden="true"></span>
+                        一键从本机Cookie导入全部站点
+                    </button>
+                    <button id='delallsites' class="btn btn-outline-danger btn-sm" type="button">
+                        <span id="busy3" role="status" aria-hidden="true"></span>
+                        全部删除
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -82,6 +94,46 @@
 
 {% block script %}
 <script>
+    $('#delallsites').click(function() {
+        $("#busy3").addClass("spinner-border spinner-border-sm")
+        $('#searchallsites').prop('disabled', true);
+        $.ajax({
+            url: '/api/delallsites',
+            type: 'post',
+            // data : dict,
+            // data: JSON.stringify(dict),
+            contentType: "application/json",
+            // dataType: "json",        
+            success: function (response) {
+                // t = JSON.parse(response)
+                $('#data').DataTable().ajax.reload();
+            },
+            complete: function (xhr, textStatus) {
+                $('#searchallsites').prop('disabled', false);
+                $("#busy3").removeClass("spinner-border spinner-border-sm");
+            },
+        });
+    });
+
+    $('#searchallsites').click(function() {
+        $("#busy2").addClass("spinner-border spinner-border-sm")
+        $('#searchallsites').prop('disabled', true);
+        $.ajax({
+            url: '/api/searchsites',
+            type: 'get',
+            // data : dict,
+            // data: JSON.stringify(dict),
+            contentType: "application/json",
+            // dataType: "json",        
+            success: function (response) {
+                $('#data').DataTable().ajax.reload();
+            },
+            complete: function (xhr, textStatus) {
+                $('#searchallsites').prop('disabled', false);
+                $("#busy2").removeClass("spinner-border spinner-border-sm");
+            },
+        });
+    });
     $('#savecookie').click(function () {
         $("#busy").addClass("spinner-border spinner-border-sm")
         $('#savecookie').prop('disabled', true);
@@ -224,7 +276,7 @@
                 },
                 {
                     data: 'site',
-                    "width": "20%",
+                    // "width": "20%",
                     "render": function (data, type, row) {
                         var l1 = '<img style="float:left;margin-right: 15px" alt="'+row.site+'" src="/static/icon_cache/'+row.site+'.ico" width="22" height="22">'
                         return l1 + '<a href="' + row.siteNewLink + '" target="_blank">' + row.site + '</a>';
@@ -232,14 +284,15 @@
                 },
                 {
                     data: 'newTorCount',
-                    "width": "15%"
+                    "width": "10%"
                 },
                 {
                     data: 'lastNewStatus',
-                    "width": "15%"
+                    "width": "10%"
                 },
                 {
                     data: "auto_update",
+                    "width": "10%",
                     className: "dt-body-center text-center",
                     render: function(data, type, row) {
                     if (data ) {
@@ -260,7 +313,7 @@
                 },
                 {
                     data: 'id', searchable: false,
-                    "width": "18%",
+                    "width": "16%",
                     "render": function (data, type, row) {
                         // var linkDelete = '<a href="/sitedel/' + row.id + '">删除</a>';
                         var linkDelete = '<a href="#" onclick="deleteClick(\'' + row.site + '\');return false;">' + '删除' + '</a>';

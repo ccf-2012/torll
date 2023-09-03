@@ -26,9 +26,9 @@ import shutil
 from humanbytes import HumanBytes
 from http.cookies import SimpleCookie
 import sys
-import logging
+from loguru import logger
 
-sys.path.insert(1, '../torcp/')
+# sys.path.insert(1, '../torcp/')
 from torcp.tmdbparser import TMDbNameParser
 
 app = Flask(__name__)
@@ -40,7 +40,10 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 auth = HTTPBasicAuth()
 scheduler = BackgroundScheduler(job_defaults={'max_instances': 3})
-logger = logging.getLogger(__name__)
+
+logger.remove()
+logger.add(sys.stdout, format="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | - <level>{message}</level>")
+# logger.add(sys.stdout, format="<green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <level>{message}</level>")
 
 
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
@@ -1572,15 +1575,15 @@ def getTMDbInfo(dbtor):
 def parseMediaSource(tortitle):
     if re.search(r'remux', tortitle, re.I):
         return 'remux'
-    if re.search(r'web-?dl|web-?rip|hdtv', tortitle, re.I):
+    if re.search(r'(web-?dl|web-?rip|hdtv|\bweb\b)', tortitle, re.I):
         return 'webdl'
-    if re.search(r'encode|x265|x264', tortitle, re.I):
+    if re.search(r'(encode|x265|x264)', tortitle, re.I):
         return 'encode'
     if re.search(r'\b(blu-?ray|uhd|bdmv|BDRip)\b', tortitle, re.I):
         return 'bluray'
     if re.search(r'\b(dvdr|dvdrip|NTSC|DVD|DVDISO)\b', tortitle, re.I):
         return 'dvd'
-    if re.search(r'AVC.*DTS|MPEG.*AVC', tortitle, re.I):
+    if re.search(r'(AVC.*DTS|MPEG.*AVC)', tortitle, re.I):
         return 'bluray'
     logger.info('unknow type: '+tortitle)
     return 'other'
@@ -1595,9 +1598,12 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
     if not siteurl:
         if 'newtorrent' in cursite:
             siteurl = cursite['baseurl'] + cursite['newtorrent']
-    if not siteurl:
-        logger.info("no newtorlink configured.")
-        return -2
+    if not siteurl.startswith('https:'):
+        siteurl = cursite['baseurl'] + siteurl
+    # if not siteurl:
+    #     logger.warning("no newtorlink configured.")
+    #     return -2
+    logger.info(f"Loading new torrents: {sitename} - {siteurl}")
     doc = requestPtPage(siteurl, sitecookie)
     if not doc:
         logger.warning('Fail to fetch: ' + siteurl)
@@ -1605,6 +1611,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
     parser = lxml.html.HTMLParser(recover=True, encoding='utf-8')
     htmltree = lxml.html.fromstring(doc, parser=parser)
     torlist = htmltree.xpath(cursite["torlist"])
+    # logger.info(f"get {len(torlist)-1} items in page")
     count = 0
     for row in reversed(torlist):
         title = xpathGetElement(row, cursite, "tortitle")
@@ -2174,6 +2181,36 @@ def apiCheckAutoUpdate():
 
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
+@app.route('/api/delallsites/',  methods=['POST'])
+@auth.login_required
+def apiDelAllSites():
+    PtSite.query.delete()
+    db.session.commit()
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+
+
+
+@app.route('/api/searchsites/',  methods=['GET'])
+@auth.login_required
+def apiSearchCookiedSites():
+    for siteJson in siteconfig.PT_SITES:
+        r = siteconfig.fetchSiteIcon(siteJson['site'])
+        if not r:
+            logger.warning(f"can NOT connect to the {siteJson['site']}")
+        exists = db.session.query(PtSite.id).filter_by(
+            site=siteJson['site']).first() is not None
+        if not exists:
+            cookieStr = siteconfig.loadSavedCookies(siteJson)
+            dbsite = PtSite(
+                site=siteJson['site'], 
+                auto_update=False,
+                icopath=siteconfig.getSiteIcoPath(siteJson['site']),
+                cookie=cookieStr, 
+                siteNewLink=siteJson['baseurl'] + siteJson['newtorrent'])
+            db.session.add(dbsite)
+    db.session.commit()
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+
 
 @app.route('/api/sitesetting/',  methods=['GET', 'POST'])
 @auth.login_required
@@ -2195,8 +2232,9 @@ def apiGetSiteSetting():
                 siteNewLink=r['newtorlink'])
             db.session.add(dbsite)
             # 下载站点图标，保存在缓存目录(static/icon_cache)下
-            siteconfig.fetchSiteIcon(r['site'])
-
+            r = siteconfig.fetchSiteIcon(r['site'])
+            if not r:
+                logger.warning(f"can NOT connect to the {r['site']}")
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
             dbsite.cookie = r['cookie']
@@ -2315,13 +2353,14 @@ def siteNewsJob():
     with app.app_context():
         sitelist = PtSite.query
         for dbsite in sitelist:
-            resultCount = getSiteTorrent(
-                dbsite.site, dbsite.cookie, siteurl=dbsite.siteNewLink)
-            dbsite.lastNewStatus = resultCount
-            if resultCount > 0:
-                dbsite.newTorCount += resultCount
-            db.session.commit()
-            logger.info("%s : %s" % (dbsite.site, resultCount))
+            if dbsite.last_update:
+                resultCount = getSiteTorrent(
+                    dbsite.site, dbsite.cookie, siteurl=dbsite.siteNewLink)
+                dbsite.lastNewStatus = resultCount
+                if resultCount > 0:
+                    dbsite.newTorCount += resultCount
+                db.session.commit()
+                logger.info("%s : %s" % (dbsite.site, resultCount))
 
 
 def rssJob(id):
@@ -2337,7 +2376,7 @@ def startApsScheduler():
         tasks = RSSTask.query
         for t in tasks:
             if not scheduler.get_job(str(t.id)):
-                logger.info(t.rsslink)
+                logger.info(f"Start rss task: {t.rsslink}")
                 job = scheduler.add_job(rssJob, 'interval',
                                         args=[t.id],
                                         minutes=t.task_interval,
@@ -2346,6 +2385,7 @@ def startApsScheduler():
                 if t.active == 2:
                     job.pause()
 
+    logger.info("Start sitenew task")
     jobSiteNew = scheduler.add_job(siteNewsJob, 'interval',
                                    minutes=60,
                                    id='jobsitenew')

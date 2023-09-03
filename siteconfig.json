@@ -401,7 +401,7 @@
         "baseurl": "https://hhanclub.top/",
         "searchurl": "torrents.php?search=",
         "searchIMDburl": "torrents.php?search_area=4&search=",
-        "newtorrent": "torrents.php?team=1",
+        "newtorrent": "torrents.php",
         "tagzz": ".//span[contains(text(),'中字')]",
         "taggy": ".//span[contains(text(),'国语')]",
         "tagfree": ".//span[contains(@class, 'promotion-tag-free')]",

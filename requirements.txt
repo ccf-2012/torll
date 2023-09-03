@@ -12,3 +12,5 @@ feedparser
 wtforms
 apscheduler
 lxml
+loguru
+browser-cookie3

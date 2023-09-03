@@ -2,13 +2,14 @@
 {% block stylesheet %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowgroup/1.3.0/css/rowGroup.bootstrap5.min.css">
 <style>
+
     tr.dtrg-group,
     tr.dtrg-group:hover {
         background-color: rgb(219 223 229) !important;
     }
     .dataTables_filter {
-   float: left !important;
-}  
+    float: left !important;
+    }  
 </style>
 {% endblock %}
 {% block content %}
@@ -115,11 +116,15 @@
                     if (rows.data()[0].tmdbposter) {
                         var row = rows.data()[0];
                         var s = row.tmdbcat + '/' + row.tmdbid;
+                        // var imdblink = '<a  href="https://www.themoviedb.org/' + s + '" target="_blank"> TMDb </a>'
+                        var titleLink = '<a style="color: #1f1f1f" href="https://www.themoviedb.org/' + s + '" target="_blank">'+ row.tmdbtitle + ' (' + row.tmdbyear + ') </a>' 
                         // var titleLink = '<a href="#" onclick="tmdbTitleOnClick(\'' + row.tmdbtitle + '\');return false;">' + row.tmdbtitle+ '</a>';
 
                         return $('<tr/>')
+                            // .append('<td > <a  href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
                             .append('<td > <a class="preview" title='+row.tmdbtitle+' href="https://image.tmdb.org/t/p/w200' + row.tmdbposter + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
-                            .append('<td colspan="7"> <h6>' + row.tmdbtitle + ' (' + row.tmdbyear + ')' + '</h6><p>' + row.genrestr + '</td>')
+                            // .append('<td colspan="7"> <h6>' + row.tmdbtitle + ' (' + row.tmdbyear + ') ' +imdblink+ '</h6>'+'<p>' + row.genrestr + '</td>')
+                            .append('<td colspan="7"> <h6>' + titleLink+ '</h6>'+'<p>' + row.genrestr + '</td>')
                     }
                     else {
                         return $('<tr/>')
@@ -133,7 +138,7 @@
             columns: [
                 {
                     data: 'site',
-                    "width": "7%",
+                    "width": "4%",
                     "render": function (data, type, row, meta) {
                         if (data) {
                             var l1 = '<img style="float:right" alt="'+row.site+'" src="/static/icon_cache/'+row.site+'.ico" width="22" height="22">'
