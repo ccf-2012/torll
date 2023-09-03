@@ -9,13 +9,17 @@ cache_dir = os.path.join(os.path.dirname(__file__), 'static', "icon_cache")
 def getSiteIcoPath(sitename):
     return '/static/' + f"{sitename}.ico"
 
+def fetchSiteIcon(siteid):
+    siteJson = getSiteConfig(siteid)
+    if siteJson:
+        loadSiteIcon(siteJson)
 
-def loadSiteIcon(sitehost):
+def loadSiteIcon(siteJson):
     # cursite = getSiteConfig(sitehost)
-    icourl = sitehost['baseurl'] + 'favicon.ico'
+    icourl = siteJson['baseurl'] + 'favicon.ico'
     # 创建图标缓存目录
     os.makedirs(cache_dir, exist_ok=True)
-    icon_path = os.path.join(cache_dir, f"{sitehost['site']}.ico")
+    icon_path = os.path.join(cache_dir, f"{siteJson['site']}.ico")
     if not os.path.exists(icon_path):
         response = requests.get(icourl, timeout=5)
         with open(icon_path, "wb") as f:

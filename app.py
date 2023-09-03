@@ -11,7 +11,7 @@ from flask_httpauth import HTTPBasicAuth
 import myconfig
 import argparse
 from urllib.parse import urlparse
-from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField, SelectField
+from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField, SelectField,BooleanField
 from wtforms.validators import DataRequired, NumberRange
 from wtforms.widgets import PasswordInput
 import qbfunc
@@ -2094,6 +2094,7 @@ class PtSite(db.Model):
     last_update = db.Column(
         db.DateTime, default=datetime.now, onupdate=datetime.now)
     site = db.Column(db.String(32))
+    auto_update = db.Column(db.Boolean)
     icopath = db.Column(db.String(256))
     cookie = db.Column(db.String(1024))
     siteNewLink = db.Column(db.String(256))
@@ -2108,6 +2109,7 @@ class PtSite(db.Model):
             'id': self.id,
             'last_update': self.last_update,
             'site': self.site,
+            'auto_update': self.auto_update,
             'icopath': self.icopath,
             'cookie': self.cookie,
             'siteNewLink': self.siteNewLink,
@@ -2121,7 +2123,8 @@ class PtSiteForm(Form):
     site = SelectField(u'选择站点', choices=[
                        ('pterclub', 'PTerClub'), ('chdbits', 'CHDBits'), ('audiences', 'Audiences')])
     cookie = StringField('Cookie')
-    internlink = StringField('官种链接')
+    internlink = StringField('站新链接')
+    autoUpdate = BooleanField('自动刷新')
     submit = SubmitField("添加")
 
 
@@ -2150,6 +2153,28 @@ def apiSaveSearch():
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
+@app.route('/api/checkautoupdate/',  methods=['GET'])
+@auth.login_required
+def apiCheckAutoUpdate():
+    sitehost = request.args.get('site')
+    autoupdate = request.args.get('autoupdate') == 'true'
+    if not sitehost:
+        abort(jsonify(message="site not found"))
+
+    if sitehost.isdigit():
+        # dbsite = PtSite.query.get(sitehost)
+        dbsite = db.session.get(PtSite, sitehost)
+    else:
+        dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
+    if not dbsite:
+        return json.dumps({'success': False}), 201, {'ContentType': 'application/json'}
+
+    dbsite.auto_update = autoupdate
+    db.session.commit()
+
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+
+
 @app.route('/api/sitesetting/',  methods=['GET', 'POST'])
 @auth.login_required
 def apiGetSiteSetting():
@@ -2164,10 +2189,14 @@ def apiGetSiteSetting():
         if not exists:
             dbsite = PtSite(
                 site=r['site'], 
+                auto_update=r['autoupdate'],
                 icopath=siteconfig.getSiteIcoPath(r['site']),
                 cookie=r['cookie'], 
                 siteNewLink=r['newtorlink'])
             db.session.add(dbsite)
+            # 下载站点图标，保存在缓存目录(static/icon_cache)下
+            siteconfig.fetchSiteIcon(r['site'])
+
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
             dbsite.cookie = r['cookie']

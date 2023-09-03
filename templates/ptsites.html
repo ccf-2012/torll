@@ -22,7 +22,7 @@
             </span>
         </div>
         <form class="row form-horizontal" method="post">
-            <div class="input-group mb-3">
+            <div class="input-group mb-1">
                 <div class="col-sm-2">
                     <label class="visually-hidden" for="site">选择站点</label>
                     <select class="form-select" id="site">
@@ -33,14 +33,24 @@
                     </select>
                 </div>
 
-                <input id="cookie" type="text" class="form-control col-sm-5" placeholder="设置 Cookie"
+                <div class="col-sm-3">
+                    <input id="cookie" type="text" class="form-control col-sm-5" placeholder="设置 Cookie"
                     aria-label="设置 Cookie" aria-describedby="button-addon2">
-                <input id="newtorlink" type="text" class="form-control col-sm-5" placeholder="设置 站新链接"
-                aria-label="设置 站新链接" aria-describedby="button-addon2">
-                <button id='savecookie' class="btn btn-primary" type="button">
-                    <span id="busy" role="status" aria-hidden="true"></span>
-                    保存
-                </button>
+                </div>
+                <div class="col-sm-3">
+                    <input id="newtorlink" type="text" class="form-control col-sm-5" placeholder="设置 站新链接"
+                    aria-label="设置 站新链接" aria-describedby="button-addon2">
+                </div>
+                <div class="form-check form-switch col-sm-2">
+                    <input id="autoupdate"  class="form-check-input" style="margin: 12px 3px;" type="checkbox" role="switch" checked>
+                    <label class="form-check-label " style="margin: 8px 3px;" for="autoupdate">自动刷新</label>
+                  </div>
+                <div class="col-sm-1">
+                    <button id='savecookie' class="btn btn-primary" type="button">
+                        <span id="busy" role="status" aria-hidden="true"></span>
+                        保存
+                    </button>
+                </div>
 
             </div>
         </form>
@@ -57,6 +67,7 @@
                 <th>站点</th>
                 <th>入库种子</th>
                 <th>今日新种</th>
+                <th>自动刷新</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -75,7 +86,12 @@
         $("#busy").addClass("spinner-border spinner-border-sm")
         $('#savecookie').prop('disabled', true);
 
-        var dict = { site: $('#site').val(), cookie: $('#cookie').val(), newtorlink: $('#newtorlink').val() };
+        var dict = { 
+            site: $('#site').val(), 
+            cookie: $('#cookie').val(), 
+            newtorlink: $('#newtorlink').val(),
+            autoupdate: $('#autoupdate').is(':checked')
+        };
         $.ajax({
             url: '/api/sitesetting',
             type: 'post',
@@ -122,6 +138,16 @@
 
     })
 
+    function checkBoxClicked(ele, siteid) {
+        var checked = $(ele).is(':checked');
+        console.log(siteid)
+        $.ajax({
+            url: '/api/checkautoupdate',
+            type: 'get',
+            data: { site: siteid, autoupdate: checked },
+            contentType: "application/json",
+        });
+    }
     function editClick(id) {
         apiSiteSetting(id, 'edit')
     }
@@ -200,7 +226,8 @@
                     data: 'site',
                     "width": "20%",
                     "render": function (data, type, row) {
-                        return '<a href="' + row.siteNewLink + '" target="_blank">' + row.site + '</a>';
+                        var l1 = '<img style="float:left;margin-right: 15px" alt="'+row.site+'" src="/static/icon_cache/'+row.site+'.ico" width="22" height="22">'
+                        return l1 + '<a href="' + row.siteNewLink + '" target="_blank">' + row.site + '</a>';
                     }
                 },
                 {
@@ -212,6 +239,26 @@
                     "width": "15%"
                 },
                 {
+                    data: "auto_update",
+                    className: "dt-body-center text-center",
+                    render: function(data, type, row) {
+                    if (data ) {
+                        return '<input type="checkbox" class="form-check-input" onclick="checkBoxClicked(this, \'' + row.site + '\');" checked>';
+                    } else {
+                        return '<input type="checkbox" onclick="checkBoxClicked(this, \'' + row.site + '\');" class="form-check-input">';
+                    }
+                    return data;
+                    },
+
+                    // data: 'auto_update',
+                    // "width": "10%",
+                    // "render": function (data, type, row) {
+                    //     var switchUpdate = '<input id="autoupdate"  class="form-check-input" style="margin: 12px 3px;" type="checkbox" role="switch" checked>';
+                    //     // + '<label class="form-check-label " style="margin: 8px 3px;" for="autoupdate">自动刷新</label>';
+                    //     return switchUpdate;
+                    // },
+                },
+                {
                     data: 'id', searchable: false,
                     "width": "18%",
                     "render": function (data, type, row) {
@@ -219,6 +266,7 @@
                         var linkDelete = '<a href="#" onclick="deleteClick(\'' + row.site + '\');return false;">' + '删除' + '</a>';
                         var linkEdit = '<a href="#" onclick="editClick(\'' + row.site + '\');return false;">' + '编辑' + '</a>';
                         var linkRunOnce = '<a href="#" onclick="apiGetSiteTorrent(this, \'' + row.id + '\');return false;">' + '站新' + '</a>';
+
                         return linkEdit + " | " + linkDelete + " | " + linkRunOnce;
                     },
                 },
