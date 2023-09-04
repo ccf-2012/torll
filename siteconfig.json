@@ -106,7 +106,7 @@
         "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
       },
       {
-        "site": "redleaves",
+        "site": "leaves",
         "torlist": "//table[contains(@class,'torrents')]/tr",
         "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
         "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
