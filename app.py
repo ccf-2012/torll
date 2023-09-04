@@ -81,7 +81,7 @@ def genSiteLink(siteAbbrev, siteid, torname='', sitecat=''):
             if siteid:
                 detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
             else:
-                detailUrl = site['baseurl'] + 'search.php?' + torname
+                detailUrl = site['baseurl'] + 'search.php?search=' + torname
         else:
             logger.info(f'No site config: {siteAbbrev}')
     return detailUrl if detailUrl else ''
