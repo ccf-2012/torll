@@ -44,7 +44,7 @@ UPDATE_STATUS_BUSY = 1
 LOG_FILE_NAME = "torll.log"
 
 
-def genSiteLink(siteAbbrev, siteid, sitecat=''):
+def genSiteLink(siteAbbrev, siteid, torname='', sitecat=''):
     SITE_URL_PREFIX = {
         'pter': 'https://pterclub.com/details.php?id=',
         'pterclub': 'https://pterclub.com/details.php?id=',
@@ -81,7 +81,7 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
             if siteid:
                 detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
             else:
-                detailUrl = site['baseurl'] + 'search.php?' + siteAbbrev
+                detailUrl = site['baseurl'] + 'search.php?' + torname
         else:
             logger.info(f'No site config: {siteAbbrev}')
     return detailUrl if detailUrl else ''
@@ -113,7 +113,7 @@ class TorMediaItem(db.Model):
             'title': self.title,
             'addedon': self.addedon,
             'torabbrev': self.torsite,
-            'torsite': genSiteLink(self.torsite, self.torsiteid, self.tmdbcat),
+            'torsite': genSiteLink(self.torsite, self.torsiteid, self.torname, self.tmdbcat),
             'torsitecat': self.torsitecat,
             'torimdb': self.torimdb,
             'tmdbid': self.tmdbid,
