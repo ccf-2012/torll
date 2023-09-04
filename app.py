@@ -2435,7 +2435,7 @@ def startApsScheduler():
 
     logger.info("Start sitenew task")
     jobSiteNew = scheduler.add_job(siteNewsJob, 'interval',
-                                   minutes=60,
+                                   minutes=10,
                                    id='jobsitenew')
 
     scheduler.start()
