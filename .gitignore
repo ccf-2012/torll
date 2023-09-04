@@ -15,7 +15,6 @@ rcp.sh
 icon_cache/
 *.ico
 myTMDbParser*
-postcookie.py
 tt.py
 tt*.py
 
