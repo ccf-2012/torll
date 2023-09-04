@@ -459,6 +459,7 @@
         "doubanval": "",
         "imdbval": "string(.//a[contains(@class,'imdb')])",
         "imdbstr": "",
+        "doubanid": "",
         "seednum": "string(./td[6])",
         "downnum": "string(./td[7])",
         "torsize": "string(./td[5])",
