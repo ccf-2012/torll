@@ -1,6 +1,23 @@
 
 import qbittorrentapi
 import myconfig
+import urllib.parse
+
+def getTorrentFirstTracker(torrent):
+    noneTracker = {"url": "", "msg": ""}
+    firstTracker = next(
+        (tracker for tracker in torrent.trackers if tracker['status'] > 0), noneTracker)
+    return firstTracker
+
+def abbrevTracker(trackerstr):
+    hostnameList = urllib.parse.urlparse(trackerstr).netloc.split('.')
+    if len(hostnameList) == 2:
+        abbrev = hostnameList[0]
+    elif len(hostnameList) == 3:
+        abbrev = hostnameList[1]
+    else:
+        abbrev = ''
+    return abbrev
 
 
 def getTorrentByHash(torhash):
@@ -9,29 +26,27 @@ def getTorrentByHash(torhash):
 
     try:
         qbClient.auth_log_in()
-    except qbittorrentapi.LoginFailed as e:
-        print(e)
-        return '', '', '', '', ''
     except:
-        return '', '', '', '', ''
+        return '', '', '', '', '', ''
 
-    if not qbClient:
-        return '', '', '', '', ''
+    # if not qbClient:
+    #     return '', '', '', '', ''
 
-    try:
-        # torrent = qbClient.torrents_properties(torrent_hash=torhash)
-        torrent = qbClient.torrents_trackers(torrent_hash=torhash)
-    except:
-        print('Torrent hash NOT found.')
-        return '', '', '', '', ''
+    # try:
+    #     # torrent = qbClient.torrents_properties(torrent_hash=torhash)
+    #     torrent = qbClient.torrents_trackers(torrent_hash=torhash)
+    # except:
+    #     print('Torrent hash NOT found.')
+    #     return '', '', '', '', ''
 
     torlist = qbClient.torrents_info(torrent_hashes=torhash, limit=3)
-    if len(torlist) != 1:
+    if len(torlist) <= 0:
         print('Torrent hash NOT found.')
-        return '', '', '', '', ''
-
+        return '', '', '', '', '', ''
     torrent = torlist[0]
-    return torrent.content_path, torrent.hash, str(torrent.size), torrent.tags, torrent.save_path
+    tracker = getTorrentFirstTracker(torrent)
+
+    return torrent.content_path, torrent.hash, str(torrent.size), torrent.tags, torrent.save_path, abbrevTracker(tracker)
 
 
 def getAutoRunProgram():

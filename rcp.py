@@ -94,7 +94,7 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
     return '', '', None
 
 
-def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcatidstr=None):
+def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertHashDir, tmdbcatidstr=None):
     if (CONFIG.dockerFrom != CONFIG.dockerTo):
         if torpath.startswith(CONFIG.dockerFrom) and savepath.startswith(CONFIG.dockerFrom):
             torpath = torpath.replace(
@@ -112,6 +112,8 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcat
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
 
         site, siteid, torimdb = parseSiteId(site_id_imdb, torimdb)
+        if not site:
+            site = abbrevTracker
         if insertHashDir:
             targetDir = os.path.join(CONFIG.linkDir, torhash)
         else:
@@ -153,9 +155,9 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir, tmdbcat
 
 def torcpByHash(torhash):
     if torhash:
-        torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(torhash)
+        torpath, torhash2, torsize, tortag, savepath, tortracker = qbfunc.getTorrentByHash(torhash)
         r = runTorcp(torpath, torhash2, torsize, tortag,
-                     savepath, insertHashDir=ARGS.hash_dir, tmdbcatidstr=ARGS.tmdbcatid)
+                     savepath, abbrevTracker=tortracker, insertHashDir=ARGS.hash_dir, tmdbcatidstr=ARGS.tmdbcatid)
         return r
     else:
         print("set -I arg")
@@ -168,6 +170,7 @@ def loadArgs():
     parser.add_argument('-F', '--full-path', help='full torrent save path.')
     parser.add_argument('-I', '--info-hash', help='info hash of the torrent.')
     parser.add_argument('-D', '--save-path', help='qbittorrent save path.')
+    parser.add_argument('-T', '--tracker', help='torrent tracker.')
     parser.add_argument('-G', '--tag', help='tag of the torrent.')
     parser.add_argument('-Z', '--size', help='size of the torrent.')
     parser.add_argument('--hash-dir', action='store_true', help='create hash dir.') 
@@ -186,7 +189,7 @@ def main():
     readConfig(ARGS.config)
     if ARGS.full_path and ARGS.save_path:
         runTorcp(ARGS.full_path, ARGS.info_hash, ARGS.size,
-                 ARGS.tag, ARGS.save_path, 
+                 ARGS.tag, ARGS.save_path, abbrevTracker=ARGS.tracker,
                  insertHashDir=ARGS.hash_dir, tmdbcatidstr=ARGS.tmdbcatid)
     else:
         torcpByHash(ARGS.info_hash)

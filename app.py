@@ -78,7 +78,10 @@ def genSiteLink(siteAbbrev, siteid, sitecat=''):
     else:
         site = siteconfig.getSiteConfig(siteAbbrev)
         if site:
-            detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
+            if siteid:
+                detailUrl = site['baseurl'] + 'details.php?id=' + str(siteid)
+            else:
+                detailUrl = site['baseurl'] + 'search.php?' + siteAbbrev
         else:
             logger.info(f'No site config: {siteAbbrev}')
     return detailUrl if detailUrl else ''
@@ -507,9 +510,8 @@ def runTorcpByHash():
     if 'torhash' in request.form:
         torhash = request.form['torhash'].strip()
         logger.info(torhash)
-        torpath, torhash2, torsize, tortag, savepath = qbfunc.getTorrentByHash(
-            torhash)
-        r = runRcp(torpath, torhash2, torsize, tortag, savepath, None)
+        torpath, torhash2, torsize, tortag, savepath, tortracker = qbfunc.getTorrentByHash(torhash)
+        r = runRcp(torpath, torhash2, torsize, tortag, savepath, tortracker, None)
         if r == 200:
             return jsonify({'OK': 200}), 200
     return jsonify({'Error': 401}), 401
@@ -522,11 +524,10 @@ def runTorcpApi():
         torpath = request.json['torpath'].strip()
         torhash = request.json['torhash'].strip()
         torsize = request.json['torsize'].strip()
-        tortag = request.json['tortag'].strip(
-        ) if 'tortag' in request.json else ''
-        savepath = request.json['savepath'].strip(
-        ) if 'savepath' in request.json else ''
-        r = runRcp(torpath, torhash, torsize, tortag, savepath, None)
+        tortracker = request.json['tortracker'].strip() if 'tortracker' in request.json else ''
+        tortag = request.json['tortag'].strip() if 'tortag' in request.json else ''
+        savepath = request.json['savepath'].strip() if 'savepath' in request.json else ''
+        r = runRcp(torpath, torhash, torsize, tortag, savepath, tortracker, None)
         if r == 200:
             return jsonify({'OK': 200}), 200
     return jsonify({'Error': 401}), 401
@@ -2412,7 +2413,7 @@ def startApsScheduler():
     scheduler.print_jobs()
 
 
-def runRcp(torpath, torhash, torsize, tortag, savepath, tmdbcatid):
+def runRcp(torpath, torhash, torsize, tortag, savepath, tortracker, tmdbcatid):
     # if (myconfig.CONFIG.apiRunProgram == 'True') and (myconfig.CONFIG.dockerFrom != myconfig.CONFIG.dockerTo):
     #     if torpath.startswith(myconfig.CONFIG.dockerFrom) and savepath.startswith(myconfig.CONFIG.dockerFrom):
     #         torpath = torpath.replace(
@@ -2421,7 +2422,7 @@ def runRcp(torpath, torhash, torsize, tortag, savepath, tmdbcatid):
     #             myconfig.CONFIG.dockerFrom, myconfig.CONFIG.dockerTo, 1)
 
     import rcp
-    return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, insertHashDir=False, tmdbcatidstr=tmdbcatid)
+    return rcp.runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker=tortracker, insertHashDir=False, tmdbcatidstr=tmdbcatid)
 
 
 def loadArgs():

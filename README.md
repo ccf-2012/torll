@@ -276,6 +276,15 @@ python3 loadqb.py
 ```
 
 
+# sqlite table
+```sh
+# upload db.sqlite to server as db3.sqlite
+sqlite3 db.sqlite "drop table pt_site; drop table site_torrent; drop table  torrent_cache;"
+sqlite3 db3.sqlite ".dump pt_site" | sqlite3 db.sqlite
+sqlite3 db3.sqlite ".dump site_torrent" | sqlite3 db.sqlite
+sqlite3 db3.sqlite ".dump torrent_cache" | sqlite3 db.sqlite
+```
+
 ---
 to be cont.
 
