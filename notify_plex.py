@@ -22,7 +22,7 @@ def notifyPlex(hash):
         if libtup:
             lib = plexSrv.library.section(libtup[0])
         else:
-            logger.info("Can't match any library: " + mediaPath)
+            logger.info("Plex: Can't match any library: " + mediaPath)
             return 
 
         if lib:
