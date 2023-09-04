@@ -2246,8 +2246,8 @@ def apiGetSiteSetting():
             site=sitehost).first() is not None
         if not exists:
             # 下载站点图标，保存在缓存目录(static/icon_cache)下
-            r = siteconfig.fetchSiteIcon(r['site'])
-            if not r:
+            icosuccess = siteconfig.fetchSiteIcon(r['site'])
+            if not icosuccess:
                 logger.warning(f"can NOT connect to the {r['site']}")
 
             dbsite = PtSite(
