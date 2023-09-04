@@ -2239,6 +2239,7 @@ def apiGetSiteSetting():
     if request.method == 'POST':
         r = request.get_json()
         sitehost = r['site']
+        logger.info(f"POST /api/sitesetting/, {sitehost}")
         if '选择站点' in sitehost:
             abort(jsonify(message="not for this"))
 

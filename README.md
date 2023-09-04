@@ -275,6 +275,17 @@ python3 loadmb.py --init-library
 python3 loadqb.py
 ```
 
+# 从本地机器上获取cookie，并上传到自己的 server
+* 修改 `postcookie.py` 中以下几行
+```
+TORLL_SERVER = 'http://127.0.0.1:5006'
+TORLL_USER = 'admin'
+TORLL_PASS = 'server_pass'
+```
+* 然后运行：
+```sh
+python3 postcookie.py
+```
 
 # sqlite table
 ```sh
