@@ -319,11 +319,15 @@
                         var linkDelete = '<a href="#" onclick="deleteClick(\'' + row.site + '\');return false;">' + '删除' + '</a>';
                         var linkEdit = '<a href="#" onclick="editClick(\'' + row.site + '\');return false;">' + '编辑' + '</a>';
                         var linkRunOnce = '<a href="#" onclick="apiGetSiteTorrent(this, \'' + row.id + '\');return false;">' + '站新' + '</a>';
-
                         return linkEdit + " | " + linkDelete + " | " + linkRunOnce;
                     },
                 },
             ],
+            "createdRow": function (row, data, dataIndex) {
+                if (data.updateing > 0){
+                    $('td', row).css('background-color', 'rgb(254 243 199)');
+                }
+            },
             drawCallback: function (settings) {
                 var pagination = $(this).closest('.dataTables_wrapper').find('.dataTables_paginate');
                 pagination.toggle(this.api().page.info().pages > 1);

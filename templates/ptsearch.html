@@ -42,7 +42,7 @@
     <table id="data" class="display order-column" style="width:100%">
         <thead>
             <tr>
-                <th>站点</th>
+                <th>站</th>
                 <th>标题</th>
                 <th>IMDb</th>
                 <th>Size</th>
@@ -198,7 +198,13 @@
             columns: [
                 {
                     data: 'site',
-                    "width": "7%",
+                    "width": "4%",
+                    "render": function (data, type, row, meta) {
+                        if (data) {
+                            var l1 = '<img  alt="'+row.site+'" src="/static/icon_cache/'+row.site+'.ico" width="22" height="22">'
+                            return l1
+                        }
+                    }
                 },
                 {
                     data: 'tortitle',
@@ -229,9 +235,12 @@
                     }
                 },
                 {
-                    data: 'torsizestr',
-                    orderable: false, searchable: false,
-                    "width": "6%"
+                    data: 'torsizeint',
+                    searchable: false,
+                    "width": "6%",
+                    "render": function (data, type, row, meta) {
+                        return row.torsizestr
+                    }
                 },
                 {
                     data: 'seednum',

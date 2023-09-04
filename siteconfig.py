@@ -25,10 +25,10 @@ CACHE_DIR = os.path.join(os.path.dirname(__file__), 'static', "icon_cache")
 PT_SITES = loadSiteConfig()
 
 
-def getSiteIcoPath(sitename):
+def getSiteIcoPath(sitename: str) -> str:
     return '/static/' + f"{sitename}.ico"
 
-def fetchSiteIcon(siteid):
+def fetchSiteIcon(siteid: str) -> bool:
     r = False
     siteJson = getSiteConfig(siteid)
     if siteJson:
@@ -36,7 +36,7 @@ def fetchSiteIcon(siteid):
         r = loadSiteIcon(siteJson)
     return r
 
-def loadSiteIcon(siteJson):
+def loadSiteIcon(siteJson: json) -> bool:
     # cursite = getSiteConfig(sitehost)
     icourl = siteJson['baseurl'] + 'favicon.ico'
     # 创建图标缓存目录
@@ -57,7 +57,7 @@ def loadSiteIcon(siteJson):
         logger.info(f"exists ico : {icon_path}")
     return r   
 
-def loadSavedCookies(siteJson):
+def loadSavedCookies(siteJson : json) -> str:
     cookieStr = ''
     # siteJson = getSiteConfig(siteid)
     if siteJson:
@@ -72,7 +72,7 @@ def loadSavedCookies(siteJson):
     return cookieStr
 
 
-def getSiteConfig(sitename):
+def getSiteConfig(sitename : str) -> json:
     cursite = next((x for x in PT_SITES if x["site"] == sitename), None)
     return cursite
 

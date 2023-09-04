@@ -1,49 +1,47 @@
-
-from flask import Flask, render_template, jsonify, redirect
-from flask import request, abort
-import requests as pyrequests
+from flask import Flask, render_template, jsonify, redirect, request, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
-from datetime import datetime, timedelta
-import os
-import logging
 from flask_httpauth import HTTPBasicAuth
-import myconfig
-import argparse
-from urllib.parse import urlparse
+from http.cookies import SimpleCookie
 from wtforms import Form, StringField, RadioField, SubmitField, DecimalField, IntegerField, SelectField,BooleanField
 from wtforms.validators import DataRequired, NumberRange
 from wtforms.widgets import PasswordInput
-import qbfunc
 from apscheduler.schedulers.background import BackgroundScheduler
-import re
-import feedparser
 
-import siteconfig
+import os
+import re
+import sys
 import json
 import lxml.html
 import shutil
-from humanbytes import HumanBytes
-from http.cookies import SimpleCookie
-import sys
-from loguru import logger
+import argparse
+import requests as pyrequests
+import feedparser
+from urllib.parse import urlparse
+from datetime import datetime, timedelta
 
+import qbfunc
+import myconfig
+import siteconfig
+from humanbytes import HumanBytes, parseSizeStr
 # sys.path.insert(1, '../torcp/')
 from torcp.tmdbparser import TMDbNameParser
+
+from loguru import logger
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # app.config['SECRET_KEY'] = 'mykey'
 db = SQLAlchemy(app)
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+
 auth = HTTPBasicAuth()
 scheduler = BackgroundScheduler(job_defaults={'max_instances': 3})
 
-logger.remove()
-logger.add(sys.stdout, format="{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | - <level>{message}</level>")
-# logger.add(sys.stdout, format="<green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <level>{message}</level>")
+
+UPDATE_STATUS_IDLE = 0
+UPDATE_STATUS_BUSY = 1
+LOG_FILE_NAME = "torll.log"
 
 
 def genSiteLink(siteAbbrev, siteid, sitecat=''):
@@ -1337,6 +1335,7 @@ class SiteTorrent(db.Model):
     seednum = db.Column(db.Integer)
     downnum = db.Column(db.Integer)
     torsizestr = db.Column(db.String(16))
+    torsizeint = db.Column(db.Integer)
     tordate = db.Column(db.DateTime)
     dlcount = db.Column(db.Integer, default=0)
 
@@ -1360,6 +1359,7 @@ class SiteTorrent(db.Model):
             'seednum': self.seednum,
             'downnum': self.downnum,
             'torsizestr': self.torsizestr,
+            'torsizeint': self.torsizeint,
             'tordate': self.tordate,
             'tmdbtitle': self.tmdbtitle,
             'tmdbcat': self.tmdbcat,
@@ -1491,7 +1491,7 @@ def siteTorrentDataList():
         if col_index is None:
             break
         col_name = request.args.get(f'columns[{col_index}][data]')
-        if col_name not in ['tortitle', 'imdbstr', 'site', 'seednum', 'tordate', 'addedon']:
+        if col_name not in ['tortitle', 'imdbstr', 'site', 'seednum', 'tordate', 'addedon', 'torsizeint']:
             col_name = 'addedon'
         descending = request.args.get(f'order[{i}][dir]') == 'desc'
         col = getattr(SiteTorrent, col_name)
@@ -1545,7 +1545,6 @@ def apiGetSiteTorrent():
         dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
     if not dbsite:
         return json.dumps({'site': dbsite.site, 'resultCount': 0}), 200, {'ContentType': 'application/json'}
-
     resultCount = getSiteTorrent(dbsite.site, dbsite.cookie, dbsite.siteNewLink)
     if resultCount > 0:
         dbsite.newTorCount += resultCount
@@ -1600,6 +1599,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
             siteurl = cursite['baseurl'] + cursite['newtorrent']
     if not siteurl.startswith('https:'):
         siteurl = cursite['baseurl'] + siteurl
+    siteUpdateBegin(sitename)
     # if not siteurl:
     #     logger.warning("no newtorlink configured.")
     #     return -2
@@ -1619,7 +1619,6 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         if not infolink:
             continue
 
-        # TODO: same details id for different site
         exists = db.session.query(db.exists().where(
             (db.and_(SiteTorrent.infolink == infolink, SiteTorrent.site == sitename)))).scalar()
 
@@ -1655,6 +1654,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         dbitem.seednum = tryint(xpathGetElement(row, cursite, "seednum"))
         dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
         dbitem.torsizestr = xpathGetElement(row, cursite, "torsize")
+        dbitem.torsizeint = parseSizeStr(dbitem.torsizestr)
         tordatestr = xpathGetElement(row, cursite, "tordate")
         try:
             dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
@@ -1668,6 +1668,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
         count += 1
         db.session.add(dbitem)
         db.session.commit()
+    siteUpdateEnd(sitename)
     logger.info('SiteNew %s - added : %d (%s)' %
           (sitename, count, datetime.now().strftime("%H:%M:%S")))
     return count
@@ -1764,6 +1765,7 @@ class TorrentCache(db.Model):
     seednum = db.Column(db.Integer)
     downnum = db.Column(db.Integer)
     torsizestr = db.Column(db.String(16))
+    torsizeint = db.Column(db.Integer)
     tordate = db.Column(db.DateTime)
     dlcount = db.Column(db.Integer, default=0)
 
@@ -1788,6 +1790,7 @@ class TorrentCache(db.Model):
             'seednum': self.seednum,
             'downnum': self.downnum,
             'torsizestr': self.torsizestr,
+            'torsizeint': self.torsizeint,
             'tordate': self.tordate,
             'dlcount': self.dlcount,
         }
@@ -1819,7 +1822,7 @@ def searchResultData():
         if col_index is None:
             break
         col_name = request.args.get(f'columns[{col_index}][data]')
-        if col_name not in ['tortitle', 'site', 'seednum', 'tordate']:
+        if col_name not in ['tortitle', 'site', 'seednum', 'tordate', 'torsizeint']:
             col_name = 'id'
         descending = request.args.get(f'order[{i}][dir]') == 'desc'
         col = getattr(TorrentCache, col_name)
@@ -1974,6 +1977,7 @@ def xpathSearchPtSites(sitehost, siteCookie, seachWord):
         dbitem.seednum = tryint(xpathGetElement(row, cursite, "seednum"))
         dbitem.downnum = tryint(xpathGetElement(row, cursite, "downnum"))
         dbitem.torsizestr = str(xpathGetElement(row, cursite, "torsize")).strip()
+        dbitem.torsizeint = parseSizeStr(dbitem.torsizestr)
         tordatestr = xpathGetElement(row, cursite, "tordate")
         try:
             dbitem.tordate = datetime.strptime(tordatestr, "%Y-%m-%d %H:%M:%S")
@@ -2095,6 +2099,7 @@ def siteCount(sitename):
 def siteCountToday(sitename):
     return SiteTorrent.query.filter_by(site=sitename).filter(SiteTorrent.addedon > datetime.now().date()).count()
 
+
 class PtSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     addedon = db.Column(db.DateTime, default=datetime.now)
@@ -2102,6 +2107,7 @@ class PtSite(db.Model):
         db.DateTime, default=datetime.now, onupdate=datetime.now)
     site = db.Column(db.String(32))
     auto_update = db.Column(db.Boolean)
+    updateing = db.Column(db.Integer, default=0)
     icopath = db.Column(db.String(256))
     cookie = db.Column(db.String(1024))
     siteNewLink = db.Column(db.String(256))
@@ -2117,6 +2123,7 @@ class PtSite(db.Model):
             'last_update': self.last_update,
             'site': self.site,
             'auto_update': self.auto_update,
+            'updateing': self.updateing,
             'icopath': self.icopath,
             'cookie': self.cookie,
             'siteNewLink': self.siteNewLink,
@@ -2125,6 +2132,15 @@ class PtSite(db.Model):
             'lastNewStatus': siteCountToday(self.site),
         }
 
+def siteUpdateBegin(sitename : str):
+    dbsite = PtSite.query.filter(PtSite.site == sitename).first()
+    dbsite.updateing = UPDATE_STATUS_BUSY
+    db.session.commit()
+
+def siteUpdateEnd(sitename : str):
+    dbsite = PtSite.query.filter(PtSite.site == sitename).first()
+    dbsite.updateing = UPDATE_STATUS_IDLE
+    db.session.commit()
 
 class PtSiteForm(Form):
     site = SelectField(u'选择站点', choices=[
@@ -2224,6 +2240,11 @@ def apiGetSiteSetting():
         exists = db.session.query(PtSite.id).filter_by(
             site=sitehost).first() is not None
         if not exists:
+            # 下载站点图标，保存在缓存目录(static/icon_cache)下
+            r = siteconfig.fetchSiteIcon(r['site'])
+            if not r:
+                logger.warning(f"can NOT connect to the {r['site']}")
+
             dbsite = PtSite(
                 site=r['site'], 
                 auto_update=r['autoupdate'],
@@ -2231,10 +2252,6 @@ def apiGetSiteSetting():
                 cookie=r['cookie'], 
                 siteNewLink=r['newtorlink'])
             db.session.add(dbsite)
-            # 下载站点图标，保存在缓存目录(static/icon_cache)下
-            r = siteconfig.fetchSiteIcon(r['site'])
-            if not r:
-                logger.warning(f"can NOT connect to the {r['site']}")
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
             dbsite.cookie = r['cookie']
@@ -2343,7 +2360,7 @@ def tail(f, lines=1, _buffer=4098):
 
 @app.route('/logview')
 def logview():
-    with open("torll.log", "r") as f: 
+    with open(LOG_FILE_NAME, "r") as f: 
         lines = tail(f, 100)
     # return render_template('logview.html')
     return render_template("logview.html", content=''.join(lines))
@@ -2354,6 +2371,7 @@ def siteNewsJob():
         sitelist = PtSite.query
         for dbsite in sitelist:
             if dbsite.last_update:
+                logger.info(f"Start sitenew on: {dbsite.site}" )
                 resultCount = getSiteTorrent(
                     dbsite.site, dbsite.cookie, siteurl=dbsite.siteNewLink)
                 dbsite.lastNewStatus = resultCount
@@ -2436,13 +2454,16 @@ def main():
 # https://stackoverflow.com/questions/14874782/apscheduler-in-flask-executes-twice
     app.run(host='0.0.0.0', port=5006, debug=True, use_reloader=False)
 
-
 if __name__ == '__main__':
-    logging.basicConfig(
-        filename=os.path.join(os.getcwd(), "torll.log"),
-        level=logging.INFO,
-        # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
-        format='%(asctime)s : %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
-    )
+    import logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+    # app.logger.disabled = True
+    log.disabled = True
+
+    logger.remove()
+    formatstr = "{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | - <level>{message}</level>"
+    logger.add(sys.stdout, format=formatstr)
+    logger.add(LOG_FILE_NAME, format=formatstr, rotation="500 MB") 
+    # logger.add(sys.stdout, format="<green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <level>{message}</level>")
     main()

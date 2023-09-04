@@ -25,7 +25,6 @@
                 <th>站点</th>
                 <th>标题</th>
                 <th>TMDb标题</th>
-                <th>IMDb</th>
                 <th>Size</th>
                 <th>S/L</th>
                 <th>发布日期</th>
@@ -116,20 +115,28 @@
                     if (rows.data()[0].tmdbposter) {
                         var row = rows.data()[0];
                         var s = row.tmdbcat + '/' + row.tmdbid;
-                        // var imdblink = '<a  href="https://www.themoviedb.org/' + s + '" target="_blank"> TMDb </a>'
                         var titleLink = '<a style="color: #1f1f1f" href="https://www.themoviedb.org/' + s + '" target="_blank">'+ row.tmdbtitle + ' (' + row.tmdbyear + ') </a>' 
                         // var titleLink = '<a href="#" onclick="tmdbTitleOnClick(\'' + row.tmdbtitle + '\');return false;">' + row.tmdbtitle+ '</a>';
+                        var tmdbLink = '';
+                        if (row.tmdbid){
+                            tmdbLink = '<a  href="https://www.themoviedb.org/' + s + '" target="_blank"> <img src="/static/image/tmdb.svg" width="24" height="24"> </a>'
+                        }
+
+                        var imdbLink = '';
+                        if (row.imdbstr){
+                            imdbLink = '<a href="https://www.imdb.com/title/' + row.imdbstr + '" target="_blank"> <img src="/static/image/imdb.png" width="24" height="24"></a>';
+                        } 
 
                         return $('<tr/>')
                             // .append('<td > <a  href="https://www.themoviedb.org/' + s + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
                             .append('<td > <a class="preview" title='+row.tmdbtitle+' href="https://image.tmdb.org/t/p/w200' + row.tmdbposter + '" target="_blank"><img src="https://image.tmdb.org/t/p/w45' + row.tmdbposter + '"></a></td>')
                             // .append('<td colspan="7"> <h6>' + row.tmdbtitle + ' (' + row.tmdbyear + ') ' +imdblink+ '</h6>'+'<p>' + row.genrestr + '</td>')
-                            .append('<td colspan="7"> <h6>' + titleLink+ '</h6>'+'<p>' + row.genrestr + '</td>')
+                            .append('<td colspan="7"> <h6>' + row.tmdbtitle + '  '+tmdbLink+' ' +imdbLink+ '</h6>'+'<p>' + row.genrestr + '</td>')
                     }
                     else {
                         return $('<tr/>')
                             .append('<td >' + rows.data()[0].tmdbcat + '</td>')
-                            .append('<td colspan="7">' + rows.data()[0].tmdbtitle + '</td>');
+                            .append('<td colspan="7"> <h6>' + rows.data()[0].tmdbtitle + ' </h6> </td>');
 
                     }
                 },
@@ -148,7 +155,7 @@
                 },
                 {
                     data: 'tortitle',
-                    "width": "45%",
+                    // "width": "45%",
                     "render": function (data, type, row, meta) {
                         if (data) {
                             var l1 = '<a class="tortitle" href="' + row.infolink + '" target="_blank">' + row.tortitle + '</a>';
@@ -169,20 +176,23 @@
                     visible: false,
                     "width": "10%",
                 },
+                // {
+                //     data: 'imdbstr',
+                //     "width": "8%",
+                //     "render": function (data, type, row, meta) {
+                //         if (data) {
+                //             return '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbstr + '</a>';
+                //         }
+                //         else return ''
+                //     }
+                // },
                 {
-                    data: 'imdbstr',
-                    "width": "8%",
+                    data: 'torsizeint',
+                    searchable: false,
+                    "width": "6%",
                     "render": function (data, type, row, meta) {
-                        if (data) {
-                            return '<a href="https://www.imdb.com/title/' + data + '" target="_blank">' + row.imdbstr + '</a>';
-                        }
-                        else return ''
+                        return row.torsizestr
                     }
-                },
-                {
-                    data: 'torsizestr',
-                    orderable: false, searchable: false,
-                    "width": "6%"
                 },
                 {
                     data: 'seednum',

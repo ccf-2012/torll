@@ -1,6 +1,6 @@
 ## copy from github...
-##
 from typing import List, Union
+import re
 
 class HumanBytes:
     METRIC_LABELS: List[str] = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
@@ -46,3 +46,14 @@ class HumanBytes:
 
         return HumanBytes.PRECISION_FORMATS[precision].format("-" if is_negative else "", num, unit)
 
+
+# based on https://stackoverflow.com/a/42865957/2002471
+units = {"B": 1, "KB": 2**10, "MB": 2**20, "GB": 2**30, "TB": 2**40}
+
+def parseSizeStr(size):
+    size = size.upper()
+    #print("parsing size ", size)
+    if not re.match(r' ', size):
+        size = re.sub(r'([KMGT]?B)', r' \1', size)
+    number, unit = [string.strip() for string in size.split()]
+    return int(float(number)*units[unit])
