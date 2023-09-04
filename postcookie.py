@@ -5,7 +5,7 @@ import siteconfig
 
 TORLL_SERVER = 'http://127.0.0.1:5006'
 TORLL_USER = 'admin'
-TORLL_PASS = 'server_pass'
+TORLL_PASS = ''
 
 if __name__ == '__main__':
     logger.remove()
@@ -16,7 +16,7 @@ if __name__ == '__main__':
         cookiestr = siteconfig.loadSavedCookies(sitehost)
         data = {
             'site': sitehost['site'],
-            'autoupdate': False,
+            'auto_update': False,
             'update_interval': 30,
             'cookie': cookiestr,
             'newtorlink' : ''

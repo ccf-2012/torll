@@ -1598,7 +1598,7 @@ def getSiteTorrent(sitename, sitecookie, siteurl=None):
     if not siteurl:
         if 'newtorrent' in cursite:
             siteurl = cursite['baseurl'] + cursite['newtorrent']
-    if not siteurl.startswith('https:'):
+    if not siteurl.startswith('http'):
         siteurl = cursite['baseurl'] + siteurl
     siteUpdateBegin(sitename)
     # if not siteurl:
@@ -2108,6 +2108,7 @@ class PtSite(db.Model):
         db.DateTime, default=datetime.now, onupdate=datetime.now)
     site = db.Column(db.String(32))
     auto_update = db.Column(db.Boolean)
+    update_interval = db.Column(db.Integer, default=60)
     updateing = db.Column(db.Integer, default=0)
     icopath = db.Column(db.String(256))
     cookie = db.Column(db.String(1024))
@@ -2124,6 +2125,7 @@ class PtSite(db.Model):
             'last_update': self.last_update,
             'site': self.site,
             'auto_update': self.auto_update,
+            'update_interval': self.update_interval,
             'updateing': self.updateing,
             'icopath': self.icopath,
             'cookie': self.cookie,
@@ -2149,6 +2151,7 @@ class PtSiteForm(Form):
     cookie = StringField('Cookie')
     internlink = StringField('站新链接')
     autoUpdate = BooleanField('自动刷新')
+    updateInterval = IntegerField('刷新间隔 (分钟)')
     submit = SubmitField("添加")
 
 
@@ -2181,7 +2184,7 @@ def apiSaveSearch():
 @auth.login_required
 def apiCheckAutoUpdate():
     sitehost = request.args.get('site')
-    autoupdate = request.args.get('autoupdate') == 'true'
+    auto_update = request.args.get('auto_update') == 'true'
     if not sitehost:
         abort(jsonify(message="site not found"))
 
@@ -2193,7 +2196,7 @@ def apiCheckAutoUpdate():
     if not dbsite:
         return json.dumps({'success': False}), 201, {'ContentType': 'application/json'}
 
-    dbsite.auto_update = autoupdate
+    dbsite.auto_update = auto_update
     db.session.commit()
 
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
@@ -2232,6 +2235,11 @@ def apiSearchCookiedSites():
     db.session.commit()
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
+def strip_scheme_domain(url):
+    parsed = urlparse(url)
+    scheme_domain = f"{parsed.scheme}://{parsed.netloc}/"
+    return parsed.geturl().replace(scheme_domain, '', 1)
+
 
 @app.route('/api/sitesetting/',  methods=['GET', 'POST'])
 @auth.login_required
@@ -2250,18 +2258,24 @@ def apiGetSiteSetting():
             icosuccess = siteconfig.fetchSiteIcon(r['site'])
             if not icosuccess:
                 logger.warning(f"can NOT connect to the {r['site']}")
-
+            newurl = strip_scheme_domain(r['newtorlink'])
+            if not newurl:
+                site = siteconfig.getSiteConfig(r['site'])
+                newurl = site['newtorrent']
             dbsite = PtSite(
                 site=r['site'], 
-                auto_update=r['autoupdate'],
+                auto_update=r['auto_update'],
                 icopath=siteconfig.getSiteIcoPath(r['site']),
                 cookie=r['cookie'], 
-                siteNewLink=r['newtorlink'])
+                update_interval=r['update_interval'],
+                siteNewLink=newurl)
             db.session.add(dbsite)
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
             dbsite.cookie = r['cookie']
             dbsite.siteNewLink = r['newtorlink']
+            dbsite.auto_update = r['auto_update']
+            dbsite.update_interval = r['update_interval']
         db.session.commit()
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
@@ -2277,13 +2291,23 @@ def apiGetSiteSetting():
         else:
             dbsite = PtSite.query.filter(PtSite.site == sitehost).first()
         if not dbsite:
-            return json.dumps({'site': '', 'cookie':'', 'newtorlink':''}), 202, {'ContentType': 'application/json'}
+            return json.dumps({
+                'site': '', 
+                'cookie':'', 
+                'auto_update':False, 
+                'update_interval':99, 
+                'newtorlink':''}), 202, {'ContentType': 'application/json'}
 
         if op == 'delete':
             db.session.delete(dbsite)
             db.session.commit()
 
-        return json.dumps({'site': dbsite.site, 'cookie': dbsite.cookie, 'newtorlink': dbsite.siteNewLink}), 200, {'ContentType': 'application/json'}
+        return json.dumps({
+            'site': dbsite.site, 
+            'cookie': dbsite.cookie,
+            'auto_update': dbsite.auto_update,
+            'update_interval': dbsite.update_interval,
+            'newtorlink': dbsite.siteNewLink}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/api/sitelistdata')
@@ -2376,15 +2400,15 @@ def siteNewsJob():
     with app.app_context():
         sitelist = PtSite.query
         for dbsite in sitelist:
-            if dbsite.last_update:
-                logger.info(f"Start sitenew on: {dbsite.site}" )
-                resultCount = getSiteTorrent(
-                    dbsite.site, dbsite.cookie, siteurl=dbsite.siteNewLink)
-                dbsite.lastNewStatus = resultCount
-                if resultCount > 0:
-                    dbsite.newTorCount += resultCount
-                db.session.commit()
-                logger.info("%s : %s" % (dbsite.site, resultCount))
+            if dbsite.auto_update and (datetime.now()  > dbsite.last_update + timedelta(minutes=dbsite.update_interval)):
+                    logger.info(f"SiteNew start: {dbsite.site}" )
+                    resultCount = getSiteTorrent(
+                        dbsite.site, dbsite.cookie, siteurl=dbsite.siteNewLink)
+                    dbsite.lastNewStatus = resultCount
+                    if resultCount > 0:
+                        dbsite.newTorCount += resultCount
+                    db.session.commit()
+                    logger.info("%s : %s" % (dbsite.site, resultCount))
 
 
 def rssJob(id):
