@@ -2217,14 +2217,18 @@ def apiSearchCookiedSites():
         exists = db.session.query(PtSite.id).filter_by(
             site=siteJson['site']).first() is not None
         if not exists:
-            cookieStr = siteconfig.loadSavedCookies(siteJson)
-            dbsite = PtSite(
-                site=siteJson['site'], 
-                auto_update=False,
-                icopath=siteconfig.getSiteIcoPath(siteJson['site']),
-                cookie=cookieStr, 
-                siteNewLink=siteJson['baseurl'] + siteJson['newtorrent'])
-            db.session.add(dbsite)
+            try:
+                cookieStr = siteconfig.loadSavedCookies(siteJson)
+                dbsite = PtSite(
+                    site=siteJson['site'], 
+                    auto_update=False,
+                    icopath=siteconfig.getSiteIcoPath(siteJson['site']),
+                    cookie=cookieStr, 
+                    siteNewLink=siteJson['baseurl'] + siteJson['newtorrent'])
+                db.session.add(dbsite)
+            except:
+                logger.info(f"no cookie for {siteJson['site']}")
+                continue
     db.session.commit()
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
