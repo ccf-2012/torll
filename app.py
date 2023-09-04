@@ -113,7 +113,7 @@ class TorMediaItem(db.Model):
             'title': self.title,
             'addedon': self.addedon,
             'torabbrev': self.torsite,
-            'torsite': genSiteLink(self.torsite, self.torsiteid, self.torname, self.tmdbcat),
+            'torsitelink': genSiteLink(self.torsite, self.torsiteid, self.torname, self.tmdbcat),
             'torsitecat': self.torsitecat,
             'torimdb': self.torimdb,
             'tmdbid': self.tmdbid,
