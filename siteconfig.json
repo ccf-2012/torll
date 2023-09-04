@@ -26,13 +26,13 @@
         "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
       },
       {
-        "site": "chdbits",
+        "site": "ptchdbits",
         "torlist": "//table[@class='torrents']/tr",
         "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
         "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
         "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
         "subtitle": "string(.//*[contains(@class,'subtitle')])",
-        "baseurl": "https://chdbits.co/",
+        "baseurl": "https://ptchdbits.co/",
         "searchurl": "torrents.php?search=",
         "searchIMDburl": "torrents.php?search_area=4&search=",
         "newtorrent": "torrents.php?team3=1&team14=1&team13=1&team2=1&team12=1&team11=1&team8=1&team16=1",
