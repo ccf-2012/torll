@@ -187,7 +187,7 @@ class TorcpItemDBObj:
         self.torsize = torsize
 
     def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle, tmdbobj=None):
-        # logger.info("%s %s %s %s " % (targetDir, mediaName, tmdbIdStr, tmdbCat))
+        logger.info(f"{targetDir}, {mediaName}, {tmdbIdStr}, {tmdbCat}, {tmdbTitle}")
         t = TorMediaItem(torname=mediaName,
                          torsite=self.torsite,
                          title=tmdbTitle,

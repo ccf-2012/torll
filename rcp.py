@@ -1,13 +1,12 @@
 from app import TorcpItemDBObj, TorcpItemCallbackObj, initDatabase
 import os
+import sys
 from torcp.torcp import Torcp
 from myconfig import readConfig, CONFIG
 import argparse
 import re
 import qbfunc
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def extractIMDbFromTag(tagstr):
@@ -196,5 +195,7 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,  format='%(asctime)s %(levelname)s %(funcName)s %(message)s')
+    logger.remove()
+    formatstr = "{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | - <level>{message}</level>"
+    logger.add(sys.stdout, format=formatstr)
     main()

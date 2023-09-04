@@ -3,10 +3,9 @@ from plexapi.server import PlexServer
 from myconfig import CONFIG, readConfig
 import argparse
 import os
+import sys
 import time
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 MAX_RETRY = 5
@@ -65,5 +64,8 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,  format='%(asctime)s %(levelname)s %(funcName)s %(message)s')
+    logger.remove()
+    formatstr = "{time:YYYY-MM-DD HH:mm:ss} | <level>{level: <8}</level> | - <level>{message}</level>"
+    logger.add(sys.stdout, format=formatstr)
+
     main()
