@@ -2100,6 +2100,10 @@ def siteCount(sitename):
 def siteCountToday(sitename):
     return SiteTorrent.query.filter_by(site=sitename).filter(SiteTorrent.addedon > datetime.now().date()).count()
 
+def siteFullLink(sitename, siteNewLink):
+    site = siteconfig.getSiteConfig(sitename)
+    return site['baseurl'] + siteNewLink
+
 
 class PtSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -2127,7 +2131,7 @@ class PtSite(db.Model):
             'updateing': self.updateing,
             'icopath': self.icopath,
             'cookie': self.cookie,
-            'siteNewLink': self.siteNewLink,
+            'siteNewLink': siteFullLink(self.site, self.siteNewLink),
             'lastResultCount': self.lastResultCount,
             'newTorCount': siteCount(self.site),
             'lastNewStatus': siteCountToday(self.site),
