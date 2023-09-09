@@ -21,8 +21,8 @@
                 <h4>配置 PT 站点</h4>
             </span>
         </div>
-        <form class="row form-horizontal" method="post">
-            <div class="input-group mb-12">
+        <form  method="post">
+            <div class="row">
                 <div class="col-sm-2">
                     <label class="visually-hidden" for="site">选择站点</label>
                     <select class="form-select" id="site">
@@ -33,37 +33,43 @@
                     </select>
                 </div>
 
-                <div class="col-sm-3">
+                <div class="col-sm-5">
                     <input id="cookie" type="text" class="form-control col-sm-5" placeholder="设置 Cookie"
                     aria-label="设置 Cookie" aria-describedby="button-addon2">
                 </div>
-                <div class="col-sm-3">
+                <div class="col-sm-5">
                     <input id="newtorlink" type="text" class="form-control col-sm-5" placeholder="设置 站新链接"
-                    aria-label="设置 站新链接" aria-describedby="button-addon2">
-                </div>
-                <div class="form-check form-switch col-sm-2">
-                    <input id="autoupdate"  class="form-check-input" style="margin: 12px 3px;" type="checkbox" role="switch" checked>
-                    <label class="form-check-label " style="margin: 8px 3px;" for="autoupdate">自动刷新</label>
-                </div>
-                <div class="col-sm-2">
-                    <button id='savecookie' class="btn btn-outline-primary " type="button">
-                        <span id="busy" role="status" aria-hidden="true"></span>
-                        添加站点
-                    </button>
+                    aria-label="设置 站新链接" >
                 </div>
             </div>
-            
-            <div class="input-group mb-1">
-                <div class="col-sm-12">
-                    <!-- <button id='searchallsites' class="btn btn-outline-primary btn-sm" type="button">
-                        <span id="busy2" role="status" aria-hidden="true"></span>
-                        一键从本机Cookie导入全部站点
-                    </button> -->
-                    <button id='delallsites' class="btn btn-outline-danger btn-sm" type="button">
+            <div class="row my-3">
+                <div class="form-check form-switch col-sm-2">
+                    <input id="auto_update"  class="form-check-input" style="margin: 12px 3px;" type="checkbox" role="switch" checked>
+                    <label class="form-check-label " style="margin: 8px 3px;" for="auto_update">自动刷新</label>
+                </div>
+                <div class="col-sm-3">
+                    <input id="update_interval" type="text" class="form-control col-sm-5" placeholder="设置 刷新间隔 (分钟)"
+                    aria-label="设置 刷新间隔 (分钟)" >                    
+                </div>
+                <div class="col-sm">
+                    <button id='savecookie' class="btn btn-outline-primary " type="button">
+                        <span id="busy" role="status" aria-hidden="true"></span>
+                        修改站点设置
+                    </button>
+                    <button id='delallsites' class="btn btn-outline-danger" type="button">
                         <span id="busy3" role="status" aria-hidden="true"></span>
                         删除全部站点
                     </button>
                 </div>
+                <div class="col-sm-3">
+                    <!-- <button id='searchallsites' class="btn btn-outline-primary btn-sm" type="button">
+                        <span id="busy2" role="status" aria-hidden="true"></span>
+                        一键从本机Cookie导入全部站点
+                    </button> -->
+                </div>
+            </div>
+            
+            <div class="row my-3">
             </div>
         </form>
     </div>
@@ -80,6 +86,7 @@
                 <th>入库种子</th>
                 <th>今日新种</th>
                 <th>自动刷新</th>
+                <th>刷新间隔</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -142,7 +149,8 @@
             site: $('#site').val(), 
             cookie: $('#cookie').val(), 
             newtorlink: $('#newtorlink').val(),
-            autoupdate: $('#autoupdate').is(':checked')
+            auto_update: $('#auto_update').is(':checked'),
+            update_interval: $('#update_interval').val()
         };
         $.ajax({
             url: '/api/sitesetting',
@@ -178,6 +186,8 @@
                 t = JSON.parse(response)
                 $("#cookie").val(t.cookie)
                 $("#newtorlink").val(t.newtorlink)
+                $("#auto_update").prop('checked', t.auto_update)
+                $("#update_interval").val(t.update_interval)
                 $("#msg").hide()
             },
             complete: function (xhr, textStatus) {
@@ -196,7 +206,7 @@
         $.ajax({
             url: '/api/checkautoupdate',
             type: 'get',
-            data: { site: siteid, autoupdate: checked },
+            data: { site: siteid, auto_update: checked },
             contentType: "application/json",
         });
     }
@@ -224,6 +234,8 @@
                     $("#site").val(t.site);
                     $("#cookie").val(t.cookie);
                     $('#newtorlink').val(t.newtorlink);
+                    $("#auto_update").prop('checked', t.auto_update)
+                    $("#update_interval").val(t.update_interval)
                 }
             },
             complete: function (xhr, textStatus) {
@@ -306,10 +318,14 @@
                     // data: 'auto_update',
                     // "width": "10%",
                     // "render": function (data, type, row) {
-                    //     var switchUpdate = '<input id="autoupdate"  class="form-check-input" style="margin: 12px 3px;" type="checkbox" role="switch" checked>';
-                    //     // + '<label class="form-check-label " style="margin: 8px 3px;" for="autoupdate">自动刷新</label>';
+                    //     var switchUpdate = '<input id="auto_update"  class="form-check-input" style="margin: 12px 3px;" type="checkbox" role="switch" checked>';
+                    //     // + '<label class="form-check-label " style="margin: 8px 3px;" for="auto_update">自动刷新</label>';
                     //     return switchUpdate;
                     // },
+                },
+                {
+                    data: 'update_interval',
+                    "width": "10%"
                 },
                 {
                     data: 'id', searchable: false,
