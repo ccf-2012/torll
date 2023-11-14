@@ -101,6 +101,13 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertH
             savepath = savepath.replace(
                 CONFIG.dockerFrom, CONFIG.dockerTo, 1)
 
+    if not CONFIG.linkDir.strip():
+        logger.warning('config not set: link dir ')
+        return 401
+    if not CONFIG.tmdb_api_key.strip():
+        logger.warning('config not set: tmdb_api_key')
+        return 401
+
     if torpath and torhash:
         if not os.path.exists(torpath):
             logger.warning('File/Dir not exists: ' + torpath)
@@ -121,10 +128,11 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertH
                 "--tmdb-api-key", CONFIG.tmdb_api_key,
                 "--tmdb-lang", CONFIG.tmdbLang,
                 "--make-log",
-                CONFIG.bracket,
                 "-e", "srt",
                 "--extract-bdmv",
                 "--tmdb-origin-name"]
+        if CONFIG.bracket:
+            argv += [CONFIG.bracket]
         if CONFIG.lang:
             argv += ["--lang", CONFIG.lang]
         if CONFIG.genre:
