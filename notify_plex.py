@@ -20,7 +20,10 @@ def notifyPlex(hash):
         mediaPath = mediaItem.location.strip()
         libtup = next((g for g in CONFIG.plexSectionList if mediaPath.startswith(g[1])), None)
         if libtup:
-            lib = plexSrv.library.section(libtup[0])
+            try:
+                lib = plexSrv.library.section(libtup[0])
+            except:
+                logger.info("Plex: no library names: " + libtup[0])
         else:
             logger.info("Plex: Can't match any library: " + mediaPath)
             return 
