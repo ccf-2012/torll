@@ -88,6 +88,32 @@ def genSiteLink(siteAbbrev, siteid, torname='', sitecat=''):
     return detailUrl if detailUrl else ''
 
 
+
+def getSEInt(sestr):
+    m = sestr.match(f'\w+(\d+)')
+    if m:
+        return int(m.group(1))
+    else:
+        return 0 # unhandle
+
+def expandSeasonString(seasonStr):
+    if not seasonStr.match(r'S\d+-S\d+'):
+        return seasonStr
+    prefix, suffix = seasonStr.split("-")
+    start = getSEInt(prefix)
+    end = getSEInt(suffix)
+    expanded_list = [f"{prefix[:1]}{str(i).zfill(2)}" for i in range(start, end+1)]
+    return ",".join(expanded_list)
+
+def expandEpisodeString(episodeStr):
+    if not episodeStr.match(r'Ep?\d+-Ep?\d+'):
+        return episodeStr
+    prefix, suffix = episodeStr.split("-")
+    start = getSEInt(prefix)
+    end = getSEInt(suffix)
+    expanded_list = [f"{prefix[:1]}{str(i).zfill(2)}" for i in range(start, end+1)]
+    return ",".join(expanded_list)
+
 class TorMediaItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     addedon = db.Column(db.DateTime, default=datetime.now)
@@ -106,6 +132,10 @@ class TorMediaItem(db.Model):
     tmdbgenreids = db.Column(db.String(20))
     location = db.Column(db.String(256))
     plexid = db.Column(db.String(120))
+    season = db.Column(db.String(128))
+    episode = db.Column(db.String(128))
+    media = db.Column(db.String(16)) # disc, encode, remux, webdl
+    resolution = db.Column(db.String(16)) # 2160p, 1080p, 720p
 
     def to_dict(self):
         return {
@@ -123,6 +153,10 @@ class TorMediaItem(db.Model):
             'tmdbgenreids': self.tmdbgenreids,
             'tmdbyear': self.tmdbyear,
             'location': self.location,
+            'season': self.season,
+            'episode': self.episode,
+            'media': self.media,
+            'resolution': self.resolution,
         }
 
 
@@ -187,6 +221,7 @@ class TorcpItemDBObj:
         self.torhash = torhash
         self.torsize = torsize
 
+
     def onOneItemTorcped(self, targetDir, mediaName, tmdbIdStr, tmdbCat, tmdbTitle, tmdbobj=None):
         logger.info(f"{targetDir}, {mediaName}, {tmdbIdStr}, {tmdbCat}, {tmdbTitle}")
         t = TorMediaItem(torname=mediaName,
@@ -204,6 +239,10 @@ class TorcpItemDBObj:
             if tmdbobj.genre_ids:
                 t.tmdbgenreids = ','.join(str(e) for e in tmdbobj.genre_ids)
             t.tmdbyear = tmdbobj.year
+            t.resolution = tmdbobj.resolution
+            if tmdbobj.tmdbcat == 'tv':
+                t.season = expandSeasonString(tmdbobj.season)
+                t.edpisode = expandEpisodeString(tmdbobj.episode)
 
         with app.app_context():
             db.session.add(t)
@@ -895,7 +934,7 @@ def existsInRssHistory(torname):
     return exists
 
 
-def checkMediaDbExistsTMDb(torTMDbid, torTMDbCat):
+def checkMediaDbTMDbExists(torTMDbid, torTMDbCat):
     with app.app_context():
         exists = db.session.query(TorMediaItem.id).filter_by(
             tmdbcat=torTMDbCat, tmdbid=torTMDbid).first() is not None
@@ -992,6 +1031,20 @@ def parseInfoPageIMDbId(doc):
     return imdbstr
 
 
+def seasonInDbSeasonStr(season, dbSeasonStr):
+    return season in dbSeasonStr
+
+
+def checkMediaDbSeasonExists(season, torTMDbid, torTMDbCat):
+    with app.app_context():
+        mdbItem = db.session.query(TorMediaItem.id).filter_by(
+            tmdbcat=torTMDbCat, tmdbid=torTMDbid).first() 
+        if mdbItem:
+            return seasonInDbSeasonStr(season, mdbItem.season)
+        else:
+            return False
+
+
 def checkMediaDbTMDbDupe(torname, imdbstr):
     if not torname:
         return 400
@@ -1002,8 +1055,11 @@ def checkMediaDbTMDbDupe(torname, imdbstr):
     tmdbid = searchTMDb(p, torname, imdbstr)
 
     if tmdbid > 0:
-        exists = checkMediaDbExistsTMDb(tmdbid, p.tmdbcat)
+        exists = checkMediaDbTMDbExists(tmdbid, p.tmdbcat)
         if exists:
+            if p.tmdbcat == 'tv':
+                if not checkMediaDbSeasonExists(p.season, tmdbid, p.tmdbcat):
+                    return 400
             return 202
         else:
             return 201
@@ -1849,7 +1905,7 @@ def searchResultData():
     }
 
 
-def remove_non_ascii(string):
+def removeNonAscii(string):
     return ''.join(char for char in string if ord(char) < 128)
 
 def subsubtitle(title, subtitle):
