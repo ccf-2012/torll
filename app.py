@@ -90,14 +90,14 @@ def genSiteLink(siteAbbrev, siteid, torname='', sitecat=''):
 
 
 def getSEInt(sestr):
-    m = sestr.match(f'\w+(\d+)')
+    m = re.match(f'\w+(\d+)', sestr, flags=re.I)
     if m:
         return int(m.group(1))
     else:
         return 0 # unhandle
 
 def expandSeasonString(seasonStr):
-    if not seasonStr.match(r'S\d+-S\d+'):
+    if not re.match(r'S\d+-S\d+', seasonStr, flags=re.I):
         return seasonStr
     prefix, suffix = seasonStr.split("-")
     start = getSEInt(prefix)
@@ -106,7 +106,7 @@ def expandSeasonString(seasonStr):
     return ",".join(expanded_list)
 
 def expandEpisodeString(episodeStr):
-    if not episodeStr.match(r'Ep?\d+-Ep?\d+'):
+    if not re.match(r'Ep?\d+-Ep?\d+', episodeStr, flags=re.I):
         return episodeStr
     prefix, suffix = episodeStr.split("-")
     start = getSEInt(prefix)
