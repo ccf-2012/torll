@@ -1032,7 +1032,10 @@ def parseInfoPageIMDbId(doc):
 
 
 def seasonInDbSeasonStr(season, dbSeasonStr):
-    return season in dbSeasonStr
+    if dbSeasonStr:
+        return season in dbSeasonStr
+    else:  # null dbSeasonStr => dupe
+        return True
 
 
 def checkMediaDbSeasonExists(season, torTMDbid, torTMDbCat):
