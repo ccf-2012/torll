@@ -1040,12 +1040,19 @@ def seasonInDbSeasonStr(season, dbSeasonStr):
 
 def checkMediaDbSeasonExists(season, torTMDbid, torTMDbCat):
     with app.app_context():
-        mdbItem = db.session.query(TorMediaItem.id).filter_by(
-            tmdbcat=torTMDbCat, tmdbid=torTMDbid).first() 
-        if mdbItem:
-            return seasonInDbSeasonStr(season, mdbItem.season)
-        else:
-            return False
+        mdbquery = TorMediaItem.query.filter(db.and_(
+            TorMediaItem.tmdbcat == torTMDbCat, 
+            TorMediaItem.tmdbid == torTMDbid
+            )).filter(db.or_(
+                ~TorMediaItem.season.contains(season),
+                TorMediaItem.season == '',
+                TorMediaItem.season == None
+        )).all()
+        return len(mdbquery) > 0
+        # if mdbItem:
+        #     return seasonInDbSeasonStr(season, mdbItem.season)
+        # else:
+        #     return False
 
 
 def checkMediaDbTMDbDupe(torname, imdbstr):
