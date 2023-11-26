@@ -1044,7 +1044,7 @@ def checkMediaDbSeasonExists(season, torTMDbid, torTMDbCat):
             TorMediaItem.tmdbcat == torTMDbCat, 
             TorMediaItem.tmdbid == torTMDbid
             )).filter(db.or_(
-                ~TorMediaItem.season.contains(season),
+                TorMediaItem.season.contains(season),
                 TorMediaItem.season == '',
                 TorMediaItem.season == None
         )).all()
@@ -1069,7 +1069,7 @@ def checkMediaDbTMDbDupe(torname, imdbstr):
         if exists:
             if p.tmdbcat == 'tv':
                 if not checkMediaDbSeasonExists(p.season, tmdbid, p.tmdbcat):
-                    return 400
+                    return 201
             return 202
         else:
             return 201
