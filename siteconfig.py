@@ -3,6 +3,7 @@ import json
 import requests
 import browser_cookie3
 import sys
+import shutil
 from loguru import logger
 from urllib.parse import urlparse
 
@@ -36,6 +37,7 @@ def fetchSiteIcon(siteid: str) -> bool:
         r = loadSiteIcon(siteJson)
     return r
 
+STATIC_IMG_PATH = '/static/image/'
 def loadSiteIcon(siteJson: json) -> bool:
     # cursite = getSiteConfig(sitehost)
     icourl = siteJson['baseurl'] + 'favicon.ico'
@@ -51,6 +53,7 @@ def loadSiteIcon(siteJson: json) -> bool:
                 f.write(response.content)
                 r = True
         else:
+            shutil.copyfile(os.path.join(STATIC_IMG_PATH, 'favicon-standard.ico'), icon_path)
             r = False
     else:
         r = True
@@ -74,6 +77,9 @@ def loadSavedCookies(siteJson : json) -> str:
 
 def getSiteConfig(sitename : str) -> json:
     cursite = next((x for x in PT_SITES if x["site"] == sitename), None)
+    if not cursite:
+        logger.error(f'site {sitename} not configured.')
+        return ""
     return cursite
 
 if __name__ == '__main__':

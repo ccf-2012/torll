@@ -6,7 +6,7 @@
         "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
         "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
         "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
-        "subtitle": "string(.//table[contains(@class,'torrentname')]//td[2]/div/div[2]/span)",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]//a[contains(@href,'details')]/parent::*/following-sibling::*/span[last()])",
         "baseurl": "https://pterclub.com/",
         "searchurl": "torrents.php?search=",
         "searchIMDburl": "torrents.php?search_area=4&search=",
@@ -663,7 +663,32 @@
         "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
         "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
         "tordate" : "string(concat(.//td[contains(@class,'rowfollow')][4]/text()[1], ' ', .//td[contains(@class,'rowfollow')][4]/text()[2]))"
-      }
+      },
+      {
+        "site": "hddolby",
+        "torlist": "//table[@class='torrents']/tr",
+        "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
+        "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
+        "downlink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'download')]/@href)",
+        "subtitle": "string(.//table[contains(@class,'torrentname')]//a[contains(@href,'details')]/parent::*)",
+        "baseurl": "https://www.hddolby.com/",
+        "searchurl": "search.php?search=",
+        "searchIMDburl": "search.php?search_area=4&search=",
+        "newtorrent": "torrents.php",
+        "tagzz": ".//table[contains(@class,'torrentname')]//span[contains(text(),'中字')]",
+        "taggy": ".//table[contains(@class,'torrentname')]//span[contains(text(),'国语')]",
+        "tagfree": ".//img[contains(@alt, 'Free')]",
+        "tag2xfree": ".//img[contains(@alt, '2X Free')]",
+        "tag50off": ".//img[contains(@alt, '50%')]",
+        "doubanval": "string(.//img[contains(@alt,'douban')]/following-sibling::*)",
+        "imdbval": "string(.//img[contains(@alt,'imdb')]/following-sibling::*)",
+        "imdbstr": "",
+        "doubanid": "",
+        "seednum": "string(.//td[contains(@class,'rowfollow')][6])",
+        "downnum": "string(.//td[contains(@class,'rowfollow')][7])",
+        "torsize": "string(.//td[contains(@class,'rowfollow')][5])",
+        "tordate" : "string(concat(.//td[contains(@class,'rowfollow')][4]/text()[1], ' ', .//td[contains(@class,'rowfollow')][4]/text()[2]))"
+      }      
     ]
   }
   

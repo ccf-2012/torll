@@ -2168,6 +2168,8 @@ def siteCountToday(sitename):
     return SiteTorrent.query.filter_by(site=sitename).filter(SiteTorrent.addedon > datetime.now().date()).count()
 
 def siteFullLink(sitename, siteNewLink):
+    if not siteNewLink:
+        siteNewLink = 'torrents.php'
     site = siteconfig.getSiteConfig(sitename)
     return site['baseurl'] + siteNewLink
 
