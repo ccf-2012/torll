@@ -37,7 +37,7 @@ def fetchSiteIcon(siteid: str) -> bool:
         r = loadSiteIcon(siteJson)
     return r
 
-STATIC_IMG_PATH = '/static/image/'
+STATIC_IMG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'image')
 def loadSiteIcon(siteJson: json) -> bool:
     # cursite = getSiteConfig(sitehost)
     icourl = siteJson['baseurl'] + 'favicon.ico'

@@ -2289,7 +2289,7 @@ def apiSearchCookiedSites():
     for siteJson in siteconfig.PT_SITES:
         r = siteconfig.fetchSiteIcon(siteJson['site'])
         if not r:
-            logger.warning(f"can NOT connect to the {siteJson['site']}")
+            logger.warning(f"fetchSiteIcon failed: {siteJson['site']}")
         exists = db.session.query(PtSite.id).filter_by(
             site=siteJson['site']).first() is not None
         if not exists:
@@ -2330,7 +2330,7 @@ def apiGetSiteSetting():
             # 下载站点图标，保存在缓存目录(static/icon_cache)下
             icosuccess = siteconfig.fetchSiteIcon(r['site'])
             if not icosuccess:
-                logger.warning(f"can NOT connect to the {r['site']}")
+                logger.warning(f"fetchSiteIcon failed: {r['site']}")
             newurl = strip_scheme_domain(r['newtorlink'])
             if not newurl:
                 site = siteconfig.getSiteConfig(r['site'])
