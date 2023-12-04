@@ -394,18 +394,18 @@ def apiTorMediaDel():
     deleted = False
     msg = ''
     if tormedia:
-        msg = 'success'
         destDir = os.path.join(myconfig.CONFIG.linkDir, tormedia.location)
+        msg = '完成删除: ' + destDir
         if os.path.exists(destDir):
             logger.info("Deleting: " + destDir)
             try:
                 shutil.rmtree(destDir)
                 deleted = True
             except:
-                msg = '文件删除出错'
+                msg = '文件删除出错: ' + destDir
                 pass
         else:
-            msg = '记录已删，但文件不存在'
+            msg = '记录已删，但文件不存在: ' + destDir
 
         db.session.delete(tormedia)
         db.session.commit()

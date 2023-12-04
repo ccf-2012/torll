@@ -63,14 +63,14 @@ curl -u admin:password -d torhash=%I http://192.168.5.6:5006/api/torcp2
 * 在脚本中通常使用 `rcp.py` 完成对 qBit 中种子文件的处理，其中会使用 torcp 的处理机制和 torll 中的设置；调用 `rcp.sh` 所需要的参数可以只是一个 `-I` 指向 qBit 中种子的 hash;
 * 若 qBit 在 docker 中运行，要使用脚本方式进行处理，需要在 docker 中安装 requirements.txt 中的依赖；参考 [torcp中的介绍](https://github.com/ccf-2012/torcp/blob/main/qb%E8%87%AA%E5%8A%A8%E5%85%A5%E5%BA%93.md#3-qbit%E4%BB%A5docker%E5%AE%89%E8%A3%85)
 
-1. 简单的例子，种子完成后直接作硬链：
+1. 简单的例子，种子完成后直接在本地硬盘上作硬链：
 ```sh
 #!/bin/bash
 # qbit 中设置完成后命令为：/home/ccf2013/torll/rcp.sh "%I"
 python3 /home/ccf2013/torll/rcp.py  -I "$1" >>/home/ccf2013/rcp2.log 2>>/home/ccf2013/rcp2e.log
 ```
 
-2. 种子完成后，在暂存目录中建立硬链，上传 gd 盘后删除
+2. 种子完成后，在暂存目录中建立硬链，调用 rclone 上传 gd 盘，之后删除
 ```sh
 #!/bin/bash
 # qbit 中设置完成后命令为：/home/ccf2013/torll/rcp.sh "%I"
@@ -91,12 +91,20 @@ rm -rf "/home/ccf2013/emby/$1/"
 ### 修正
 
 * 如果发现匹配错误的条目，可以点击 `修正` ，以新输入的 TMDb 分类和 id 作 torcp `--move-run` 
-* 如果所下载的种子已经传到 GD 盘，可以将 GD 盘 mount 到本地，这里输入 mount 后的媒体库的路径
-
+* 如果所下载的种子已经传到 GD 盘，可以将 GD 盘 mount 到本地，这里输入 mount 后的媒体库的根目标路径，其在 `config.ini` 中对应
+```ini
+[TORCP]
+mbrootdir = /gd124/media/148/emby
+```
 ![修正匹配](https://ptpimg.me/218uav.png)
 
 ### 删除
-* 当前的删除，是先删掉数据库记录，如果是链接目录存在，则同时删除链接目录 
+* 从torll 中删除当前的记录
+* 如果媒体文件是在本地的，链接目录存在，则同时**删除所链接的目录**
+* 如果媒体文件在gd盘，则不会删除
+* 注意`config.ini` 中 `[TORCP]`段中，`linkdir` 指向的是本地链接目录，而 `mbrootdir` 指向云盘 mount 在本地的位置
+> 初始时这两值为一样，因此在第一次修改前或手工修改 config.ini 前，媒体指向的位置是不对的
+
 
 ## 在添加种子时，生成 site_id 形式的保存目录
 * torll 在处理 qBit 中的种子，对 `site_id_imdb` 形式目录保存的种子，如 'pter_87424_tt0075329'，将会识别其中的源站信息和IMDb。这样的目录，有利于追溯查阅信息和保种续种(Credit to @boomPa)。
@@ -275,7 +283,7 @@ python3 loadmb.py --init-library
 python3 loadqb.py
 ```
 
-# 从本地机器上获取cookie，并上传到自己的 server
+# postcookie  从本地机器上获取cookie，并上传到自己的 server
 * 修改 `postcookie.py` 中以下几行
 ```
 TORLL_SERVER = 'http://127.0.0.1:5006'
