@@ -3,9 +3,9 @@ import sys
 from loguru import logger
 import siteconfig
 
-TORLL_SERVER = 'http://127.0.0.1:5006'
+TORLL_SERVER = 'http://ol.torll.com:5006'
 TORLL_USER = 'admin'
-TORLL_PASS = ''
+TORLL_PASS = 'C4GssEIYnZktPsQm'
 
 if __name__ == '__main__':
     logger.remove()
