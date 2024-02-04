@@ -205,10 +205,11 @@ options:
 * 在 `config.ini` 中应有 Plex Server 的相应设置，即：
 ```ini
 [PLEX]
-server_url=http://192.168.5.6:32400
+server_url = http://192.168.5.6:32400
 ; 取得Plex token的步骤： https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
-server_token=your-PLEX_token
+server_token = your-PLEX_token
 rootdir = /gd1/media/plex/
+; rootdir = /volume1/downloads/NAS8/
 ```
 
 * 在 `config.ini` 中编辑 Plex Section和文件路径的对应，如：
@@ -220,6 +221,17 @@ rootdir = /gd1/media/plex/
 中文电影 = Movie/cn
 电影 = Movie
 动画剧集 = TV/animation
+```
+
+* 一个section可以包含多个目录，如：
+```ini
+[PLEX_SECTION]
+剧集 = TV/other, TV/cn, TV/ja, TV/ko
+电影 = Movie/other, Movie/cn, Movie/ja, Movie/ko
+儿童剧集 = TV/动画
+纪录剧集 = TV/纪录
+纪录电影 = Movie/纪录
+动画电影 = Movie/动画
 ```
 
 * 使用
