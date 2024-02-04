@@ -2288,8 +2288,6 @@ def apiDelAllSites():
 def apiSearchCookiedSites():
     for siteJson in siteconfig.PT_SITES:
         r = siteconfig.fetchSiteIcon(siteJson['site'])
-        if not r:
-            logger.warning(f"fetchSiteIcon failed: {siteJson['site']}")
         exists = db.session.query(PtSite.id).filter_by(
             site=siteJson['site']).first() is not None
         if not exists:

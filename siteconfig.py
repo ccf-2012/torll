@@ -53,7 +53,10 @@ def loadSiteIcon(siteJson: json) -> bool:
                 f.write(response.content)
                 r = True
         else:
-            shutil.copyfile(os.path.join(STATIC_IMG_PATH, 'favicon-standard.ico'), icon_path)
+            logger.warning(f"fail to get site icon, using default ico.")
+            defaultico = os.path.join(STATIC_IMG_PATH, 'favicon-standard.ico')
+            if os.path.isfile(defaultico):
+                shutil.copyfile(defaultico, icon_path)
             r = False
     else:
         r = True

@@ -14,6 +14,7 @@ rcp.sh
 
 icon_cache/
 *.ico
+!*favicon-standard.ico
 myTMDbParser*
 tt.py
 tt*.py
