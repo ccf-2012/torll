@@ -197,6 +197,14 @@ options:
 
 > 对于原 torcp 用户，这个 torll 要求 torcp 版本 >= 0.60 的依赖，torcp 在此版后改写了结构以支持外部代码传参及调用执行；原有的功能和使用方式仍然不受影响，即如果原来有脚本在使用 torcp 跑，即使更新到了新版，也应能继续完成任务；
 
+## 对于rss的种子，分存到不同目录
+* 在建立RSS任务时，可以设置给qbit打tag
+* 所打的tag，可在 `config.ini` 中设置不同tag存到不同目录，形如：
+
+```ini
+[TAG_DIR]
+未完结剧集 = /volume1/video/downloads/tv_未完结
+```
 
 ## notify_plex.py 
 * 对于 gd 盘，Plex 无法感知有文件变动
