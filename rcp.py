@@ -92,6 +92,9 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
         return eo.targetDir, eo.tmdbTitle, eo.tmdbParser
     return '', '', None
 
+def getTagDir(tortag):
+    tagdirtup = next((g for g in CONFIG.tagDirList if tortag == g[0]), ("", ""))
+    return tagdirtup[1]
 
 def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertHashDir, tmdbcatidstr=None):
     if (CONFIG.dockerFrom != CONFIG.dockerTo):
@@ -114,10 +117,14 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertH
             return 402
         logger.info("torpath: %s, torhash: %s, torsize: %s, tortag: %s, savepath: %s" %
             (torpath, torhash, torsize, tortag, savepath))
-        torimdb = extractIMDbFromTag(tortag)
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
 
-        site, siteid, torimdb = parseSiteId(site_id_imdb, torimdb)
+        # use tor tag as different output dir
+        if tortag:
+            tagdir = getTagDir(tortag)
+            targetDir = os.path.join(CONFIG.linkDir, tagdir)
+
+        site, siteid, torimdb = parseSiteId(site_id_imdb, '')
         if not site:
             site = abbrevTracker
         if insertHashDir:

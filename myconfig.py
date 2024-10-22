@@ -64,6 +64,11 @@ def readConfig(cfgFile):
         # CONFIG.plexSectionList = [(key, value) for key,value in configitems ]
             #   config['PLEX'].get('sectionList', '')
 
+    if 'TAG_DIR' in config:
+        configitems = config.items('TAG_DIR')
+        for key, value in configitems:
+            CONFIG.tagDirList.append((key, value))
+
     if 'EMBY' in config:
         CONFIG.embyServer = config['EMBY'].get('server_url', '')
         CONFIG.embyUser = config['EMBY'].get('user', '')

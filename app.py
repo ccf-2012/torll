@@ -1077,12 +1077,18 @@ def checkMediaDbTMDbDupe(torname, imdbstr):
         return 203
 
 
-def addTorrent(downloadLink, siteIdStr, imdbstr, qbCate=''):
+def addTorrent(downloadLink, imdbstr, qbCate=''):
     if (not myconfig.CONFIG.qbServer):
         return 400
 
     if not validDownloadlink(downloadLink):
         return 402
+
+    siteIdStr = genrSiteId(downloadLink, imdbstr)
+    # with app.app_context():
+    #     toritem = Tor2Download(torsiteid = siteIdStr, torcat = qbCate)
+    #     db.session.add(toritem)
+    #     db.session.commit()
 
     if not myconfig.CONFIG.dryrun:
         logger.info("   >> Added: " + siteIdStr)
@@ -1094,12 +1100,12 @@ def addTorrent(downloadLink, siteIdStr, imdbstr, qbCate=''):
     return 201
 
 
-def addTorrentViaPageDownload(downloadLink, sitecookie, siteIdStr, imdbstr):
+def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr):
     if (not myconfig.CONFIG.qbServer):
         return 400
 
     if 'passkey' in downloadLink:
-        return addTorrent(downloadLink, siteIdStr, imdbstr)
+        return addTorrent(downloadLink, imdbstr)
 
     cookie = SimpleCookie()
     cookie.load(sitecookie)
@@ -1113,6 +1119,12 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, siteIdStr, imdbstr):
     response = pyrequests.get(downloadLink, headers=headers, cookies=cookies)
     if not response.status_code == 200:
         return 402
+
+    siteIdStr = genrSiteId(downloadLink, imdbstr)
+    # with app.app_context():
+    #     toritem = Tor2Download(torsiteid = siteIdStr, torcat = '')
+    #     db.session.add(toritem)
+    #     db.session.commit()
 
     if not myconfig.CONFIG.dryrun:
         logger.info("   >> Added: " + siteIdStr)
@@ -1208,8 +1220,6 @@ def processRssFeeds(rsstask):
                     db.session.commit()
                     continue
 
-        siteIdStr = genrSiteId(item.link, imdbstr)
-
         rssDownloadLink = item.links[1]['href']
         dbrssitem.accept = 2
         logger.info('   %s (%s), %s' %
@@ -1227,7 +1237,7 @@ def processRssFeeds(rsstask):
             continue
 
         qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
-        r = addTorrent(rssDownloadLink, siteIdStr, imdbstr, qbcat)
+        r = addTorrent(rssDownloadLink, imdbstr, qbcat)
         if r == 201:
             # Downloaded
             dbrssitem.accept = 3
@@ -1261,11 +1271,10 @@ def apiRssManualDownload():
         if doc:
             imdbstr = parseInfoPageIMDbId(doc)
             dbrssitem.imdbstr = imdbstr
-        siteIdStr = genrSiteId(dbrssitem.infoLink, imdbstr)
 
         if not checkMediaDbNameDupe(dbrssitem.title):
             qbcat = taskitem.qbcategory if taskitem.qbcategory else ''
-            r = addTorrent(dbrssitem.downloadLink, siteIdStr, imdbstr, qbcat)
+            r = addTorrent(dbrssitem.downloadLink, imdbstr, qbcat)
             if r == 201:
                 added = True
                 dbrssitem.accept = 3
@@ -1292,9 +1301,9 @@ def jsApiDupeDownload():
     imdbstr = ''
     if 'imdbid' in request.json and request.json['imdbid']:
         imdbstr = request.json['imdbid'].strip()
-    siteIdStr = ''
-    if 'siteid' in request.json and request.json['siteid']:
-        siteIdStr = request.json['siteid'].strip()
+    # siteIdStr = ''
+    # if 'siteid' in request.json and request.json['siteid']:
+    #     siteIdStr = request.json['siteid'].strip()
     forceDownload = False
     if 'force' in request.json:
         forceDownload = request.json['force']
@@ -1311,7 +1320,7 @@ def jsApiDupeDownload():
 
     if not myconfig.CONFIG.dryrun:
         logger.info("Added: " + request.json['torname'])
-        r = addTorrent(downloadlink, siteIdStr, imdbstr)
+        r = addTorrent(downloadlink, imdbstr)
         if r == 201:
             return jsonify({'Download': True}), 201
         else:
@@ -1764,7 +1773,7 @@ def siteTorDownload(torid):
 
         # if not checkMediaDbNameDupe(dbcacheitem.title):
         r = addTorrentViaPageDownload(
-            downlink, sitecookie, siteIdStr, dbitem.imdbstr)
+            downlink, sitecookie, dbitem.imdbstr)
         if r == 201:
             added = True
             dbitem.dlcount += 1
@@ -1792,17 +1801,16 @@ def apiSiteTorDownload():
             if doc:
                 imdbstr = parseInfoPageIMDbId(doc)
                 dbitem.imdbstr = imdbstr
-    siteIdStr = genrSiteId(infolink, dbitem.imdbstr)
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
     r = addTorrentViaPageDownload(
-        downlink, sitecookie, siteIdStr, dbitem.imdbstr)
+        downlink, sitecookie, dbitem.imdbstr)
     if r == 201:
         added = True
         dbitem.dlcount += 1
         db.session.commit()
-    msg = f'{siteIdStr}, {dbitem.tortitle}'
+    msg = f'{dbitem.tortitle}'
     # return render_template('dlresult.html', added=added, msg=msg)
     return json.dumps({'added': added, 'msg': msg}), 200, {'ContentType': 'application/json'}
 
@@ -2147,17 +2155,16 @@ def apiSearchResultDownload():
             if doc:
                 imdbstr = parseInfoPageIMDbId(doc)
                 dbcacheitem.imdbstr = imdbstr
-    siteIdStr = genrSiteId(infolink, dbcacheitem.imdbstr)
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
     r = addTorrentViaPageDownload(
-        downlink, sitecookie, siteIdStr, dbcacheitem.imdbstr)
+        downlink, sitecookie, dbcacheitem.imdbstr)
     if r == 201:
         added = True
         dbcacheitem.dlcount += 1
         db.session.commit()
-    msg = f'{siteIdStr}, {dbcacheitem.tortitle}'
+    msg = f'{dbcacheitem.tortitle}'
     return json.dumps({'added': added, 'msg': msg}), 200, {'ContentType': 'application/json'}
 
 
@@ -2511,6 +2518,13 @@ def startApsScheduler():
 
     scheduler.start()
     scheduler.print_jobs()
+
+
+# class Tor2Download(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     addedon = db.Column(db.DateTime, default=datetime.now)
+#     torsiteid = db.Column(db.String(255))
+#     torcat = db.Column(db.String(256), index=True)
 
 
 def runRcp(torpath, torhash, torsize, tortag, savepath, tortracker, tmdbcatid):
