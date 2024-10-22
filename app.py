@@ -1136,6 +1136,11 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr):
     return 201
 
 
+def remove_passkey_from_url(url):
+    # 使用正则表达式匹配并去除 passkey 参数及其值
+    return re.sub(r'&passkey=[^&]*', '', url)
+
+
 def processRssFeeds(rsstask):
     feed = feedparser.parse(rsstask.rsslink)
     rssFeedSum = 0
@@ -1166,27 +1171,33 @@ def processRssFeeds(rsstask):
 
         logger.info("%d: %s (%s)" % (rssFeedSum, item.title,
                                datetime.now().strftime("%H:%M:%S")))
-
+        size_item = tryint(item.links[1]['length'])
         dbrssitem = RSSHistory(site=rsstask.site,
                                tid=rsstask.id,
                                title=item.title,
                                infoLink=item.link,
                                downloadLink=item.links[1]['href'],
-                               size=item.links[1]['length'])
+                               size=size_item)
 
         db.session.add(dbrssitem)
         db.session.commit()
+
+        size_gb = size_item / 1024 / 1024 / 1024
+        logger.info(f"{rssFeedSum}: {item.title} ({HumanBytes.format(size_item)})")
+
 
         if rsstask.title_regex:
             if not re.search(rsstask.title_regex, item.title, re.I):
                 dbrssitem.reason = 'TITLE_REGEX'
                 db.session.commit()
+                logger.info("   >> Skip: TITLE_REGEX " )
                 continue
 
         if rsstask.title_not_regex:
             if re.search(rsstask.title_not_regex, item.title, re.I):
                 dbrssitem.reason = 'TITLE_NOT_REGEX'
                 db.session.commit()
+                logger.info("   >> Skip: TITLE_NOT_REGEX " )
                 continue
 
         imdbstr = ''
@@ -1196,6 +1207,7 @@ def processRssFeeds(rsstask):
             if not doc:
                 dbrssitem.reason = 'Fetch info page failed'
                 db.session.commit()
+                logger.info("   >> Skip: Fetch info page failed" )
                 continue
             imdbstr = parseInfoPageIMDbId(doc)
             dbrssitem.imdbstr = imdbstr
@@ -1205,11 +1217,13 @@ def processRssFeeds(rsstask):
                 if not re.search(rsstask.info_regex, doc, flags=re.A):
                     dbrssitem.reason = 'INFO_REGEX'
                     db.session.commit()
+                    logger.info("   >> Skip: INFO_REGEX" )
                     continue
             if rsstask.info_not_regex:
                 if re.search(rsstask.info_not_regex, doc, flags=re.A):
                     dbrssitem.reason = 'INFO_NOT_REGEX'
                     db.session.commit()
+                    logger.info("   >> Skip: INFO_NOT_REGEX" )
                     continue
             if rsstask.min_imdb:
                 imdbval, doubanval = parseInfoPageIMDbval(doc)
@@ -1218,6 +1232,7 @@ def processRssFeeds(rsstask):
                     dbrssitem.reason = "IMDb: %s, douban: %s" % (
                         imdbval, doubanval)
                     db.session.commit()
+                    logger.info("   >> Skip: MIN_IMDb" )
                     continue
 
         rssDownloadLink = item.links[1]['href']
@@ -1236,14 +1251,19 @@ def processRssFeeds(rsstask):
             db.session.commit()
             continue
 
+        logger.info(f'   >> ({HumanBytes.format(int(dbrssitem.size))}), {remove_passkey_from_url(rssDownloadLink)}')
+
         qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
         r = addTorrent(rssDownloadLink, imdbstr, qbcat)
         if r == 201:
             # Downloaded
+            # size_storage_space -=  size_gb
             dbrssitem.accept = 3
             rssAccept += 1
+        elif r == 301:
+            dbrssitem.reason = 'disk space'
         else:
-            dbrssitem.reason = 'qBit Error'
+            dbrssitem.reason = 'qBit error'
 
         db.session.commit()
 
