@@ -1105,7 +1105,7 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr, qbCate=''):
         return 400
 
     if 'passkey' in downloadLink:
-        return addTorrent(downloadLink, imdbstr)
+        return addTorrent(downloadLink, imdbstr, qbCate)
 
     cookie = SimpleCookie()
     cookie.load(sitecookie)
@@ -1801,8 +1801,9 @@ def siteTorDownload(torid):
         siteIdStr = genrSiteId(infolink, dbitem.imdbstr)
 
         # if not checkMediaDbNameDupe(dbcacheitem.title):
+        qbCategory = checkAutoCategory(dbitem.tortitle)
         r = addTorrentViaPageDownload(
-            downlink, sitecookie, dbitem.imdbstr)
+            downlink, sitecookie, dbitem.imdbstr, qbCategory)
         if r == 201:
             added = True
             dbitem.dlcount += 1
@@ -1833,8 +1834,9 @@ def apiSiteTorDownload():
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
+    qbCategory = checkAutoCategory(dbitem.tortitle)    
     r = addTorrentViaPageDownload(
-        downlink, sitecookie, dbitem.imdbstr)
+        downlink, sitecookie, dbitem.imdbstr, qbCategory)
     if r == 201:
         added = True
         dbitem.dlcount += 1
@@ -2187,8 +2189,9 @@ def apiSearchResultDownload():
 
     # if not checkMediaDbNameDupe(dbcacheitem.title):
     added = False
+    qbCategory = checkAutoCategory(dbcacheitem.tortitle)
     r = addTorrentViaPageDownload(
-        downlink, sitecookie, dbcacheitem.imdbstr)
+        downlink, sitecookie, dbcacheitem.imdbstr, qbCategory)
     if r == 201:
         added = True
         dbcacheitem.dlcount += 1
