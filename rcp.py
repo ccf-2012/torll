@@ -116,14 +116,15 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertH
         if not os.path.exists(torpath):
             logger.warning('File/Dir not exists: ' + torpath)
             return 402
-        logger.info("torpath: %s, torhash: %s, torsize: %s, tortag: %s, savepath: %s" %
-            (torpath, torhash, torsize, tortag, savepath))
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
 
         # use tor tag as different output dir
         if tortag:
             tagdir = getTagDir(tortag)
             targetDir = os.path.join(CONFIG.linkDir, tagdir)
+
+        logger.info("torpath: %s, torhash: %s, torsize: %s, tortag: %s, targetDir: %s" %
+            (torpath, torhash, torsize, tortag, targetDir))
 
         site, siteid, torimdb = parseSiteId(site_id_imdb, '')
         if not site:
