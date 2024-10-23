@@ -117,6 +117,13 @@ def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertH
             logger.warning('File/Dir not exists: ' + torpath)
             return 402
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
+        site, siteid, torimdb = parseSiteId(site_id_imdb, '')
+        if not site:
+            site = abbrevTracker
+        if insertHashDir:
+            targetDir = os.path.join(CONFIG.linkDir, torhash)
+        else:
+            targetDir = CONFIG.linkDir
 
         # use tor tag as different output dir
         if torcat:
@@ -126,13 +133,6 @@ def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertH
         logger.info("torpath: %s, torhash: %s, torsize: %s, torcat: %s, targetDir: %s" %
             (torpath, torhash, torsize, torcat, targetDir))
 
-        site, siteid, torimdb = parseSiteId(site_id_imdb, '')
-        if not site:
-            site = abbrevTracker
-        if insertHashDir:
-            targetDir = os.path.join(CONFIG.linkDir, torhash)
-        else:
-            targetDir = CONFIG.linkDir
         argv = [rootdir, "-d", targetDir, "-s",
                 "--tmdb-api-key", CONFIG.tmdb_api_key,
                 "--tmdb-lang", CONFIG.tmdbLang,
