@@ -1128,7 +1128,7 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr, qbCate=''):
 
     if not myconfig.CONFIG.dryrun:
         logger.info("   >> Added: " + siteIdStr)
-        if not qbfunc.addQbitFileWithTag(response.content, getAbbrevSiteName(downloadLink), siteIdStr, qbCate=''):
+        if not qbfunc.addQbitFileWithTag(response.content, getAbbrevSiteName(downloadLink), siteIdStr, qbCate):
             return 400
     else:
         logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)

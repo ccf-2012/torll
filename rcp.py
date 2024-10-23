@@ -93,9 +93,9 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
         return eo.targetDir, eo.tmdbTitle, eo.tmdbParser
     return '', '', None
 
-def getTagDir(tortag):
-    tagdirtup = next((g for g in CONFIG.categoryDirList if tortag == g[0]), ("", ""))
-    return tagdirtup[1]
+def getCategoryDir(tortag):
+    catDirTup = next((g for g in CONFIG.categoryDirList if tortag == g[0]), ("", ""))
+    return catDirTup[1]
 
 def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertHashDir, tmdbcatidstr=None):
     if (CONFIG.dockerFrom != CONFIG.dockerTo):
@@ -127,7 +127,7 @@ def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertH
 
         # use tor tag as different output dir
         if torcat:
-            tagdir = getTagDir(torcat)
+            tagdir = getCategoryDir(torcat)
             targetDir = os.path.join(CONFIG.linkDir, tagdir)
 
         logger.info("torpath: %s, torhash: %s, torsize: %s, torcat: %s, targetDir: %s" %
@@ -154,11 +154,14 @@ def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertH
             argv += ["--imdbid", torimdb]
         if tmdbcatidstr:
             argv += ["--tmdbid", tmdbcatidstr]
-        if CONFIG.extraParam:
+
+        #TODO  在种子已经有匹配的torcat时，不加exparamList
+        if CONFIG.extraParam and not torcat:
             exparamList = [item.strip() for item in CONFIG.extraParam.split(',')]
             argv += exparamList
 
         # print(argv)
+        logger.debug(argv)
         if not torsize:
             torsize = '0'
         eo = TorcpItemDBObj(site, siteid, torimdb,
