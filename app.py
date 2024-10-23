@@ -24,7 +24,7 @@ import qbfunc
 import myconfig
 import siteconfig
 from humanbytes import HumanBytes, parseSizeStr
-# sys.path.insert(1, '../torcp/')
+sys.path.insert(1, '../torcp/')
 from torcp.tmdbparser import TMDbNameParser
 
 from loguru import logger

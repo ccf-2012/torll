@@ -1,6 +1,7 @@
 from app import TorcpItemDBObj, TorcpItemCallbackObj, initDatabase
 import os
 import sys
+sys.path.insert(1, '../torcp/')
 from torcp.torcp import Torcp
 from myconfig import readConfig, CONFIG
 import argparse
@@ -150,6 +151,9 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertH
             argv += ["--imdbid", torimdb]
         if tmdbcatidstr:
             argv += ["--tmdbid", tmdbcatidstr]
+        if CONFIG.extraParam:
+            exparamList = [item.strip() for item in CONFIG.extraParam.split(',')]
+            argv += exparamList
 
         # print(argv)
         if not torsize:

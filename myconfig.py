@@ -6,7 +6,7 @@ class configData():
     plexServer = ''
     plexToken = ''
     plexRootDir = ''
-    plexSectionList = []
+    plexSectionList = [] # config.ini only
     embyServer = ''
     embyUser = ''
     embyPass = ''
@@ -31,6 +31,10 @@ class configData():
     rcpshfile = ''
     symbolink = ''
     notifyPlex = False
+    tagDirList = []     # config.ini only
+    extraParam = ''     # config.ini only
+
+
 
 
 CONFIG = configData()
@@ -90,6 +94,7 @@ def readConfig(cfgFile):
         CONFIG.genre = config['TORCP'].get('genre', '')
         CONFIG.symbolink = config['TORCP'].get('symbolink', '')
         CONFIG.notifyPlex = config['TORCP'].getboolean('notifyPlex', False)
+        CONFIG.extraParam = config['TORCP'].get('extra', '')
 
     if 'QBIT' in config:
         CONFIG.qbServer = config['QBIT'].get('server_ip', '')
