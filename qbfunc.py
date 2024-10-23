@@ -53,7 +53,7 @@ def getTorrentByHash(torhash):
     torrent = torlist[0]
     tracker = getTorrentFirstTracker(torrent)
 
-    return torrent.content_path, torrent.hash, str(torrent.size), torrent.tags, torrent.save_path, abbrevTracker(tracker["url"])
+    return torrent.content_path, torrent.hash, str(torrent.size), torrent.category, torrent.save_path, abbrevTracker(tracker["url"])
 
 
 def getAutoRunProgram():

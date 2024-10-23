@@ -97,7 +97,7 @@ def getTagDir(tortag):
     tagdirtup = next((g for g in CONFIG.tagDirList if tortag == g[0]), ("", ""))
     return tagdirtup[1]
 
-def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertHashDir, tmdbcatidstr=None):
+def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertHashDir, tmdbcatidstr=None):
     if (CONFIG.dockerFrom != CONFIG.dockerTo):
         if torpath.startswith(CONFIG.dockerFrom) and savepath.startswith(CONFIG.dockerFrom):
             torpath = torpath.replace(
@@ -119,12 +119,12 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertH
         rootdir, site_id_imdb = getSiteIdDirName(torpath, savepath)
 
         # use tor tag as different output dir
-        if tortag:
-            tagdir = getTagDir(tortag)
+        if torcat:
+            tagdir = getTagDir(torcat)
             targetDir = os.path.join(CONFIG.linkDir, tagdir)
 
-        logger.info("torpath: %s, torhash: %s, torsize: %s, tortag: %s, targetDir: %s" %
-            (torpath, torhash, torsize, tortag, targetDir))
+        logger.info("torpath: %s, torhash: %s, torsize: %s, torcat: %s, targetDir: %s" %
+            (torpath, torhash, torsize, torcat, targetDir))
 
         site, siteid, torimdb = parseSiteId(site_id_imdb, '')
         if not site:
@@ -174,8 +174,8 @@ def runTorcp(torpath, torhash, torsize, tortag, savepath, abbrevTracker, insertH
 
 def torcpByHash(torhash):
     if torhash:
-        torpath, torhash2, torsize, tortag, savepath, tortracker = qbfunc.getTorrentByHash(torhash)
-        r = runTorcp(torpath, torhash2, torsize, tortag,
+        torpath, torhash2, torsize, torcat, savepath, tortracker = qbfunc.getTorrentByHash(torhash)
+        r = runTorcp(torpath, torhash2, torsize, torcat,
                      savepath, abbrevTracker=tortracker, insertHashDir=ARGS.hash_dir, tmdbcatidstr=ARGS.tmdbcatid)
         return r
     else:

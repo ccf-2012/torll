@@ -550,8 +550,8 @@ def runTorcpByHash():
     if 'torhash' in request.form:
         torhash = request.form['torhash'].strip()
         logger.info(torhash)
-        torpath, torhash2, torsize, tortag, savepath, tortracker = qbfunc.getTorrentByHash(torhash)
-        r = runRcp(torpath, torhash2, torsize, tortag, savepath, tortracker, None)
+        torpath, torhash2, torsize, torcat, savepath, tortracker = qbfunc.getTorrentByHash(torhash)
+        r = runRcp(torpath, torhash2, torsize, torcat, savepath, tortracker, None)
         if r == 200:
             return jsonify({'OK': 200}), 200
     return jsonify({'Error': 401}), 401
