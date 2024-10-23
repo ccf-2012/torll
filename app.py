@@ -1259,9 +1259,9 @@ def processRssFeeds(rsstask):
 
         logger.info(f'   >> ({HumanBytes.format(int(dbrssitem.size))}), {removePasskeyUrl(rssDownloadLink)}')
 
-        #qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
-
-        qbCategory = checkAutoCategory(item.title)
+        qbCategory = rsstask.qbcategory if rsstask.qbcategory else ''
+        if not qbCategory:
+            qbCategory = checkAutoCategory(item.title)
         r = addTorrent(rssDownloadLink, imdbstr, qbCategory)
         if r == 201:
             # Downloaded
