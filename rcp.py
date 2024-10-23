@@ -139,8 +139,8 @@ def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertH
                 "--make-log",
                 "-e", "srt",
                 "--extract-bdmv",
-                # "--origin-name"]
-                "--tmdb-origin-name"]
+                "--origin-name"]
+                # "--tmdb-origin-name"]
         if CONFIG.bracket:
             argv += [CONFIG.bracket]
         # if CONFIG.lang:
