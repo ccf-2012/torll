@@ -31,8 +31,9 @@ class configData():
     rcpshfile = ''
     symbolink = ''
     notifyPlex = False
-    tagDirList = []     # config.ini only
-    extraParam = ''     # config.ini only
+    categoryDirList = []    # config.ini only
+    extraParam = ''         # config.ini only
+    autoCategory = []       # config.ini only
 
 
 
@@ -68,10 +69,15 @@ def readConfig(cfgFile):
         # CONFIG.plexSectionList = [(key, value) for key,value in configitems ]
             #   config['PLEX'].get('sectionList', '')
 
-    if 'TAG_DIR' in config:
-        configitems = config.items('TAG_DIR')
+    if 'CATEGORY_DIR' in config:
+        configitems = config.items('CATEGORY_DIR')
         for key, value in configitems:
-            CONFIG.tagDirList.append((key, value))
+            CONFIG.categoryDirList.append((key, value))
+
+    if 'AUTO_CATEGORY' in config:
+        configitems = config.items('AUTO_CATEGORY')
+        for key, value in configitems:
+            CONFIG.autoCategory.append((key, value))
 
     if 'EMBY' in config:
         CONFIG.embyServer = config['EMBY'].get('server_url', '')

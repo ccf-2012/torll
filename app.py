@@ -1092,7 +1092,7 @@ def addTorrent(downloadLink, imdbstr, qbCate=''):
 
     if not myconfig.CONFIG.dryrun:
         logger.info("   >> Added: " + siteIdStr)
-        if not qbfunc.addQbitWithTag(downloadLink.strip(), imdbstr, siteIdStr, qbCate):
+        if not qbfunc.addQbitWithTag(downloadLink.strip(), getAbbrevSiteName(downloadLink), siteIdStr, qbCate):
             return 400
     else:
         logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
@@ -1100,7 +1100,7 @@ def addTorrent(downloadLink, imdbstr, qbCate=''):
     return 201
 
 
-def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr):
+def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr, qbCate=''):
     if (not myconfig.CONFIG.qbServer):
         return 400
 
@@ -1128,7 +1128,7 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr):
 
     if not myconfig.CONFIG.dryrun:
         logger.info("   >> Added: " + siteIdStr)
-        if not qbfunc.addQbitFileWithTag(response.content, imdbstr, siteIdStr):
+        if not qbfunc.addQbitFileWithTag(response.content, getAbbrevSiteName(downloadLink), siteIdStr, qbCate=''):
             return 400
     else:
         logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
@@ -1136,9 +1136,15 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr):
     return 201
 
 
-def remove_passkey_from_url(url):
-    # 使用正则表达式匹配并去除 passkey 参数及其值
+def removePasskeyUrl(url):
     return re.sub(r'&passkey=[^&]*', '', url)
+
+
+def checkAutoCategory(title):
+    for category, pattern in myconfig.CONFIG.autoCategory:
+        if re.search(pattern, title):
+            return category
+    return ''
 
 
 def processRssFeeds(rsstask):
@@ -1251,10 +1257,12 @@ def processRssFeeds(rsstask):
             db.session.commit()
             continue
 
-        logger.info(f'   >> ({HumanBytes.format(int(dbrssitem.size))}), {remove_passkey_from_url(rssDownloadLink)}')
+        logger.info(f'   >> ({HumanBytes.format(int(dbrssitem.size))}), {removePasskeyUrl(rssDownloadLink)}')
 
-        qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
-        r = addTorrent(rssDownloadLink, imdbstr, qbcat)
+        #qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
+
+        qbCategory = checkAutoCategory(item.title)
+        r = addTorrent(rssDownloadLink, imdbstr, qbCategory)
         if r == 201:
             # Downloaded
             # size_storage_space -=  size_gb
@@ -1293,8 +1301,8 @@ def apiRssManualDownload():
             dbrssitem.imdbstr = imdbstr
 
         if not checkMediaDbNameDupe(dbrssitem.title):
-            qbcat = taskitem.qbcategory if taskitem.qbcategory else ''
-            r = addTorrent(dbrssitem.downloadLink, imdbstr, qbcat)
+            qbCategory = checkAutoCategory(dbrssitem.title)
+            r = addTorrent(dbrssitem.downloadLink, imdbstr, qbCategory)
             if r == 201:
                 added = True
                 dbrssitem.accept = 3
@@ -1311,7 +1319,7 @@ def apiRssManualDownload():
 
 @app.route('/api/dupedownload', methods=['POST'])
 @auth.login_required
-def jsApiDupeDownload():
+def apiDupeDownload():
     if not request.json or 'torname' not in request.json:
         abort(jsonify(message="torname not found"))
 
@@ -1340,7 +1348,8 @@ def jsApiDupeDownload():
 
     if not myconfig.CONFIG.dryrun:
         logger.info("Added: " + request.json['torname'])
-        r = addTorrent(downloadlink, imdbstr)
+        qbCategory = checkAutoCategory(request.json['torname'])
+        r = addTorrent(downloadlink, imdbstr, qbCategory)
         if r == 201:
             return jsonify({'Download': True}), 201
         else:
@@ -1353,7 +1362,7 @@ def jsApiDupeDownload():
 
 @app.route('/api/checkdupeonly', methods=['POST'])
 @auth.login_required
-def jsApiCheckDupe():
+def apiCheckDupe():
     if not request.json or 'torname' not in request.json:
         abort(jsonify(message="torname not found"))
     if checkMediaDbNameDupe(request.json['torname']):

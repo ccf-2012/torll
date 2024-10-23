@@ -94,7 +94,7 @@ def runTorcpMove(sourceDir, targetDir, torimdb=None, tmdbcatidstr=None):
     return '', '', None
 
 def getTagDir(tortag):
-    tagdirtup = next((g for g in CONFIG.tagDirList if tortag == g[0]), ("", ""))
+    tagdirtup = next((g for g in CONFIG.categoryDirList if tortag == g[0]), ("", ""))
     return tagdirtup[1]
 
 def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertHashDir, tmdbcatidstr=None):
