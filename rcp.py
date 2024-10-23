@@ -139,13 +139,13 @@ def runTorcp(torpath, torhash, torsize, torcat, savepath, abbrevTracker, insertH
                 "--make-log",
                 "-e", "srt",
                 "--extract-bdmv",
-                "--origin-name"]
-                # "--tmdb-origin-name"]
+                # "--origin-name"]
+                "--tmdb-origin-name"]
         if CONFIG.bracket:
             argv += [CONFIG.bracket]
         # if CONFIG.lang:
         #     argv += ["--lang", CONFIG.lang]
-        argv += ["--sep-area5 "]
+        argv += ["--sep-area5"]
         if CONFIG.genre:
             argv += ["--genre", CONFIG.genre]
         if CONFIG.bracket == '--emby-bracket':
