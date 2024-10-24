@@ -51,11 +51,12 @@ def parseSizeStr(size):
     units = {"B": 1, "KB": 2**10, "MB": 2**20, "GB": 2**30, "TB": 2**40 ,
              "":  1, "KIB": 10**3, "MIB": 10**6, "GIB": 10**9, "TIB": 10**12}
     m = re.match(r'^([\d\.]+)\s*([a-zA-Z]{0,3})$', str(size).strip())
-    number, unit = float(m.group(1)), m.group(2).upper()
-    if unit in units:
-        return int(number*units[unit])
-    # raise ValueError("Invalid human size")
-    return 0
+    try:
+        number, unit = float(m.group(1)), m.group(2).upper()
+        sizeint = int(number*units[unit])
+    except:
+        sizeint = 0
+    return sizeint
 
 # based on https://stackoverflow.com/a/42865957/2002471
 # units = {"B": 1, "KB": 2**10, "MB": 2**20, "GB": 2**30, "TB": 2**40}

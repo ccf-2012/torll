@@ -135,7 +135,63 @@ const API_AUTH_PASS = "password";
 
 即可定向到所设地址，如上例中的 192.168.5.6，去进行查重和发起下载，其中用户名密码为 torll 中的登陆密码。
 
+----
+## RSS CLI 
+> 命令行形式运行 rss 命令，在 web 页面观察记录
 
+### 设置 RSS
+* 以 `rssconfig.json.sample` 为样本编辑形成 `rssconfig.json` 文件
+```sh
+cp rssconfig.json.sample rssconfig.json
+```
+* 其中条目形如:
+```json
+{
+  "rsstasks": [
+    {
+      "name": "华语最佳", // 用于标识，要求本配置文件内唯一
+      "site": "expample",  // 站点id 应于siteconfig.json名字对应
+      "rss_url": "https://example.club/torrentrss.php?rows=10&linktype=dl&passkey=somepasskey",
+      "cookie": "c_secure_pass=....",
+      "qb_category": "", // 此rss收进下载器的种子全部添加某特定标识
+      "filters": [
+        {
+          "detail_regex": "最佳男主角",  // 要求在种子信息详情页中能匹配 字串 或 正则
+          "title_not_regex": "Hello",   // 要求在种标题中 不 匹配 字串 或 正则
+          "subtitle_not_regex": "Test",  // 要求在种子副标题 不 匹配 字串 或 正则
+          "size_gb_min": "2",       // 要求种子大小大于 2GB
+          "size_gb_max": "12"       // 要求种子大小小于 12GB
+        }
+      ]
+    }, // 可以写多个
+    {
+      "name": "Another动漫专线",
+      "rss_url": "https://another.top/torrentrss.php?passkey=abcdefgh&rows=30&linktype=dl",
+      "site": "another",
+      "cookie": "c_secure_uid=;",
+      "qb_category": "动漫专线",
+      "filters": [
+        {
+          "title_regex": "S\\d+E\\d+",
+          "subtitle_regex": "第\\d+集"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 运行
+* 直接运行
+```sh
+python3 rsscli.py
+```
+* 也可放入 crontab 中定时运行
+
+### 观察记录
+* 在 torll 上 RSS 页面可观察到 rss 的记录，收录的和未收的，未收的会显示原因
+
+  
 ----
 ## 影视库
 * 当积累了较多种子，toll 可以方便在查找种子标题，存储路径，可以点击链接到源站查看信息，也可以方便地查看TMDb, IMDb

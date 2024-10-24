@@ -1,0 +1,33 @@
+{
+  "rsstasks": [
+    {
+      "name": "最佳男主角",
+      "rss_url": "https://example.club/torrentrss.php?rows=10&linktype=dl&passkey=somepasskey",
+      "site": "expample",
+      "cookie": "c_secure_pass=....",
+      "qb_category": "",
+      "filters": [
+        {
+          "detail_regex": "最佳男主角",
+          "title_not_regex": "Hello",
+          "subtitle_not_regex": "Test",
+          "size_gb_min": "2",
+          "size_gb_max": "12"
+        }
+      ]
+    },
+    {
+      "name": "Another动漫专线",
+      "rss_url": "https://another.top/torrentrss.php?passkey=abcdefgh&rows=30&linktype=dl",
+      "site": "another",
+      "cookie": "c_secure_uid=;",
+      "qb_category": "动漫专线",
+      "filters": [
+        {
+          "title_regex": "S\\d+E\\d+",
+          "subtitle_regex": "第\\d+集"
+        }
+      ]
+    }
+  ]
+}

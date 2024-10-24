@@ -651,7 +651,6 @@ def rssHistoryData():
 def rssLog():
     return render_template('rsslog.html')
 
-
 class RSSTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     site = db.Column(db.String(64))
@@ -1094,7 +1093,7 @@ def addTorrent(downloadLink, imdbstr, qbCate=''):
         if not qbfunc.addQbitWithTag(downloadLink.strip(), getAbbrevSiteName(downloadLink), siteIdStr, qbCate):
             return 400
     else:
-        logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
+        logger.info("   >> DRYRUN: " + siteIdStr + " , " + downloadLink)
 
     return 201
 

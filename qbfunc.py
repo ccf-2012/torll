@@ -233,6 +233,60 @@ def addQbitWithTag(downlink, qbTag, siteIdStr=None, qbCategory=''):
     return True
 
 
+def addQbitEntry(entry, size_storage_space):
+    qbClient = qbittorrentapi.Client(
+        host=myconfig.CONFIG.qbServer, port=myconfig.CONFIG.qbPort, username=myconfig.CONFIG.qbUser, password=myconfig.CONFIG.qbPass)
+
+    try:
+        qbClient.auth_log_in()
+    except qbittorrentapi.LoginFailed as e:
+        print(e)
+        return False
+
+    if not qbClient:
+        return False
+
+    try:
+        torrents = qbClient.torrents_info()
+        # logger.info(f'   >>  {len(torrents)} torrents in client.')
+    except:
+        logger.debug('  !! Fail to load torrent list.')
+        # client.disconnect()
+        return False
+
+    # logger.info(f'   >> Free space: {convert_size(size_storage_space)}.')
+    enough_space = space_for_torrent(
+        qbClient, torrents, entry, size_storage_space)
+    if not enough_space:
+        logger.info(f'   !! No enough space. Skip: {entry.title}')
+        return False
+
+    try:
+        if entry.siteid_str:
+            result = qbClient.torrents_add(
+                urls=entry.downlink,
+                save_path=entry.siteid_str,
+                category=entry.label,
+                tags=[entry.imdb],
+                use_auto_torrent_management=False)
+        else:
+            result = qbClient.torrents_add(
+                urls=entry.downlink,
+                category=entry.label,
+                tags=[entry.imdb],
+                use_auto_torrent_management=False)
+        if 'OK' in result.upper():
+            pass
+            logger.success(
+                f'   >> Torrent added: {entry.title} ({human_size(entry.size)})')
+        else:
+            logger.warning(
+                '   >> Torrent not added! something wrong with qb api ...')
+    except Exception as e:
+        logger.error('   >> Torrent not added! Exception: '+str(e))
+        return False
+    return True
+
 
 def addQbitFileWithTag(filecontent, qbTag, siteIdStr=None, qbCategory=''):
     qbClient = qbittorrentapi.Client(
@@ -274,3 +328,15 @@ def addQbitFileWithTag(filecontent, qbTag, siteIdStr=None, qbCategory=''):
         return False
 
     return True
+
+
+
+class DownloadEntry:
+    def __init__(self):
+        super().__init__()
+        self.downlink = ''
+        self.title = ''
+        self.siteid_str = ''
+        self.imdb = ''
+        self.label = ''
+        self.size = 0
