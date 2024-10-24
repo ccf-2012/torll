@@ -3,7 +3,7 @@ import sys
 from loguru import logger
 import siteconfig
 
-TORLL_SERVER = 'http://ol.torll.com:5006'
+TORLL_SERVER = 'http://192.168.5.6:5006'
 TORLL_USER = 'admin'
 TORLL_PASS = 'C4GssEIYnZktPsQm'
 
