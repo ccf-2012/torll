@@ -1093,7 +1093,7 @@ def addTorrent(downloadLink, imdbstr, qbCate=''):
         if not qbfunc.addQbitWithTag(downloadLink.strip(), getAbbrevSiteName(downloadLink), siteIdStr, qbCate):
             return 400
     else:
-        logger.info("   >> DRYRUN: " + siteIdStr + " , " + downloadLink)
+        logger.info("   >> DRYRUN: " + siteIdStr + " , " + removePasskeyUrl(downloadLink))
 
     return 201
 
@@ -1129,13 +1129,13 @@ def addTorrentViaPageDownload(downloadLink, sitecookie, imdbstr, qbCate=''):
         if not qbfunc.addQbitFileWithTag(response.content, getAbbrevSiteName(downloadLink), siteIdStr, qbCate):
             return 400
     else:
-        logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + downloadLink)
+        logger.info("   >> DRYRUN: " + siteIdStr + "\n   >> " + removePasskeyUrl(downloadLink))
 
     return 201
 
 
 def removePasskeyUrl(url):
-    return re.sub(r'&passkey=[^&]*', '', url)
+    return re.sub(r'&(passkey|rsskey|downhash)=[^&]*', '', url)
 
 
 def checkAutoCategory(title):
@@ -1354,7 +1354,7 @@ def apiDupeDownload():
             abort(jsonify(message="failed add qbit"))
     else:
         logger.info("DRYRUN: " + request.json['torname'] +
-              "\n" + request.json['downloadlink'])
+              " - " + removePasskeyUrl(request.json['downloadlink']))
         return jsonify({'DRYRUN': True}), 205
 
 
