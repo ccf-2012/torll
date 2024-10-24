@@ -27,7 +27,7 @@ python3 app.py -G
 ```sh
 python3 app.py
 ```
-> 你可以打开 `config.ini` 查看和修改密码。需要注意的是如果这里密码改了，在 qBit 中的命令和 `torfilter` 中也要相应修改
+> 你可以打开 `config.ini` 查看和修改密码。需要注意的是如果这里密码改了，在 qBit 中的种子完成后命令和 `torfilter` 代码中也要相应修改
 
 * 启动成功后，浏览器打开 `http://server.ip:5006/` 以上面生成的用户名密码登录后使用。
 
@@ -107,16 +107,17 @@ rm -rf "/home/ccf2013/emby/$1/"
 
 
 ### 在 torll 中浏览站点种子列表
-* 首先配置各个站点，主要包括 cookie 和 种子列表链接
-* 在站点配置中，可以设置获取各站新种
+* 站点-站点配置，选择站点，设置 cookie 和 种子列表链接 (站新链接)
+* 当前支持 pter, chd, aud, ob, rl, hds, frds, ssd, ttg, mteam, tlf, hdh, pth, tju, hh, ~~beitai~~, ~~hdc~~, hares, hdfans, soulvoice, hdtime, discfan, btschool, ptsbao, piggo, hddolby 站
+* 可以在自己本地的PC机上运行 postcookie  从本地机器上获取cookie，并上传到运行 torll 的 server
+* 在站点配置中，可以设置自动定时获取各站新种
 * 获取过各站新种 ( `站新` )后，即可在站点页面中浏览和发起下载
 ![站新](https://ptpimg.me/4q6430.png)
 
-
 ### 在 torll 中查找下载
-* 可以直接选取某几个站点，输入关键字，发起搜索
-* 当前支持 pter, chd, aud, ob, hds, frds, ssd, ttg, mteam, tlf, hdh, pth, tju, hh, beitai, hdc, hares, hdfans, soulvoice, hdtime, discfan, btschool, ptsbao 站
-* 搜索结果可以选中发起下载
+* 在上述站点配置完成后，可以直接选取某几个站点，输入关键字，发起搜索
+* 搜索结果可以发起下载
+
 
 ### 通过 torfilter 下载
 使用 [github 上的代码](https://github.com/ccf-2012/torfilter)，修改 `torfilter.js` 以下2部分：
@@ -245,10 +246,10 @@ Movie/ko/Fukuoka (2020) {tmdb-576112}
 
 ```ini
 [AUTO_CATEGORY]
-未完结 = S\d+E\d+
+单集 = S\d+E\d+
 
 [CATEGORY_DIR]
-未完结 = /volume1/video/downloads/tv_未完结
+单集 = /volume1/video/downloads/tv_未完结
 ```
 
 ----

@@ -51,7 +51,6 @@ def genSiteLink(siteAbbrev, siteid, torname='', sitecat=''):
         'aud': 'https://audiences.me/details.php?id=',
         'audiences': 'https://audiences.me/details.php?id=',
         'chd': 'https://ptchdbits.co/details.php?id=',
-        'chdbits': 'https://chdbits.co/details.php?id=',
         'lhd': 'https://lemonhd.org/',
         'hds': 'https://hdsky.me/details.php?id=',
         'hdc': 'https://hdchina.org/details.php?id=',

@@ -26,7 +26,7 @@
         "tordate" : "string(.//td[contains(@class,'rowfollow')][4]//@title)"
       },
       {
-        "site": "ptchdbits",
+        "site": "chdbits",
         "torlist": "//table[@class='torrents']/tr",
         "tortitle": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@title)",
         "infolink": "string(.//*[contains(@class,'torrentname')]//a[contains(@href,'details')]/@href)",
